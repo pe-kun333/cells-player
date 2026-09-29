@@ -1,5 +1,6 @@
 import { $, fmt, fmtDate, escapeHtml, icon } from './util.js';
 import { saveSettings } from './store.js';
+import { tr, locale } from './i18n.js';
 
 // 単語帳: 文字起こしの中の言葉を、前後の文・時刻・どのメディアかと一緒に保存する（すべてのメディア共通）。
 // 一覧から、その場面へ戻ったり、CSV（Anki や表計算ソフト向け）で書き出したりできる
@@ -37,7 +38,7 @@ export class Words {
   openAdd(init = {}) {
     const { app } = this;
     if (!app.store.doc) {
-      app.toast('先に動画か音声を開いてください');
+      app.toast(tr('先に動画か音声を開いてください'));
       return;
     }
     const t = Number.isFinite(init.t) ? init.t : app.now();
@@ -48,7 +49,7 @@ export class Words {
     $('#wordMsg').textContent = '';
     $('#wordContext').innerHTML = this.pending.context
       ? `<span class="wc-time">${fmt(t)}</span>${escapeHtml(this.pending.context)}`
-      : `<span class="wc-time">${fmt(t)}</span><span class="muted">（この時刻の字幕はありません）</span>`;
+      : `<span class="wc-time">${fmt(t)}</span><span class="muted">${tr('（この時刻の字幕はありません）')}</span>`;
     this.addDialog.showModal();
     f.word.focus();
     f.word.select();
@@ -61,7 +62,7 @@ export class Words {
     const word = f.word.value.trim();
     if (!word) {
       e.preventDefault();
-      $('#wordMsg').textContent = '言葉を入れてください';
+      $('#wordMsg').textContent = tr('言葉を入れてください');
       f.word.focus();
       return;
     }
@@ -75,7 +76,7 @@ export class Words {
       mediaTitle: doc.title,
       mediaUrl: doc.source !== 'local' ? doc.url : null,
     });
-    app.hint(`「${word}」を単語帳に追加しました（上の「単語帳」から見られます）`);
+    app.hint(tr('「{word}」を単語帳に追加しました（上の「単語帳」から見られます）', { word }));
   }
 
   openList() {
@@ -103,12 +104,12 @@ export class Words {
     const { store, settings } = this.app;
     for (const b of this.scopeBtns) b.classList.toggle('on', b.dataset.scope === settings.wordScope);
     const list = this.visible();
-    $('#wordsCount').textContent = `${list.length} 語（全部で ${store.words.length} 語）`;
+    $('#wordsCount').textContent = tr('{n} 語（全部で {all} 語）', { n: list.length, all: store.words.length });
     if (!list.length) {
       this.listEl.innerHTML = `<div class="words-empty">${
         store.words.length
-          ? '条件に合う言葉がありません。'
-          : 'まだ言葉がありません。右下の「文字起こし」で行を選んで「単語帳」を押すか、W キーで追加できます。'
+          ? tr('条件に合う言葉がありません。')
+          : tr('まだ言葉がありません。右下の「文字起こし」で行を選んで「単語帳」を押すか、W キーで追加できます。')
       }</div>`;
       return;
     }
@@ -127,18 +128,18 @@ export class Words {
     const marked = word && ctx.includes(word) ? ctx.split(word).join(`<mark>${word}</mark>`) : ctx;
     const note =
       this.editing === w.id
-        ? `<input class="field wi-note-input" value="${escapeHtml(w.note || '')}" placeholder="意味・メモ（Enter で保存）">`
-        : `<span class="wi-note${w.note ? '' : ' muted'}" data-w="edit" title="クリックで編集">${w.note ? escapeHtml(w.note) : '意味・メモを書く'}</span>`;
+        ? `<input class="field wi-note-input" value="${escapeHtml(w.note || '')}" placeholder="${tr('意味・メモ（Enter で保存）')}">`
+        : `<span class="wi-note${w.note ? '' : ' muted'}" data-w="edit" title="${tr('クリックで編集')}">${w.note ? escapeHtml(w.note) : tr('意味・メモを書く')}</span>`;
     return `<div class="word-item" data-id="${w.id}">
       <div class="wi-top">
         <span class="wi-word">${word}</span>
         ${note}
         <span class="spacer"></span>
-        <button type="button" class="btn tiny" data-w="go" title="${here ? 'この場面へ移動' : 'このメディアを開いてその場面へ'}">${icon('play')}${fmt(w.t)}</button>
-        <button type="button" class="btn tiny danger" data-w="del" title="単語帳から消す">${icon('trash')}</button>
+        <button type="button" class="btn tiny" data-w="go" title="${here ? tr('この場面へ移動') : tr('このメディアを開いてその場面へ')}">${icon('play')}${fmt(w.t)}</button>
+        <button type="button" class="btn tiny danger" data-w="del" title="${tr('単語帳から消す')}">${icon('trash')}</button>
       </div>
       ${ctx ? `<div class="wi-context">${marked}</div>` : ''}
-      <div class="wi-meta">${escapeHtml(w.mediaTitle || '')}${here ? '（いま開いているメディア）' : ''}・${fmtDate(w.at)} に追加</div>
+      <div class="wi-meta">${escapeHtml(w.mediaTitle || '')}${here ? tr('（いま開いているメディア）') : ''}${tr('・{date} に追加', { date: fmtDate(w.at) })}</div>
     </div>`;
   }
 
@@ -153,7 +154,7 @@ export class Words {
       this.app.jumpToMedia(w.mediaId, w.mediaUrl, Math.max(0, w.t - 0.3), w.mediaTitle);
     } else if (a === 'del') {
       this.app.store.deleteWord(w.id);
-      this.app.hint(`「${w.word}」を単語帳から消しました`);
+      this.app.hint(tr('「{word}」を単語帳から消しました', { word: w.word }));
     } else if (a === 'edit') {
       this.editing = w.id;
       this.render();
@@ -177,17 +178,17 @@ export class Words {
   exportCsv() {
     const list = this.visible();
     if (!list.length) {
-      this.app.hint('書き出す言葉がありません');
+      this.app.hint(tr('書き出す言葉がありません'));
       return;
     }
     const cell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const rows = [['言葉', '意味・メモ', '前後の文', '時刻', 'メディア', '追加した日時']];
-    for (const w of list) rows.push([w.word, w.note, w.context, fmt(w.t), w.mediaTitle, new Date(w.at).toLocaleString('ja-JP')]);
+    const rows = [[tr('言葉'), tr('意味・メモ'), tr('前後の文'), tr('時刻'), tr('メディア'), tr('追加した日時')]];
+    for (const w of list) rows.push([w.word, w.note, w.context, fmt(w.t), w.mediaTitle, new Date(w.at).toLocaleString(locale)]);
     // Excel で文字化けしないよう BOM を付ける
     const blob = new Blob(['﻿' + rows.map((r) => r.map(cell).join(',')).join('\r\n')], { type: 'text/csv' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = '単語帳.csv';
+    a.download = tr('単語帳.csv');
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }

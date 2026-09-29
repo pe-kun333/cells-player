@@ -1,5 +1,6 @@
 import { uid, round2 } from './util.js';
 import { openKV } from './db.js';
+import { tr, isEn } from './i18n.js';
 
 const PREFIX = 'cellsplayer:';
 const OLD_PREFIX = 'cellplayer:'; // アプリ名を cells-player に変える前の保存データ
@@ -9,10 +10,16 @@ const mediaKey = (id) => 'media:' + id;
 // よく使うコメント（4〜9 キー）。付けた名前がそのままタグになるので、
 // 名前を変えるとそれ以降は別のタグとして記録される
 export const PRESET_COUNT = 6;
-export const DEFAULT_PRESET_SETS = [
-  { id: 'study', name: '学習用', items: ['要復習', '聞き取れない', '覚えたい表現', '発音注意', 'わかった', '質問したい'] },
-  { id: 'watch', name: '鑑賞用', items: ['名場面', '笑った', '泣ける', '鳥肌', '映像がいい', 'もう一度見たい'] },
-];
+// 初めて使うときの内容。名前はタグとして保存されるので、そのときの表示の言語で用意する（あとで言語を変えても元のまま）
+export const DEFAULT_PRESET_SETS = isEn
+  ? [
+      { id: 'study', name: 'Study', items: ['Review', "Can't catch", 'Useful phrase', 'Pronunciation', 'Got it', 'Question'] },
+      { id: 'watch', name: 'Watching', items: ['Great scene', 'Funny', 'Moving', 'Chills', 'Beautiful shot', 'Watch again'] },
+    ]
+  : [
+      { id: 'study', name: '学習用', items: ['要復習', '聞き取れない', '覚えたい表現', '発音注意', 'わかった', '質問したい'] },
+      { id: 'watch', name: '鑑賞用', items: ['名場面', '笑った', '泣ける', '鳥肌', '映像がいい', 'もう一度見たい'] },
+    ];
 
 export const DEFAULT_SETTINGS = {
   offsets: [3, 6, 9],      // 「少し前に目印」ボタンの秒数
@@ -32,7 +39,8 @@ export const DEFAULT_SETTINGS = {
   momentListSync: true,      // 「瞬間のコメント」を再生位置に連動させる
   momentListMode: 'comments', // サイドバー下の一覧に出すもの（comments: 瞬間のコメント / transcript: 文字起こし）
   captions: true,            // 字幕を動画の上に表示する
-  liveLang: 'ja-JP',         // 音声認識の言語
+  liveLang: isEn ? 'en-US' : 'ja-JP', // 音声認識の言語
+  lang: null,                // 表示の言語（null ならブラウザの言語に合わせる）
   liveHelpSeen: false,       // 音声認識の準備の説明を見たか（初回だけ出す）
   repeatCount: 0,            // リピートの回数（0 はずっと）
   repeatGap: 0,              // リピートで頭に戻ったあとの無音（秒）
@@ -68,7 +76,7 @@ export function normalizePresetSets(sets) {
     .filter((s) => s && typeof s === 'object')
     .map((s) => ({
       id: typeof s.id === 'string' && s.id ? s.id : uid(),
-      name: String(s.name || 'セット').trim() || 'セット',
+      name: String(s.name || tr('セット')).trim() || tr('セット'),
       items: Array.from({ length: PRESET_COUNT }, (_, i) =>
         String((Array.isArray(s.items) && s.items[i]) || '').trim(),
       ),

@@ -1,5 +1,6 @@
 import { $, fmt, icon, escapeHtml, cellLabel } from './util.js';
 import { saveSettings } from './store.js';
+import { tr } from './i18n.js';
 
 // 連続再生（ダイジェスト）: サイドバーにいま並んでいるセル・目印を、上から順に続けて再生する。
 // セルはその区間を、目印は「少し前から」〜設定の秒数あと までを1つの区切りとして再生する
@@ -19,7 +20,7 @@ export class Digest {
       if (a === 'prev') this.go(this.i - 1, true);
       else if (a === 'next') this.go(this.i + 1, true);
       else if (a === 'loop') this.toggleLoop();
-      else if (a === 'stop') this.stop('連続再生をやめました');
+      else if (a === 'stop') this.stop(tr('連続再生をやめました'));
     });
   }
 
@@ -37,12 +38,12 @@ export class Digest {
       const m = it.o;
       // 一覧に並んでいるセルの中の目印は、そのセルの再生に含まれるので飛ばす
       if (cells.some((c) => m.t >= c.s && m.t < c.e)) continue;
-      const first = m.comments[0]?.text || m.tags.join('・');
+      const first = m.comments[0]?.text || m.tags.join(tr('・'));
       clips.push({
         id: m.id,
         s: app.leadTime(m.t),
         e: Math.min(app.duration(), m.t + app.settings.momentClip),
-        label: `${fmt(m.t)} の目印  ${first}`,
+        label: tr('{time} の目印  {text}', { time: fmt(m.t), text: first }),
       });
     }
     return clips.filter((c) => c.e - c.s > 0.2);
@@ -51,12 +52,12 @@ export class Digest {
   start() {
     const { app } = this;
     if (!app.player) {
-      app.toast('先に動画か音声を開いてください');
+      app.toast(tr('先に動画か音声を開いてください'));
       return;
     }
     const clips = this.build();
     if (!clips.length) {
-      app.hint('連続再生するセルや目印がありません（サイドバーの一覧に並んでいるものを順に再生します）');
+      app.hint(tr('連続再生するセルや目印がありません（サイドバーの一覧に並んでいるものを順に再生します）'));
       return;
     }
     app.stopModes('digest'); // リピート・練習とは同時に使えない
@@ -64,7 +65,7 @@ export class Digest {
     this.active = true;
     this.go(0, true);
     app.player.play();
-    app.hint(`${clips.length} 件を続けて再生します`);
+    app.hint(tr('{n} 件を続けて再生します', { n: clips.length }));
   }
 
   // i 番目の区切りへ。force: 前へ・次へボタンなどで、再生位置が近くても必ず頭から
@@ -75,7 +76,7 @@ export class Digest {
     if (i >= this.clips.length) {
       if (!app.settings.digestLoop) {
         app.player.pause();
-        this.stop('連続再生が終わりました');
+        this.stop(tr('連続再生が終わりました'));
         return;
       }
       i = 0;
@@ -106,7 +107,7 @@ export class Digest {
     s.digestLoop = !s.digestLoop;
     saveSettings(s);
     this.render();
-    this.app.hint(s.digestLoop ? '最後まで行ったら最初から繰り返します' : '最後まで行ったら止まります');
+    this.app.hint(s.digestLoop ? tr('最後まで行ったら最初から繰り返します') : tr('最後まで行ったら止まります'));
   }
 
   // main.js の監視から呼ぶ（別のウィンドウを見ていても動く）
@@ -134,7 +135,7 @@ export class Digest {
         this.render();
         this.app.onDigestClip(this.clips[j].id);
       } else {
-        this.stop('区切りの外へ移動したので、連続再生をやめました');
+        this.stop(tr('区切りの外へ移動したので、連続再生をやめました'));
       }
     }
     this.lastT = now;
@@ -156,11 +157,11 @@ export class Digest {
     const c = this.clips[this.i];
     const loop = this.app.settings.digestLoop;
     this.bar.innerHTML = `
-      <span class="dg-state">${icon('play')}連続再生 ${this.i + 1} / ${this.clips.length}</span>
+      <span class="dg-state">${icon('play')}${tr('連続再生 {i} / {n}', { i: this.i + 1, n: this.clips.length })}</span>
       <span class="dg-label" title="${escapeHtml(c ? c.label : '')}">${escapeHtml(c ? c.label : '')}</span>
-      <button data-dg="prev" title="前へ" aria-label="前へ">${icon('back')}</button>
-      <button data-dg="next" title="次へ" aria-label="次へ">${icon('next')}</button>
-      <button data-dg="loop" class="${loop ? 'on' : ''}" title="最後まで行ったら最初から繰り返す" aria-label="繰り返し" aria-pressed="${loop}">${icon('repeat')}</button>
-      <button data-dg="stop" title="連続再生をやめる">${icon('x')}停止</button>`;
+      <button data-dg="prev" title="${tr('前へ')}" aria-label="${tr('前へ')}">${icon('back')}</button>
+      <button data-dg="next" title="${tr('次へ')}" aria-label="${tr('次へ')}">${icon('next')}</button>
+      <button data-dg="loop" class="${loop ? 'on' : ''}" title="${tr('最後まで行ったら最初から繰り返す')}" aria-label="${tr('繰り返し')}" aria-pressed="${loop}">${icon('repeat')}</button>
+      <button data-dg="stop" title="${tr('連続再生をやめる')}">${icon('x')}${tr('停止')}</button>`;
   }
 }

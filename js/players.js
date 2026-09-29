@@ -1,3 +1,5 @@
+import { tr } from './i18n.js';
+
 // ローカルファイル／URL と YouTube を同じ操作で扱うためのプレイヤー
 
 class Emitter {
@@ -14,10 +16,10 @@ class Emitter {
 
 function mediaErrorMessage(err) {
   switch (err && err.code) {
-    case 2: return 'ネットワークエラーで読み込めませんでした';
-    case 3: return 'ファイルのデコードに失敗しました';
-    case 4: return 'この形式は再生できません（ブラウザが対応していないコーデックの可能性があります）';
-    default: return 'ファイルを読み込めませんでした';
+    case 2: return tr('ネットワークエラーで読み込めませんでした');
+    case 3: return tr('ファイルのデコードに失敗しました');
+    case 4: return tr('この形式は再生できません（ブラウザが対応していないコーデックの可能性があります）');
+    default: return tr('ファイルを読み込めませんでした');
   }
 }
 
@@ -113,7 +115,7 @@ function loadYouTubeApi() {
       s.src = 'https://www.youtube.com/iframe_api';
       s.onerror = () => {
         ytApiPromise = null;
-        reject(new Error('YouTube の読み込みに失敗しました（ネットワークを確認してください）'));
+        reject(new Error(tr('YouTube の読み込みに失敗しました（ネットワークを確認してください）')));
       };
       document.head.appendChild(s);
     });
@@ -122,12 +124,12 @@ function loadYouTubeApi() {
 }
 
 const YT_ERRORS = {
-  2: '動画 ID が正しくありません',
-  5: 'この動画はこのプレイヤーで再生できません',
-  100: '動画が見つかりません（削除済みか非公開です）',
-  101: 'この動画は埋め込み再生が許可されていません',
-  150: 'この動画は埋め込み再生が許可されていません',
-  153: 'YouTube を再生できません（start.bat から起動したページで開いてください）',
+  2: tr('動画 ID が正しくありません'),
+  5: tr('この動画はこのプレイヤーで再生できません'),
+  100: tr('動画が見つかりません（削除済みか非公開です）'),
+  101: tr('この動画は埋め込み再生が許可されていません'),
+  150: tr('この動画は埋め込み再生が許可されていません'),
+  153: tr('YouTube を再生できません（公開ページか、start.bat から起動したページで開いてください）'),
 };
 
 export function parseYouTubeId(input) {
@@ -197,7 +199,7 @@ export class YouTubePlayer extends Emitter {
             this.emit('durationchange');
           },
           onError: (e) => {
-            const msg = YT_ERRORS[e.data] || `YouTube でエラーが発生しました（コード ${e.data}）`;
+            const msg = YT_ERRORS[e.data] || tr('YouTube でエラーが発生しました（コード {code}）', { code: e.data });
             if (!settled) {
               settled = true;
               reject(new Error(msg));

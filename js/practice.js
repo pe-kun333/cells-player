@@ -1,6 +1,7 @@
 import { $, fmt, escapeHtml, icon } from './util.js';
 import { saveSettings } from './store.js';
 import { cueIndexAt } from './transcript.js';
+import { tr } from './i18n.js';
 
 // 文字起こしの行を使った練習。
 // シャドーイング: 1行再生 → 行の長さ×倍率だけ止まる（そのあいだに声に出す）→ 次の行（くり返し回数も選べる）
@@ -42,11 +43,11 @@ export class Practice {
   start(mode) {
     const { app } = this;
     if (!app.player) {
-      app.toast('先に動画か音声を開いてください');
+      app.toast(tr('先に動画か音声を開いてください'));
       return;
     }
     if (!this.cues.length) {
-      app.hint('先に字幕・文字起こしを入れてください（「字幕を読み込む」「貼り付け」「音声認識」）');
+      app.hint(tr('先に字幕・文字起こしを入れてください（「字幕を読み込む」「貼り付け」「音声認識」）'));
       return;
     }
     app.stopModes('practice');
@@ -64,8 +65,8 @@ export class Practice {
     this.playLine();
     app.hint(
       mode === 'shadow'
-        ? 'シャドーイングを始めます。1行流れて止まったら、同じように声に出してみましょう'
-        : 'ディクテーションを始めます。聞こえたとおりに入力して、Enter で答え合わせします',
+        ? tr('シャドーイングを始めます。1行流れて止まったら、同じように声に出してみましょう')
+        : tr('ディクテーションを始めます。聞こえたとおりに入力して、Enter で答え合わせします'),
     );
   }
 
@@ -140,8 +141,8 @@ export class Practice {
     this.stop();
     this.app.hint(
       mode === 'shadow'
-        ? 'シャドーイングが最後の行まで終わりました'
-        : `ディクテーションが終わりました${avg !== null ? `（平均の一致 ${avg}%）` : ''}`,
+        ? tr('シャドーイングが最後の行まで終わりました')
+        : tr('ディクテーションが終わりました') + (avg !== null ? tr('（平均の一致 {avg}%）', { avg }) : ''),
     );
   }
 
@@ -188,7 +189,7 @@ export class Practice {
     else if (a === 'check') this.check(this.draft);
     else if (a === 'stop') {
       this.stop();
-      this.app.hint('練習をやめました');
+      this.app.hint(tr('練習をやめました'));
     }
   }
 
@@ -232,30 +233,30 @@ export class Practice {
     const n = this.cues.length;
     const shadow = this.mode === 'shadow';
     const head = `<div class="pr-head">
-      <span class="pr-title">${icon(shadow ? 'repeat' : 'text')}${shadow ? 'シャドーイング' : 'ディクテーション'}</span>
-      <span class="pr-pos">${this.i + 1} / ${n} 行目${c ? `・${fmt(c.s)}` : ''}</span>
+      <span class="pr-title">${icon(shadow ? 'repeat' : 'text')}${shadow ? tr('シャドーイング') : tr('ディクテーション')}</span>
+      <span class="pr-pos">${tr('{i} / {n} 行目', { i: this.i + 1, n })}${c ? `${tr('・')}${fmt(c.s)}` : ''}</span>
       <span class="spacer"></span>
-      <button class="btn tiny" data-pr="prev">前の行</button>
-      <button class="btn tiny" data-pr="again">もう一度</button>
-      <button class="btn tiny" data-pr="next">次の行</button>
-      <button class="btn tiny" data-pr="stop">${icon('x')}やめる</button>
+      <button class="btn tiny" data-pr="prev">${tr('前の行')}</button>
+      <button class="btn tiny" data-pr="again">${tr('もう一度')}</button>
+      <button class="btn tiny" data-pr="next">${tr('次の行')}</button>
+      <button class="btn tiny" data-pr="stop">${icon('x')}${tr('やめる')}</button>
     </div>`;
     let body;
     if (shadow) {
       const status = {
-        play: '再生中… よく聞いて',
-        gap: '声に出してみましょう',
+        play: tr('再生中… よく聞いて'),
+        gap: tr('声に出してみましょう'),
       }[this.phase] || '';
-      const reps = s.shadowRepeat > 1 ? `（${this.rep + 1} / ${s.shadowRepeat} 回目）` : '';
+      const reps = s.shadowRepeat > 1 ? tr('（{i} / {n} 回目）', { i: this.rep + 1, n: s.shadowRepeat }) : '';
       const opt = (values, cur, label) => values.map((v) => `<option value="${v}"${v === cur ? ' selected' : ''}>${label(v)}</option>`).join('');
       body = `
-        <div class="pr-line${s.shadowShowText ? '' : ' is-hidden'}">${s.shadowShowText ? escapeHtml(c?.text || '') : '（文字は隠しています）'}</div>
+        <div class="pr-line${s.shadowShowText ? '' : ' is-hidden'}">${s.shadowShowText ? escapeHtml(c?.text || '') : tr('（文字は隠しています）')}</div>
         <div class="pr-status ${this.phase}">${status}${reps}</div>
         <div class="pr-gap">${this.phase === 'gap' ? `<i style="animation-duration:${this.gapMs}ms"></i>` : ''}</div>
         <div class="pr-opts">
-          <label>待ち時間 <select data-pr-opt="gap">${opt([0.5, 1, 1.5, 2, 3], s.shadowGap, (v) => `行の長さの ${v} 倍`)}</select></label>
-          <label>くり返し <select data-pr-opt="repeat">${opt([1, 2, 3, 5], s.shadowRepeat, (v) => `${v} 回`)}</select></label>
-          <label class="pr-check"><input type="checkbox" data-pr-opt="text"${s.shadowShowText ? ' checked' : ''}> 文字を見せる</label>
+          <label>${tr('待ち時間')} <select data-pr-opt="gap">${opt([0.5, 1, 1.5, 2, 3], s.shadowGap, (v) => tr('行の長さの {v} 倍', { v }))}</select></label>
+          <label>${tr('くり返し')} <select data-pr-opt="repeat">${opt([1, 2, 3, 5], s.shadowRepeat, (v) => tr('{n} 回', { n: v }))}</select></label>
+          <label class="pr-check"><input type="checkbox" data-pr-opt="text"${s.shadowShowText ? ' checked' : ''}> ${tr('文字を見せる')}</label>
         </div>`;
     } else {
       const r = this.result;
@@ -263,14 +264,14 @@ export class Practice {
       body = `
         <div class="pr-row">
           <input class="field pr-input" type="text" autocomplete="off" spellcheck="false"
-            placeholder="聞こえたとおりに入力（Enter で答え合わせ・Shift+Enter でもう一度聞く）">
-          <button class="btn small" data-pr="${r ? 'next' : 'check'}">${r ? '次の行' : '答え合わせ'}</button>
+            placeholder="${tr('聞こえたとおりに入力（Enter で答え合わせ・Shift+Enter でもう一度聞く）')}">
+          <button class="btn small" data-pr="${r ? 'next' : 'check'}">${r ? tr('次の行') : tr('答え合わせ')}</button>
         </div>
-        <div class="pr-status ${this.phase}">${this.phase === 'play' ? '再生中… 字幕は隠しています' : this.phase === 'answer' ? '入力して Enter で答え合わせ' : ''}</div>
+        <div class="pr-status ${this.phase}">${this.phase === 'play' ? tr('再生中… 字幕は隠しています') : this.phase === 'answer' ? tr('入力して Enter で答え合わせ') : ''}</div>
         ${r ? `<div class="pr-result">
-          <div><span class="pr-label">正解</span><span class="pr-diff">${r.refHtml}</span></div>
-          <div><span class="pr-label">あなた</span><span class="pr-diff">${r.ansHtml || '<span class="muted">（未入力）</span>'}</span></div>
-          <div class="pr-score">一致 ${r.score}%${avg !== null ? `（平均 ${avg}%・${this.score.n} 行）` : ''}　<span class="muted">Enter で次の行へ</span></div>
+          <div><span class="pr-label">${tr('正解')}</span><span class="pr-diff">${r.refHtml}</span></div>
+          <div><span class="pr-label">${tr('あなた')}</span><span class="pr-diff">${r.ansHtml || `<span class="muted">${tr('（未入力）')}</span>`}</span></div>
+          <div class="pr-score">${tr('一致 {score}%', { score: r.score })}${avg !== null ? tr('（平均 {avg}%・{n} 行）', { avg, n: this.score.n }) : ''}　<span class="muted">${tr('Enter で次の行へ')}</span></div>
         </div>` : ''}`;
     }
     card.innerHTML = head + body;

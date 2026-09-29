@@ -1,7 +1,7 @@
 // オフラインでも起動できるよう、アプリのファイルをブラウザに保存しておく。
 // 通信できるときは毎回新しいファイルを取りに行き（更新がすぐ反映される）、取れないときだけ保存しておいたものを使う。
 // 利用者のデータ（IndexedDB）やファイル・YouTube の通信には関わらない
-const CACHE = 'cells-player-v1';
+const CACHE = 'cells-player-v2';
 
 // 新しいファイルを足したら、ここにも足す
 const APP_FILES = [
@@ -14,6 +14,8 @@ const APP_FILES = [
   './js/commentlist.js',
   './js/db.js',
   './js/digest.js',
+  './js/i18n.js',
+  './js/i18n-en.js',
   './js/live.js',
   './js/moment.js',
   './js/players.js',

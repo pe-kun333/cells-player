@@ -1,3 +1,5 @@
+import { tr } from './i18n.js';
+
 // 字幕・文字起こしの読み込み（.srt / .vtt / JSON / 時刻つきの文字）・書き出しと、時間での検索
 
 // 00:01:02,345 / 00:01:02.345 / 01:02.345
@@ -135,7 +137,7 @@ export function parseTranscript(text, name = '') {
     try {
       data = JSON.parse(text);
     } catch {
-      if (ext === 'json') throw new Error('JSON として読み込めませんでした');
+      if (ext === 'json') throw new Error(tr('JSON として読み込めませんでした'));
     }
   }
   if (data !== undefined) {
@@ -147,7 +149,7 @@ export function parseTranscript(text, name = '') {
   }
   const out = normalize(cues);
   if (!out.length) {
-    throw new Error('字幕・文字起こしの行が見つかりませんでした（.srt / .vtt / 文字起こしの JSON、または「0:05」のような時刻つきの文字に対応しています）');
+    throw new Error(tr('字幕・文字起こしの行が見つかりませんでした（.srt / .vtt / 文字起こしの JSON、または「0:05」のような時刻つきの文字に対応しています）'));
   }
   return out;
 }

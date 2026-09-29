@@ -1,5 +1,6 @@
 import { $, fmt, escapeHtml, icon } from './util.js';
 import { saveSettings } from './store.js';
+import { tr } from './i18n.js';
 
 // 右サイドバーの下の一覧。「瞬間のコメント」（目印のコメントと定型コメント）と「文字起こし」（字幕の行）を
 // 切り替えて、時間順に小さく並べる。
@@ -161,8 +162,8 @@ export class CommentList {
     } else if (!this.rows.length) {
       this.body.innerHTML =
         this.mode === 'transcript'
-          ? '<div class="mlist-empty">文字起こしはまだありません。「字幕を読み込む」「貼り付け」「音声認識」で追加できます</div>'
-          : '<div class="mlist-empty">まだありません。C キーで、いまの瞬間にコメントを書けます</div>';
+          ? `<div class="mlist-empty">${tr('文字起こしはまだありません。「字幕を読み込む」「貼り付け」「音声認識」で追加できます')}</div>`
+          : `<div class="mlist-empty">${tr('まだありません。C キーで、いまの瞬間にコメントを書けます')}</div>`;
     } else {
       const rg = this.range();
       this.body.innerHTML = this.rows.map((r, i) => this.rowHtml(r, i, rg)).join('');
@@ -182,12 +183,12 @@ export class CommentList {
   rowHtml(r, i, rg) {
     const inRange = rg && i >= rg[0] && i <= rg[1];
     const last = rg && i === rg[1];
-    const full = `${fmt(r.t, true)}  ${r.tags.map((t) => `［${t}］`).join('')}${r.text}`;
+    const full = `${fmt(r.t, true)}  ${r.tags.map((t) => tr('［{tag}］', { tag: t })).join('')}${r.text}`;
     let html;
     if (r.key === this.editing) {
       html = `<div class="mrow is-selected is-editing" data-key="${escapeHtml(r.key)}"><span class="mt">${fmt(r.t)}</span>
         <textarea class="medit" rows="1" spellcheck="false">${escapeHtml(r.text)}</textarea></div>
-        <div class="medit-hint">Enter で保存・Shift+Enter で改行・Esc でやめる</div>`;
+        <div class="medit-hint">${tr('Enter で保存・Shift+Enter で改行・Esc でやめる')}</div>`;
       return html;
     }
     const tags = r.tags.map((t) => `<span class="mtag">${escapeHtml(t)}</span>`).join('');
@@ -199,33 +200,33 @@ export class CommentList {
     if (rg[1] > rg[0]) {
       const n = rg[1] - rg[0] + 1;
       return html + `<div class="macts">
-        <span class="macts-note">${n} 行を選んでいます</span>
-        <button data-mact="cell" title="選んだ行の最初から最後までを1つのセルにする">${icon('cell')}セルにする</button>
+        <span class="macts-note">${tr('{n} 行を選んでいます', { n })}</span>
+        <button data-mact="cell" title="${tr('選んだ行の最初から最後までを1つのセルにする')}">${icon('cell')}${tr('セルにする')}</button>
         <span class="spacer"></span>
-        <button data-mact="close" title="選択をやめる (Esc)" aria-label="閉じる">${icon('x')}</button>
+        <button data-mact="close" title="${tr('選択をやめる (Esc)')}" aria-label="${tr('閉じる')}">${icon('x')}</button>
       </div>`;
     }
     const lead = this.app.settings.leadIn;
     const tx = !r.id;
     html += `<div class="macts">
-      <button data-mact="go" title="クリックで移動・ダブルクリックでそこから再生">${icon('play')}移動</button>
-      <button data-mact="lead" title="${lead}秒前へ移動・ダブルクリックでそこから再生">${icon('back')}${lead}秒前から</button>
-      <button data-mact="add"${this.adding ? ' class="on"' : ''} title="${tx ? 'この時刻の目印にコメントする' : 'この目印にコメントを追加する'}">${icon('comment')}コメント</button>
+      <button data-mact="go" title="${tr('クリックで移動・ダブルクリックでそこから再生')}">${icon('play')}${tr('移動')}</button>
+      <button data-mact="lead" title="${tr('{s}秒前へ移動・ダブルクリックでそこから再生', { s: lead })}">${icon('back')}${tr('{s}秒前から', { s: lead })}</button>
+      <button data-mact="add"${this.adding ? ' class="on"' : ''} title="${tx ? tr('この時刻の目印にコメントする') : tr('この目印にコメントを追加する')}">${icon('comment')}${tr('コメント')}</button>
       <span class="spacer"></span>
-      <button data-mact="close" title="閉じる (Esc)" aria-label="閉じる">${icon('x')}</button>
+      <button data-mact="close" title="${tr('閉じる (Esc)')}" aria-label="${tr('閉じる')}">${icon('x')}</button>
     </div>`;
     // 文字起こしの行は、2段目に行そのものの操作を出す
     if (tx) {
       html += `<div class="macts macts-2">
-        <button data-mact="edit" title="この行の文字を直す">${icon('pencil')}編集</button>
-        <button data-mact="word" title="この行の言葉を単語帳に入れる（先に行の中の言葉をドラッグで選んでおくと、その言葉が入ります）">単語帳</button>
-        <button data-mact="del" title="この行を消す" aria-label="この行を消す">${icon('trash')}</button>
-        <span class="mtip" title="Shift を押しながら別の行をクリックすると、範囲を選んでセルにできます">Shift+クリックで範囲を選んでセルに</span>
+        <button data-mact="edit" title="${tr('この行の文字を直す')}">${icon('pencil')}${tr('編集')}</button>
+        <button data-mact="word" title="${tr('この行の言葉を単語帳に入れる（先に行の中の言葉をドラッグで選んでおくと、その言葉が入ります）')}">${tr('単語帳')}</button>
+        <button data-mact="del" title="${tr('この行を消す')}" aria-label="${tr('この行を消す')}">${icon('trash')}</button>
+        <span class="mtip" title="${tr('Shift を押しながら別の行をクリックすると、範囲を選んでセルにできます')}">${tr('Shift+クリックで範囲を選んでセルに')}</span>
       </div>`;
     }
     if (this.adding) {
-      const where = r.id ? `${fmt(r.t)} の目印にコメント` : `${fmt(r.t)} にコメント（目印ができます）`;
-      html += `<div class="madd"><input class="madd-input" type="text" placeholder="${where}（Enter で追加・Esc でやめる）" autocomplete="off"></div>`;
+      const where = r.id ? tr('{time} の目印にコメント', { time: fmt(r.t) }) : tr('{time} にコメント（目印ができます）', { time: fmt(r.t) });
+      html += `<div class="madd"><input class="madd-input" type="text" placeholder="${where}${tr('（Enter で追加・Esc でやめる）')}" autocomplete="off"></div>`;
     }
     return html;
   }
@@ -338,7 +339,7 @@ export class CommentList {
     this.adding = false;
     if (r.id) {
       this.app.store.addComment('marker', r.id, text, r.t);
-      this.app.hint(`${fmt(r.t, true)} の目印にコメントしました`);
+      this.app.hint(tr('{time} の目印にコメントしました', { time: fmt(r.t, true) }));
     } else {
       // 文字起こしの行: その時刻の目印（近くにあればそれ）にコメントする
       this.app.commentAt(text, { markerId: null, t: r.t, fromTarget: false });

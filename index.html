@@ -39,9 +39,13 @@
   </defs>
 </svg>
 
-<div id="bootError" class="boot-error">
-  このページはファイルを直接開いても動きません。<br>
-  同じフォルダにある <b>start.bat</b> をダブルクリックして起動するか、公開されている URL から開いてください。
+<div id="bootError" class="boot-error" data-i18n-skip>
+  <div>
+    このページはファイルを直接開いても動きません。<br>
+    同じフォルダにある <b>start.bat</b> をダブルクリックして起動するか、公開されている URL から開いてください。
+    <p lang="en">This page does not work when opened as a file.<br>
+    Double-click <b>start.bat</b> in the same folder, or open the published URL.</p>
+  </div>
 </div>
 
 <header class="topbar">
@@ -82,6 +86,7 @@
         <div class="empty-foot">
           ファイルはこのブラウザの中だけで再生され、どこにも送信されません。メモもこのブラウザに保存されます。
           <a href="privacy.html" target="_blank" rel="noopener">プライバシーとデータの扱い</a>
+          <button type="button" class="link-btn" id="btnLangSwitch"></button>
         </div>
       </div>
       <div class="caption" id="caption" hidden></div>
@@ -154,7 +159,7 @@
     <div class="side-head">
       <div class="tabs" id="sideTabs" role="tablist">
         <button class="tab" data-tab="cells" role="tab">セル</button>
-        <button class="tab" data-tab="markers" role="tab">目印</button>
+        <button class="tab" data-tab="markers" role="tab" data-i18n="目印（タブ）">目印</button>
         <button class="tab" data-tab="all" role="tab">すべて</button>
       </div>
       <div class="side-search">
@@ -217,6 +222,13 @@
 <dialog id="settingsDialog">
   <form method="dialog" id="settingsForm" class="dialog-body">
     <h2>設定</h2>
+    <label class="set-row">
+      <span>表示の言語 / Language<small>切り替えるとページを読み込み直します</small></span>
+      <select name="lang" data-i18n-skip>
+        <option value="ja">日本語</option>
+        <option value="en">English</option>
+      </select>
+    </label>
     <label class="set-row">
       <span>少し前に付ける目印（秒）<small>カンマ区切り、最大5つ</small></span>
       <input class="field" name="offsets" type="text">
@@ -325,10 +337,10 @@
 <dialog id="liveDialog">
   <form method="dialog" id="liveForm" class="dialog-body">
     <h2>音声認識の準備</h2>
-    <p class="dialog-note live-note">
+    <p class="dialog-note live-note" data-i18n-html="liveNote">
       Chrome の音声認識は<b>マイクの音</b>を聞いて文字にします。流れている動画や音声を文字起こしするには、<b>PC の音をマイクとして入力する</b>設定をします。
     </p>
-    <ol class="live-steps">
+    <ol class="live-steps" data-i18n-html="liveSteps">
       <li>Windows の「設定」→「システム」→「サウンド」→「その他のサウンド設定」を開き、「録音」タブの <b>ステレオ ミキサー</b> を右クリックして「有効」にします（表示されないときは、空いている所を右クリックして「無効なデバイスの表示」）。</li>
       <li>このページの最初の開始で、マイクの使用を「許可」します。</li>
       <li>アドレスバー右のマイクのアイコン（またはサイトの設定）で、マイクを <b>ステレオ ミキサー</b> に切り替えます。</li>
@@ -361,7 +373,7 @@
 <dialog id="helpDialog">
   <form method="dialog" class="dialog-body">
     <h2>ショートカット</h2>
-    <table class="keys">
+    <table class="keys" data-i18n-html="helpKeys">
       <tr><td><kbd>Space</kbd></td><td>再生 / 一時停止</td></tr>
       <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>5秒戻る / 進む（<kbd>Shift</kbd> で1秒）</td></tr>
       <tr><td><kbd>,</kbd> <kbd>.</kbd></td><td>コマ送り（ローカルファイルのみ）</td></tr>
@@ -382,7 +394,7 @@
       <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>元に戻す（<kbd>Shift</kbd> 付きでやり直す）</td></tr>
     </table>
     <h3 class="help-sub">文字起こし（右下の「文字起こし」タブ）</h3>
-    <table class="keys">
+    <table class="keys" data-i18n-html="helpTx">
       <tr><td>行をクリック</td><td>移動・コメント・編集・単語帳・削除</td></tr>
       <tr><td><kbd>Shift</kbd> + クリック</td><td>範囲を選んで「セルにする」</td></tr>
       <tr><td>シャドーイング</td><td>1行ずつ再生して止まる。止まっている間に声に出す</td></tr>
@@ -422,7 +434,7 @@
 
 <dialog id="wordsDialog" class="wide-dialog">
   <form method="dialog" class="dialog-body">
-    <h2>単語帳</h2>
+    <h2 data-i18n="単語帳（見出し）">単語帳</h2>
     <div class="words-bar">
       <div class="seg" role="group" aria-label="表示する範囲">
         <button type="button" data-scope="media">このメディア</button>

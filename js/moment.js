@@ -1,4 +1,5 @@
 import { $, $$, fmt, escapeHtml, hearts, icon, commentSummary, tagChips } from './util.js';
+import { tr } from './i18n.js';
 
 // 動画の下の「この瞬間」パネル。いいね・コメントは常に目印（瞬間）に付く
 export class Moment {
@@ -48,7 +49,7 @@ export class Moment {
 
   renderOffsets() {
     this.offsetsEl.innerHTML = this.app.settings.offsets
-      .map((s) => `<button class="btn small" data-off="${s}" title="${s}秒前に目印">−${s}秒</button>`)
+      .map((s) => `<button class="btn small" data-off="${s}" title="${tr('{s}秒前に目印', { s })}">${tr('−{s}秒', { s })}</button>`)
       .join('');
   }
 
@@ -62,8 +63,8 @@ export class Moment {
     this.quickEl.innerHTML = set.items
       .map((name, i) =>
         name
-          ? `<button class="quick-btn" data-qi="${i}" title="${escapeHtml(name)}（${i + 4} キー）"><span class="qb-name">${escapeHtml(name)}</span><kbd>${i + 4}</kbd></button>`
-          : `<button class="quick-btn empty" data-qi="${i}" title="空き（鉛筆ボタンから登録できます）"><span class="qb-name">空き</span><kbd>${i + 4}</kbd></button>`,
+          ? `<button class="quick-btn" data-qi="${i}" title="${escapeHtml(tr('{name}（{key} キー）', { name, key: i + 4 }))}"><span class="qb-name">${escapeHtml(name)}</span><kbd>${i + 4}</kbd></button>`
+          : `<button class="quick-btn empty" data-qi="${i}" title="${tr('空き（鉛筆ボタンから登録できます）')}"><span class="qb-name">${tr('空き')}</span><kbd>${i + 4}</kbd></button>`,
       )
       .join('');
     this.effKey = '';
@@ -86,7 +87,7 @@ export class Moment {
   // C キー／「ここにコメント」ボタン。書きかけがなければ、いまの瞬間を固定し直す
   startMark() {
     if (!this.app.player) {
-      this.app.toast('先に動画か音声を開いてください');
+      this.app.toast(tr('先に動画か音声を開いてください'));
       return;
     }
     if (!this.app.ui.commentPin || !this.input.value.trim()) this.setPin(true);
@@ -178,9 +179,9 @@ export class Moment {
       const pinned = pin.markerId && store.getMarker(pin.markerId);
       const near = !pinned && store.nearestMarker(pin.t, settings.mergeWindow);
       free = !pinned;
-      if (pinned) label = `${fmt(pinned.t, true)} の目印へ`;
-      else if (near) label = `近くの目印 ${fmt(near.t, true)} へ`;
-      else label = `${fmt(pin.t, true)} に新しい目印`;
+      if (pinned) label = tr('{time} の目印へ', { time: fmt(pinned.t, true) });
+      else if (near) label = tr('近くの目印 {time} へ', { time: fmt(near.t, true) });
+      else label = tr('{time} に新しい目印', { time: fmt(pin.t, true) });
     }
     const key = `${label}|${free}`;
     if (key === this.pinKey) return;
@@ -189,9 +190,9 @@ export class Moment {
     this.pinEl.hidden = !pin;
     if (!pin) return;
     const nudges = free
-      ? '<button data-pin="-1" title="1秒前へ">−1秒</button><button data-pin="1" title="1秒後へ">+1秒</button>'
+      ? `<button data-pin="-1" title="${tr('1秒前へ')}">${tr('−1秒')}</button><button data-pin="1" title="${tr('1秒後へ')}">${tr('+1秒')}</button>`
       : '';
-    this.pinEl.innerHTML = `${icon('pin')}<span class="pin-label">${label}</span>${nudges}<button data-pin="cancel" title="取り消す (Esc)" aria-label="取り消す">${icon('x')}</button>`;
+    this.pinEl.innerHTML = `${icon('pin')}<span class="pin-label">${label}</span>${nudges}<button data-pin="cancel" title="${tr('取り消す (Esc)')}" aria-label="${tr('取り消す')}">${icon('x')}</button>`;
   }
 
   bindFeed() {
@@ -206,7 +207,7 @@ export class Moment {
       else if (act === 'bm') store.updateMarker(m.id, { bm: !m.bm });
       else if (act === 'del') {
         store.deleteMarker(m.id);
-        this.hint('目印を削除しました（Ctrl+Z で元に戻せます）');
+        this.hint(tr('目印を削除しました（Ctrl+Z で元に戻せます）'));
       } else {
         // 行（その瞬間へ）と −3秒（少し前へ）。すばやく2回押すと再生も始める
         this.app.focusMarker(m.id, act === 'lead');
@@ -248,15 +249,15 @@ export class Moment {
       this.effKey = effKey;
       // 対象の目印とは別の場所に次のいいねが付くときは、それも書いておく
       const likeNote = m && likeM !== m
-        ? `<span class="chip-sub">次のいいね → ${likeM ? `近くの目印 ${fmt(likeM.t, true)}` : `${fmt(now)} に新しい目印`}</span>`
+        ? `<span class="chip-sub">${tr('次のいいね → {where}', { where: likeM ? tr('近くの目印 {time}', { time: fmt(likeM.t, true) }) : tr('{time} に新しい目印', { time: fmt(now) }) })}</span>`
         : '';
       if (!on) this.chipEl.innerHTML = '';
       else if (eff?.kind === 'target') {
-        this.chipEl.innerHTML = `<span class="chip is-target">${icon('pin')} 対象: ${fmt(m.t, true)} の目印${likeNote}<button data-act="release" title="対象から外す (Esc)" aria-label="対象から外す">${icon('x')}</button></span>`;
+        this.chipEl.innerHTML = `<span class="chip is-target">${icon('pin')} ${tr('対象: {time} の目印', { time: fmt(m.t, true) })}${likeNote}<button data-act="release" title="${tr('対象から外す (Esc)')}" aria-label="${tr('対象から外す')}">${icon('x')}</button></span>`;
       } else if (eff) {
-        this.chipEl.innerHTML = `<span class="chip is-new">${icon('pin')} 対象: 近くの目印 ${fmt(m.t, true)}${likeNote}</span>`;
+        this.chipEl.innerHTML = `<span class="chip is-new">${icon('pin')} ${tr('対象: 近くの目印 {time}', { time: fmt(m.t, true) })}${likeNote}</span>`;
       } else {
-        this.chipEl.innerHTML = `<span class="chip is-new">いいね・コメントすると ${fmt(now)} に目印ができます</span>`;
+        this.chipEl.innerHTML = `<span class="chip is-new">${tr('いいね・コメントすると {time} に目印ができます', { time: fmt(now) })}</span>`;
       }
       for (const b of this.likeBtns) b.classList.toggle('on', !!likeM && likeM.lv === Number(b.dataset.lv));
       this.bmBtn.classList.toggle('on', !!bmM && bmM.bm);
@@ -286,23 +287,23 @@ export class Moment {
       return;
     }
     if (!near.length) {
-      this.feedEl.innerHTML = '<div class="feed-empty">目印はまだありません。M キーか「目印」ボタンで、再生を止めずに付けられます</div>';
+      this.feedEl.innerHTML = `<div class="feed-empty">${tr('目印はまだありません。M キーか「目印」ボタンで、再生を止めずに付けられます')}</div>`;
       return;
     }
     this.feedEl.innerHTML = near
       .map((m) => {
         const cls = (Math.abs(m.t - now) <= win ? ' is-now' : '') + (m.id === tid ? ' is-target' : '');
-        let text = '<span class="fi-text muted">コメントなし</span>';
+        let text = `<span class="fi-text muted">${tr('コメントなし')}</span>`;
         if (m.comments.length) text = `<span class="fi-text">${escapeHtml(commentSummary(m.comments))}</span>`;
         else if (m.tags.length) text = '<span class="fi-text"></span>';
-        return `<div class="feed-item${cls}" data-id="${m.id}" title="クリックでこの目印へ移動・ダブルクリックでそこから再生">
+        return `<div class="feed-item${cls}" data-id="${m.id}" title="${tr('クリックでこの目印へ移動・ダブルクリックでそこから再生')}">
           <span class="fi-time">${fmt(m.t, true)}</span>
-          <button class="lead-btn" data-act="lead" title="${lead}秒前へ移動（ダブルクリックでそこから再生）">−${lead}秒</button>
-          <button class="fi-like" data-act="cycle" title="いいね（クリックで 0→1→2→3→0）">${hearts(m.lv)}</button>
-          <button class="fi-bm${m.bm ? ' on' : ''}" data-act="bm" title="ブックマーク">${icon('bookmark', m.bm ? 'fill' : '')}</button>
+          <button class="lead-btn" data-act="lead" title="${tr('{s}秒前へ移動（ダブルクリックでそこから再生）', { s: lead })}">${tr('−{s}秒', { s: lead })}</button>
+          <button class="fi-like" data-act="cycle" title="${tr('いいね（クリックで 0→1→2→3→0）')}">${hearts(m.lv)}</button>
+          <button class="fi-bm${m.bm ? ' on' : ''}" data-act="bm" title="${tr('ブックマーク')}">${icon('bookmark', m.bm ? 'fill' : '')}</button>
           ${tagChips(m.tags)}
           ${text}
-          <button class="fi-del" data-act="del" title="目印を削除">${icon('x')}</button>
+          <button class="fi-del" data-act="del" title="${tr('目印を削除')}">${icon('x')}</button>
         </div>`;
       })
       .join('');

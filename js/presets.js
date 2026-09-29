@@ -1,5 +1,6 @@
 import { $, escapeHtml, uid } from './util.js';
 import { PRESET_COUNT, normalizePresetSets, saveSettings } from './store.js';
+import { tr } from './i18n.js';
 
 // 「よく使うコメント」のセットを編集するダイアログ。保存を押すまでは下書きを編集する
 export class PresetDialog {
@@ -19,11 +20,11 @@ export class PresetDialog {
     });
     this.form.setName.addEventListener('input', () => {
       const opt = this.form.set.selectedOptions[0];
-      if (opt) opt.textContent = this.form.setName.value || '（名前なし）';
+      if (opt) opt.textContent = this.form.setName.value || tr('（名前なし）');
     });
     $('#btnAddSet').addEventListener('click', () => {
       this.keep();
-      const s = { id: uid(), name: `セット ${this.draft.length + 1}`, items: Array(PRESET_COUNT).fill('') };
+      const s = { id: uid(), name: tr('セット {n}', { n: this.draft.length + 1 }), items: Array(PRESET_COUNT).fill('') };
       this.draft.push(s);
       this.currentId = s.id;
       this.fill();
@@ -32,7 +33,7 @@ export class PresetDialog {
     });
     $('#btnDelSet').addEventListener('click', () => {
       if (this.draft.length <= 1) {
-        this.message('セットは1つ以上必要です');
+        this.message(tr('セットは1つ以上必要です'));
         return;
       }
       this.draft = this.draft.filter((s) => s.id !== this.currentId);

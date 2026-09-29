@@ -13,8 +13,11 @@ import { parseTranscript, isNotesJson, cueIndexAt } from './transcript.js';
 import { Digest } from './digest.js';
 import { LiveCaption } from './live.js';
 import { $, clamp, fmt, round2, escapeHtml, icon, cellLabel } from './util.js';
+import { tr, trMaybe, lang, isEn, translatePage } from './i18n.js';
 
 $('#bootError').remove();
+// 画面の文を表示の言語にする（英語のときだけ書き換わる）
+translatePage();
 
 const store = new Store();
 
@@ -101,7 +104,7 @@ app.toast = toast;
 
 function requireMedia() {
   if (app.player && store.doc) return true;
-  toast('先に動画か音声を開いてください');
+  toast(tr('先に動画か音声を開いてください'));
   return false;
 }
 
@@ -118,7 +121,7 @@ function renderAll() {
 
 store.subscribe((reason) => {
   if (reason === 'saveError') {
-    toast('保存できませんでした（ブラウザの保存容量がいっぱいの可能性があります）');
+    toast(tr('保存できませんでした（ブラウザの保存容量がいっぱいの可能性があります）'));
     return;
   }
   if (reason === 'words') {
@@ -183,7 +186,7 @@ function updatePlayButton() {
   const paused = !app.player || app.player.paused;
   const b = $('#btnPlay');
   b.innerHTML = icon(paused ? 'play' : 'pause');
-  b.setAttribute('aria-label', paused ? '再生' : '一時停止');
+  b.setAttribute('aria-label', paused ? tr('再生') : tr('一時停止'));
 }
 
 // ---- 対象の目印 ----
@@ -286,10 +289,14 @@ app.markAt = (t, { offset = 0 } = {}) => {
     // いいね・コメントだけの目印でも、M を押したら区間の区切りにする
     m = near;
     if (!m.mark) store.updateMarker(m.id, { mark: true });
-    app.hint(`近くの目印（${fmt(m.t, true)}）を対象にしました`);
+    app.hint(tr('近くの目印（{time}）を対象にしました', { time: fmt(m.t, true) }));
   } else {
     m = store.addMarker(t, { mark: true });
-    app.hint(offset ? `${offset}秒前（${fmt(m.t, true)}）に目印を付けました` : `${fmt(m.t, true)} に目印を付けました`);
+    app.hint(
+      offset
+        ? tr('{s}秒前（{time}）に目印を付けました', { s: offset, time: fmt(m.t, true) })
+        : tr('{time} に目印を付けました', { time: fmt(m.t, true) }),
+    );
   }
   app.setTarget(m.id, app.now(), FRESH);
   return m;
@@ -298,13 +305,21 @@ app.markAt = (t, { offset = 0 } = {}) => {
 app.rateMoment = (lv) => {
   if (!requireMedia()) return;
   const m = applyMoment('liked', app.now(), (x) => ({ lv: x.lv === lv ? 0 : lv }), { lv });
-  app.hint(m.lv ? `${fmt(m.t, true)} の目印にいいね ${m.lv} を付けました` : `${fmt(m.t, true)} の目印のいいねを外しました`);
+  app.hint(
+    m.lv
+      ? tr('{time} の目印にいいね {lv} を付けました', { time: fmt(m.t, true), lv: m.lv })
+      : tr('{time} の目印のいいねを外しました', { time: fmt(m.t, true) }),
+  );
 };
 
 app.toggleMomentBookmark = () => {
   if (!requireMedia()) return;
   const m = applyMoment('bookmarked', app.now(), (x) => ({ bm: !x.bm }), { bm: true });
-  app.hint(m.bm ? `${fmt(m.t, true)} の目印をブックマークしました` : `${fmt(m.t, true)} のブックマークを外しました`);
+  app.hint(
+    m.bm
+      ? tr('{time} の目印をブックマークしました', { time: fmt(m.t, true) })
+      : tr('{time} のブックマークを外しました', { time: fmt(m.t, true) }),
+  );
 };
 
 // ---- よく使うコメント（タグ） ----
@@ -315,7 +330,7 @@ app.setPresetSet = (id) => {
   saveSettings(app.settings);
   moment.renderQuick();
   renderAll(); // 目印のアイコンのキー番号もセットに合わせて変わる
-  app.hint(`よく使うコメントを「${app.activePresetSet().name}」に切り替えました`);
+  app.hint(tr('よく使うコメントを「{name}」に切り替えました', { name: app.activePresetSet().name }));
 };
 
 // 付いていなければ付け、付いていれば外す
@@ -323,7 +338,7 @@ app.toggleQuickTag = (index) => {
   if (!requireMedia()) return;
   const tag = app.activePresetSet().items[index] || '';
   if (!tag) {
-    app.hint('このボタンはまだ空いています（鉛筆ボタンから登録できます）');
+    app.hint(tr('このボタンはまだ空いています（鉛筆ボタンから登録できます）'));
     return;
   }
   const now = app.now();
@@ -334,8 +349,8 @@ app.toggleQuickTag = (index) => {
   settle(m, now, fromTarget ? { tagged: [...app.ui.target.tagged, tag] } : null);
   app.hint(
     m.tags.includes(tag)
-      ? `${fmt(m.t, true)} の目印に「${tag}」を付けました`
-      : `${fmt(m.t, true)} の目印から「${tag}」を外しました`,
+      ? tr('{time} の目印に「{tag}」を付けました', { time: fmt(m.t, true), tag })
+      : tr('{time} の目印から「{tag}」を外しました', { time: fmt(m.t, true), tag }),
   );
 };
 
@@ -348,7 +363,7 @@ app.commentAt = (text, pin) => {
   if (m) store.addComment('marker', m.id, text, m.t);
   else m = store.addMarker(t, { comments: [makeComment(text, t)] });
   settle(m, app.now(), pin?.fromTarget ? { commented: true } : null);
-  app.hint(`${fmt(m.t, true)} の目印にコメントしました`);
+  app.hint(tr('{time} の目印にコメントしました', { time: fmt(m.t, true) }));
 };
 
 app.moveMarker = (id, t) => {
@@ -358,20 +373,20 @@ app.moveMarker = (id, t) => {
 function nudgeTarget(d) {
   const eff = app.effectiveMarker();
   if (!eff) {
-    app.hint('動かす目印がありません（目印をクリックして対象にしてください）');
+    app.hint(tr('動かす目印がありません（目印をクリックして対象にしてください）'));
     return;
   }
   const m = eff.marker;
   app.moveMarker(m.id, m.t + d);
   app.setTarget(m.id);
-  app.hint(`目印を ${fmt(m.t, true)} に動かしました`);
+  app.hint(tr('目印を {time} に動かしました', { time: fmt(m.t, true) }));
 }
 
 function deleteTargetMarker() {
   const eff = app.effectiveMarker();
   if (!eff) return;
   store.deleteMarker(eff.marker.id);
-  app.hint('目印を削除しました（Ctrl+Z で元に戻せます）');
+  app.hint(tr('目印を削除しました（Ctrl+Z で元に戻せます）'));
 }
 
 function jumpMarker(dir) {
@@ -384,7 +399,7 @@ function jumpMarker(dir) {
 function frameStep(dir) {
   const p = app.player;
   if (!p.canFrameStep) {
-    app.hint('YouTube ではコマ送りは使えません');
+    app.hint(tr('YouTube ではコマ送りは使えません'));
     return;
   }
   p.pause();
@@ -396,12 +411,12 @@ function frameStep(dir) {
 app.createCell = (s, e) => {
   if (!requireMedia()) return;
   if (e - s < 0.1) {
-    app.hint('区間が短すぎます');
+    app.hint(tr('区間が短すぎます'));
     return;
   }
   const { cell, created } = store.addCell(s, e);
   app.revealCell(cell.id);
-  app.hint(created ? `${fmt(s)} – ${fmt(e)} をセルにしました` : 'このセルはもうあります');
+  app.hint(created ? tr('{range} をセルにしました', { range: `${fmt(s)} – ${fmt(e)}` }) : tr('このセルはもうあります'));
 };
 
 // 再生位置を挟む前後の目印の間をセルにする
@@ -445,7 +460,7 @@ app.clearCellSelect = () => {
 app.mergeSelectedCells = () => {
   const ids = [...app.ui.selectedCells].filter((id) => store.getCell(id));
   if (ids.length < 2) {
-    app.hint('連結するセルを2つ以上選んでください');
+    app.hint(tr('連結するセルを2つ以上選んでください'));
     return;
   }
   const parts = ids.map((id) => store.getCell(id)).sort((a, b) => a.s - b.s);
@@ -466,9 +481,9 @@ app.mergeSelectedCells = () => {
   if (hadComments) app.ui.commentsOpen.add(merged.id);
   app.revealCell(merged.id);
   app.hint(
-    `${ids.length}つのセルを ${fmt(merged.s)} – ${fmt(merged.e)} に連結しました` +
-      (gap ? '（間の部分も含めています）' : '') +
-      '。Ctrl+Z で元に戻せます',
+    tr('{n}つのセルを {range} に連結しました', { n: ids.length, range: `${fmt(merged.s)} – ${fmt(merged.e)}` }) +
+      (gap ? tr('（間の部分も含めています）') : '') +
+      tr('。Ctrl+Z で元に戻せます'),
   );
 };
 
@@ -538,7 +553,7 @@ function onRepeatLoop(c) {
   if (s.repeatCount && repeatState.loops >= s.repeatCount) {
     p.pause();
     app.stopRepeat();
-    app.hint(`${s.repeatCount} 回くり返したので、リピートを終えました`);
+    app.hint(tr('{n} 回くり返したので、リピートを終えました', { n: s.repeatCount }));
     return;
   }
   if (s.repeatRamp) app.setRate(Math.min(repeatState.baseRate, RAMP_FROM + repeatState.loops * RAMP_STEP));
@@ -561,13 +576,15 @@ function renderRepeatBar() {
   if (!c) return;
   const s = app.settings;
   const opt = (values, cur, label) => values.map((v) => `<option value="${v}"${v === cur ? ' selected' : ''}>${label(v)}</option>`).join('');
-  const nth = s.repeatCount ? `${repeatState.loops + 1} / ${s.repeatCount} 回目` : `${repeatState.loops + 1} 回目`;
+  const nth = s.repeatCount
+    ? tr('{i} / {n} 回目', { i: repeatState.loops + 1, n: s.repeatCount })
+    : tr('{i} 回目', { i: repeatState.loops + 1 });
   bar.innerHTML = `
-    <span class="rp-state">${icon('repeat')}リピート ${nth}</span>
-    <label>回数 <select data-rp="count">${opt([0, 2, 3, 5, 10, 20], s.repeatCount, (v) => (v ? `${v}回` : 'ずっと'))}</select></label>
-    <label>間 <select data-rp="gap">${opt([0, 1, 2, 3, 5], s.repeatGap, (v) => (v ? `${v}秒` : 'なし'))}</select></label>
-    <label class="rp-ramp" title="${RAMP_FROM}倍から始めて、1回ごとに ${RAMP_STEP} ずつ元の速さまで上げる"><input type="checkbox" data-rp="ramp"${s.repeatRamp ? ' checked' : ''}> だんだん速く</label>
-    <button data-rp="stop" title="リピートを止める">${icon('x')}停止</button>`;
+    <span class="rp-state">${icon('repeat')}${tr('リピート {nth}', { nth })}</span>
+    <label>${tr('回数')} <select data-rp="count">${opt([0, 2, 3, 5, 10, 20], s.repeatCount, (v) => (v ? tr('{n}回', { n: v }) : tr('ずっと')))}</select></label>
+    <label>${tr('間')} <select data-rp="gap">${opt([0, 1, 2, 3, 5], s.repeatGap, (v) => (v ? tr('{s}秒', { s: v }) : tr('なし')))}</select></label>
+    <label class="rp-ramp" title="${tr('{from}倍から始めて、1回ごとに {step} ずつ元の速さまで上げる', { from: RAMP_FROM, step: RAMP_STEP })}"><input type="checkbox" data-rp="ramp"${s.repeatRamp ? ' checked' : ''}> ${tr('だんだん速く')}</label>
+    <button data-rp="stop" title="${tr('リピートを止める')}">${icon('x')}${tr('停止')}</button>`;
 }
 
 $('#repeatBar').addEventListener('change', (e) => {
@@ -592,14 +609,14 @@ $('#repeatBar').addEventListener('change', (e) => {
 $('#repeatBar').addEventListener('click', (e) => {
   if (e.target.closest('[data-rp="stop"]')) {
     app.stopRepeat();
-    app.hint('リピートを止めました');
+    app.hint(tr('リピートを止めました'));
   }
 });
 
 app.toggleRepeat = (id) => {
   if (app.ui.repeatId === id) {
     app.stopRepeat();
-    app.hint('リピートを止めました');
+    app.hint(tr('リピートを止めました'));
     return;
   }
   const c = store.getCell(id);
@@ -611,7 +628,7 @@ app.toggleRepeat = (id) => {
   const now = app.now();
   if (now < c.s || now >= c.e - 0.05) app.seek(c.s);
   app.player.play();
-  app.hint(`「${cellLabel(c, 20) || `${fmt(c.s)} – ${fmt(c.e)}`}」をリピート再生します`);
+  app.hint(tr('「{name}」をリピート再生します', { name: cellLabel(c, 20) || `${fmt(c.s)} – ${fmt(c.e)}` }));
   renderAll();
 };
 
@@ -625,7 +642,7 @@ function toggleRepeatHere() {
     .filter((c) => now >= c.s && now < c.e)
     .sort((a, b) => a.e - a.s - (b.e - b.s))[0];
   if (inner) app.toggleRepeat(inner.id);
-  else app.hint('再生位置を含むセルがありません');
+  else app.hint(tr('再生位置を含むセルがありません'));
 }
 
 // ---- メディアを開く ----
@@ -732,7 +749,7 @@ async function openMedia(meta, makePlayer, src, cleanup) {
   updatePlayButton();
   renderAll();
   const n = store.cells.length + store.markers.length;
-  if (n) app.hint(`保存されていたセル ${store.cells.length} 件・目印 ${store.markers.length} 件を読み込みました`);
+  if (n) app.hint(tr('保存されていたセル {c} 件・目印 {m} 件を読み込みました', { c: store.cells.length, m: store.markers.length }));
   // 単語帳から別のメディアの場面へ移動しようとしていたら、開いたところでその位置へ
   const jump = app.ui.pendingJump;
   if (jump && jump.mediaId === store.doc.id) {
@@ -749,7 +766,7 @@ app.jumpToMedia = (mediaId, url, t, title) => {
   }
   app.ui.pendingJump = { mediaId, t };
   if (url) openFromText(url);
-  else toast(`「${title}」のファイルを開くと、その場面に移動します`);
+  else toast(tr('「{title}」のファイルを開くと、その場面に移動します', { title }));
 };
 
 // ファイルの先頭 1MB とサイズから ID を作る（名前を変えても同じメモが開く）
@@ -780,7 +797,7 @@ async function openLocalFile(file) {
     return;
   }
   if (!/^(video|audio)\//.test(file.type) && !MEDIA_EXT.test(file.name)) {
-    toast('動画または音声のファイルを選んでください');
+    toast(tr('動画または音声のファイルを選んでください'));
     return;
   }
   const id = await fileId(file);
@@ -820,7 +837,7 @@ function openFromText(text) {
       return;
     }
   } catch {}
-  toast('URL を確認してください');
+  toast(tr('URL を確認してください'));
 }
 
 function renderRecent() {
@@ -830,20 +847,20 @@ function renderRecent() {
     el.innerHTML = '';
     return;
   }
-  const kindLabel = { youtube: 'YouTube', url: 'URL', local: 'ファイル' };
+  const kindLabel = { youtube: 'YouTube', url: 'URL', local: tr('ファイル') };
   el.innerHTML =
-    '<div class="recent-head">最近のメディア</div>' +
+    `<div class="recent-head">${tr('最近のメディア')}</div>` +
     list
       .map((r) => {
         const canOpen = r.source !== 'local' && r.url;
         const tag = canOpen ? 'button' : 'div';
         const attrs = canOpen
-          ? `data-url="${escapeHtml(r.url)}" title="クリックで開く"`
-          : 'title="同じファイルを開くと、メモが復元されます"';
+          ? `data-url="${escapeHtml(r.url)}" title="${tr('クリックで開く')}"`
+          : `title="${tr('同じファイルを開くと、メモが復元されます')}"`;
         return `<${tag} class="recent-item${canOpen ? ' can-open' : ''}" ${attrs}>
           <span class="recent-kind">${kindLabel[r.source] || ''}</span>
           <span class="recent-title">${escapeHtml(r.title)}</span>
-          <span class="recent-count">セル ${r.cells}・目印 ${r.markers}</span>
+          <span class="recent-count">${tr('セル {c}・目印 {m}', { c: r.cells, m: r.markers })}</span>
         </${tag}>`;
       })
       .join('');
@@ -860,8 +877,8 @@ function applyTranscript(cues, name) {
   store.setTranscript({ name, cues });
   renderAll();
   toast(
-    `字幕「${name}」を読み込みました（${cues.length} 行）。セルの「文字起こし」でその区間の文字を見られます` +
-      (app.settings.captions ? '' : '（動画の上の字幕は非表示にしています。T キーで表示）'),
+    tr('字幕「{name}」を読み込みました（{n} 行）。セルの「文字起こし」でその区間の文字を見られます', { name: trMaybe(name), n: cues.length }) +
+      (app.settings.captions ? '' : tr('（動画の上の字幕は非表示にしています。T キーで表示）')),
   );
 }
 
@@ -896,7 +913,9 @@ function previewPaste() {
       .slice(0, 3)
       .map((c) => `${fmt(c.s)} ${c.text.replace(/\n/g, ' ').slice(0, 28)}`)
       .join('\n');
-    el.textContent = `${cues.length} 行を読み取りました（${fmt(cues[0].s)} 〜 ${fmt(cues[cues.length - 1].s)}）\n${sample}${cues.length > 3 ? '\n…' : ''}`;
+    el.textContent =
+      tr('{n} 行を読み取りました（{from} 〜 {to}）', { n: cues.length, from: fmt(cues[0].s), to: fmt(cues[cues.length - 1].s) }) +
+      `\n${sample}${cues.length > 3 ? '\n…' : ''}`;
     return cues;
   } catch (err) {
     el.classList.add('is-error');
@@ -922,14 +941,15 @@ pasteForm.addEventListener('submit', (e) => {
   const cues = previewPaste();
   if (!cues) {
     e.preventDefault(); // 読めないときは閉じずに理由を見せる
-    if (!pasteForm.text.value.trim()) $('#pastePreview').textContent = '文字起こしを貼り付けてください';
+    if (!pasteForm.text.value.trim()) $('#pastePreview').textContent = tr('文字起こしを貼り付けてください');
     return;
   }
   const had = store.doc?.transcript;
-  if (had && !confirm(`いまの字幕「${had.name}」を、貼り付けた文字起こしに置き換えますか？`)) {
+  if (had && !confirm(tr('いまの字幕「{name}」を、貼り付けた文字起こしに置き換えますか？', { name: trMaybe(had.name) }))) {
     e.preventDefault();
     return;
   }
+  // 字幕の名前として保存する（言語を切り替えても変えない。表示するときだけ訳す）
   applyTranscript(cues, '貼り付けた文字起こし');
   updateTxInfo();
 });
@@ -948,10 +968,10 @@ function updateCaptionButton() {
   const has = store.cues.length > 0;
   const b = $('#btnCC');
   b.classList.toggle('on', has && app.settings.captions);
-  $('#ccLabel').textContent = has ? `字幕 ${app.settings.captions ? 'オン' : 'オフ'}` : '字幕を読み込む';
+  $('#ccLabel').textContent = has ? (app.settings.captions ? tr('字幕 オン') : tr('字幕 オフ')) : tr('字幕を読み込む');
   b.title = has
-    ? `${store.doc.transcript.name}（${store.cues.length} 行）: クリックで表示を切り替え (T)。読み込み直し・外すのは「設定」から`
-    : '字幕・文字起こしを読み込む（.srt / .vtt / JSON）';
+    ? tr('{name}（{n} 行）: クリックで表示を切り替え (T)。読み込み直し・外すのは「設定」から', { name: trMaybe(store.doc.transcript.name), n: store.cues.length })
+    : tr('字幕・文字起こしを読み込む（.srt / .vtt / JSON）');
   if (!has || !app.settings.captions) $('#caption').hidden = true;
   placeCaption();
 }
@@ -978,7 +998,7 @@ function toggleCaptions() {
   saveSettings(app.settings);
   updateCaptionButton();
   txIndex = -2;
-  app.hint(app.settings.captions ? '字幕を表示します' : '字幕を隠しました');
+  app.hint(app.settings.captions ? tr('字幕を表示します') : tr('字幕を隠しました'));
 }
 
 // 再生位置の字幕: 動画の上に出す行（その行の時間内だけ）と、セルの文字起こしで強調する行（直前に始まった行）。
@@ -1019,7 +1039,7 @@ const txRecord = () => ({ record: !live.active });
 app.editCue = (id, text) => store.editCue(id, text, txRecord());
 app.deleteCue = (id) => {
   store.deleteCue(id, txRecord());
-  app.hint(live.active ? '行を消しました' : '行を消しました（Ctrl+Z で元に戻せます）');
+  app.hint(live.active ? tr('行を消しました') : tr('行を消しました（Ctrl+Z で元に戻せます）'));
 };
 app.shiftTranscript = (delta) => store.shiftTranscript(delta, txRecord());
 app.openTxTools = () => txtools.open();
@@ -1051,7 +1071,7 @@ async function importJsonFile(file) {
   try {
     data = JSON.parse(await file.text());
   } catch {
-    toast('JSON ファイルとして読み込めませんでした');
+    toast(tr('JSON ファイルとして読み込めませんでした'));
     return;
   }
   // メモの書き出しファイルでなければ、文字起こし（Whisper・cellview など）として読む
@@ -1060,18 +1080,18 @@ async function importJsonFile(file) {
     return;
   }
   if (data.media && data.media.id !== store.doc.id) {
-    const ok = confirm(`「${data.media.title}」のデータのようです。いま開いているメディアに追加しますか？`);
+    const ok = confirm(tr('「{title}」のデータのようです。いま開いているメディアに追加しますか？', { title: data.media.title }));
     if (!ok) return;
   }
   const { addedM, addedC } = store.importData(data);
-  toast(`セル ${addedC} 件・目印 ${addedM} 件を追加しました`);
+  toast(tr('セル {c} 件・目印 {m} 件を追加しました', { c: addedC, m: addedM }));
 }
 
 // ---- 設定・ヘルプ ----
 
 function updateTxInfo() {
   const t = store.doc?.transcript;
-  $('#txInfo').textContent = t ? `${t.name}（${t.cues.length} 行）` : '読み込んでいません';
+  $('#txInfo').textContent = t ? tr('{name}（{n} 行）', { name: trMaybe(t.name), n: t.cues.length }) : tr('読み込んでいません');
   $('#btnTxRemove').hidden = !t;
 }
 
@@ -1086,20 +1106,20 @@ $('#btnTxPaste2').addEventListener('click', () => {
 });
 $('#btnTxRemove').addEventListener('click', () => {
   if (!store.doc?.transcript) return;
-  if (!confirm(`字幕「${store.doc.transcript.name}」を外しますか？（元のファイルはそのまま残ります）`)) return;
+  if (!confirm(tr('字幕「{name}」を外しますか？（元のファイルはそのまま残ります）', { name: trMaybe(store.doc.transcript.name) }))) return;
   store.setTranscript(null);
   updateTxInfo();
-  app.hint('字幕を外しました');
+  app.hint(tr('字幕を外しました'));
 });
 
 function updateStorageInfo() {
   const el = $('#storageInfo');
-  const kind = store.kv?.kind === 'indexeddb' ? 'ブラウザの大きな保存領域（IndexedDB）' : 'localStorage（全体で約 5MB まで）';
+  const kind = store.kv?.kind === 'indexeddb' ? tr('ブラウザの大きな保存領域（IndexedDB）') : tr('localStorage（全体で約 5MB まで）');
   el.textContent = kind;
   storageEstimate().then((est) => {
     if (!est) return;
     const mb = (n) => (n >= 1024 ** 3 ? `${(n / 1024 ** 3).toFixed(1)} GB` : `${(n / 1024 ** 2).toFixed(1)} MB`);
-    el.textContent = `${kind}・使用 ${mb(est.usage)}（上限の目安 ${mb(est.quota)}）`;
+    el.textContent = kind + tr('・使用 {used}（上限の目安 {quota}）', { used: mb(est.usage), quota: mb(est.quota) });
   });
 }
 
@@ -1117,8 +1137,23 @@ function openSettings() {
   f.pauseOnMark.checked = s.pauseOnMark;
   f.resumeAfterComment.checked = s.resumeAfterComment;
   f.captions.checked = s.captions;
+  f.lang.value = lang;
   $('#settingsDialog').showModal();
 }
+
+// 表示の言語を切り替える。文はページを開いたときに決まるので、読み込み直す（開いているファイルは開き直してもらう）
+function switchLanguage(next) {
+  if (next === lang) return;
+  if (app.player && !confirm(tr('表示の言語を切り替えるため、ページを読み込み直します。開いているファイルは開き直してください。'))) return;
+  app.settings.lang = next;
+  saveSettings(app.settings);
+  location.href = location.pathname; // ?lang= や ?src= を外して開き直す
+}
+
+const langBtn = $('#btnLangSwitch');
+langBtn.textContent = isEn ? '日本語' : 'English';
+langBtn.lang = isEn ? 'ja' : 'en';
+langBtn.addEventListener('click', () => switchLanguage(isEn ? 'ja' : 'en'));
 
 $('#settingsForm').addEventListener('submit', (e) => {
   if (e.submitter?.value !== 'save') return;
@@ -1145,7 +1180,8 @@ $('#settingsForm').addEventListener('submit', (e) => {
   moment.renderOffsets();
   commentList.paint(); // 「○秒前から」の秒数を描き直す
   renderAll();
-  app.hint('設定を保存しました');
+  app.hint(tr('設定を保存しました'));
+  switchLanguage(f.lang.value);
 });
 
 // ---- ボタン ----
@@ -1185,7 +1221,7 @@ $('#txInput').addEventListener('change', async (e) => {
 const presetDialog = new PresetDialog(app, () => {
   moment.renderQuick();
   renderAll();
-  app.hint('よく使うコメントを保存しました');
+  app.hint(tr('よく使うコメントを保存しました'));
 });
 $('#btnEditPresets').addEventListener('click', () => presetDialog.open());
 $('#presetSetSelect').addEventListener('change', (e) => {
@@ -1474,16 +1510,23 @@ $('#btnInstall').addEventListener('click', async () => {
   const { outcome } = await installPrompt.userChoice;
   installPrompt = null;
   $('#btnInstall').hidden = true;
-  if (outcome === 'accepted') toast('インストールしました。スタートメニューなどから専用のウィンドウで開けます');
+  if (outcome === 'accepted') toast(tr('インストールしました。スタートメニューなどから専用のウィンドウで開けます'));
 });
 
 // 保存先（IndexedDB）を開いてから始める。以前の保存データの引っ越しもここで行う
 updatePlayButton();
 const kv = await store.init();
-if (kv.migrated) toast(`保存先を大きな領域（IndexedDB）に移しました（${kv.migrated} 件）。これまでのメモはそのまま使えます`);
-if (kv.kind !== 'indexeddb') toast('このブラウザでは大きな保存領域が使えないため、これまでどおりの保存先（約 5MB まで）を使います');
+if (kv.migrated) toast(tr('保存先を大きな領域（IndexedDB）に移しました（{n} 件）。これまでのメモはそのまま使えます', { n: kv.migrated }));
+if (kv.kind !== 'indexeddb') toast(tr('このブラウザでは大きな保存領域が使えないため、これまでどおりの保存先（約 5MB まで）を使います'));
 
 // ?src=... で URL のメディアを直接開ける（動作確認用）
+// ?lang=en / ?lang=ja で開いたときは、その言語を覚えておく
+const qLang = new URLSearchParams(location.search).get('lang');
+if ((qLang === 'ja' || qLang === 'en') && app.settings.lang !== qLang) {
+  app.settings.lang = qLang;
+  saveSettings(app.settings);
+}
+
 const initial = new URLSearchParams(location.search).get('src');
 if (initial) openFromText(initial);
 else showEmpty();
@@ -1498,7 +1541,7 @@ if ('launchQueue' in window) {
     if (media) await openLocalFile(media);
     if (!sub) return;
     if (app.player) loadTranscriptFile(sub);
-    else toast('字幕を読み込むには、先に動画か音声を開いてください');
+    else toast(tr('字幕を読み込むには、先に動画か音声を開いてください'));
   });
 }
 

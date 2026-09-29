@@ -1,3 +1,5 @@
+import { tr } from './i18n.js';
+
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
@@ -22,7 +24,7 @@ export function fmt(t, tenths = false) {
 export function fmtLen(sec) {
   const s = Math.max(0, Math.round(sec));
   const m = Math.floor(s / 60);
-  return m ? `${m}分${String(s % 60).padStart(2, '0')}秒` : `${s}秒`;
+  return m ? tr('{m}分{s}秒', { m, s: String(s % 60).padStart(2, '0') }) : tr('{s}秒', { s });
 }
 
 // 書いた日時: 「9/29 14:05」
@@ -69,5 +71,5 @@ export function tagChips(tags) {
 export function commentSummary(comments) {
   if (!comments.length) return '';
   const first = comments[0].text;
-  return comments.length > 1 ? `${first}（他 ${comments.length - 1} 件）` : first;
+  return comments.length > 1 ? tr('{first}（他 {n} 件）', { first, n: comments.length - 1 }) : first;
 }

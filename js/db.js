@@ -1,5 +1,7 @@
 // メモの保存先。IndexedDB（ブラウザの大きな保存領域）に、キーと値の組で保存する。
 // IndexedDB が使えないときだけ、これまでの localStorage（全体で約 5MB）に保存する
+import { tr } from './i18n.js';
+
 const DB_NAME = 'cells-player';
 const STORE = 'kv';
 const LS_PREFIX = 'cellsplayer:';
@@ -10,7 +12,7 @@ function openIdb() {
     req.onupgradeneeded = () => req.result.createObjectStore(STORE);
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
-    req.onblocked = () => reject(new Error('IndexedDB を開けませんでした'));
+    req.onblocked = () => reject(new Error(tr('IndexedDB を開けませんでした')));
   });
 }
 
@@ -27,7 +29,7 @@ class IdbKV {
       const req = fn(tx.objectStore(STORE));
       tx.oncomplete = () => resolve(req.result);
       tx.onerror = () => reject(tx.error);
-      tx.onabort = () => reject(tx.error || new Error('保存が中断されました'));
+      tx.onabort = () => reject(tx.error || new Error(tr('保存が中断されました')));
     });
   }
 

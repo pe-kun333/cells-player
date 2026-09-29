@@ -233,6 +233,7 @@ body.caption-below .stage { border-radius: 10px 10px 0 0; }
 }
 .tl-row { display: flex; align-items: center; gap: 10px; }
 .tl-label { width: 28px; flex: none; font-size: 12px; color: var(--text-3); }
+html[lang="en"] .tl-label { width: 56px; }
 .tl-lanes { position: relative; flex: 1; min-width: 0; }
 .tl-lanes.is-empty { height: 18px; display: flex; align-items: center; font-size: 11.5px; color: var(--text-3); }
 .tl-cell {
@@ -769,6 +770,7 @@ dialog.wide-dialog { width: min(720px, 94vw); }
 .about-row a, .empty-foot a { color: var(--accent-text); }
 .empty-foot { max-width: 520px; font-size: 12px; line-height: 1.7; text-align: center; color: var(--text-3); }
 .empty-foot a { white-space: nowrap; margin-left: 4px; }
+.link-btn { padding: 0; margin-left: 10px; border: 0; background: none; font: inherit; color: var(--accent-text); text-decoration: underline; cursor: pointer; }
 
 /* ---- ドロップ・トースト・ダイアログ ---- */
 .drop-hint {

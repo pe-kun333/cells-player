@@ -1,6 +1,7 @@
 import { $, fmt, fmtLen, fmtDate, escapeHtml, hearts, icon, commentSummary, tagChips } from './util.js';
 import { saveSettings } from './store.js';
 import { cuesIn } from './transcript.js';
+import { tr } from './i18n.js';
 
 const NUDGES = [-1, -0.1, 0.1, 1];
 
@@ -100,8 +101,8 @@ export class Sidebar {
     if (ui.tag && !counts.has(ui.tag)) ui.tag = '';
     const names = [...counts.keys()].sort((a, b) => a.localeCompare(b, 'ja'));
     this.tagSel.innerHTML =
-      '<option value="">タグ: すべて</option>' +
-      names.map((t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}（${counts.get(t)}）</option>`).join('');
+      `<option value="">${tr('タグ: すべて')}</option>` +
+      names.map((t) => `<option value="${escapeHtml(t)}">${escapeHtml(tr('{tag}（{n}）', { tag: t, n: counts.get(t) }))}</option>`).join('');
     this.tagSel.value = ui.tag;
   }
 
@@ -147,7 +148,7 @@ export class Sidebar {
     this.likeSel.value = String(ui.minLike);
     this.sortSel.value = settings.sidebarSort;
     this.renderTagOptions();
-    this.countEl.textContent = store.doc ? `セル ${store.cells.length}・目印 ${store.markers.length}` : '';
+    this.countEl.textContent = store.doc ? tr('セル {c}・目印 {m}', { c: store.cells.length, m: store.markers.length }) : '';
     if (ui.editingMemo && !store.getCell(ui.editingMemo)) ui.editingMemo = null;
 
     // 再描画しても入力中の欄とスクロール位置を保つ
@@ -215,13 +216,14 @@ export class Sidebar {
 
   emptyHtml() {
     const { ui, store } = this.app;
-    if (!store.doc) return '<div class="side-empty">動画や音声を開くと、ここにセルや目印が並びます。</div>';
-    if (ui.query.trim()) return `<div class="side-empty">「${escapeHtml(ui.query.trim())}」に一致するものはありません。</div>`;
-    if (ui.minLike || ui.bmOnly || ui.tag) return '<div class="side-empty">条件に合うものがありません。</div>';
+    const box = (html) => `<div class="side-empty">${html}</div>`;
+    if (!store.doc) return box(tr('動画や音声を開くと、ここにセルや目印が並びます。'));
+    if (ui.query.trim()) return box(escapeHtml(tr('「{q}」に一致するものはありません。', { q: ui.query.trim() })));
+    if (ui.minLike || ui.bmOnly || ui.tag) return box(tr('条件に合うものがありません。'));
     if (ui.tab === 'markers') {
-      return '<div class="side-empty">目印はまだありません。<br>M キーで、再生を止めずに目印を付けられます。</div>';
+      return box(tr('目印はまだありません。<br>M キーで、再生を止めずに目印を付けられます。'));
     }
-    return '<div class="side-empty">セルはまだありません。<br>タイムラインの「区間」をクリックするか、Enter キーでいまいる区間をセルにできます。</div>';
+    return box(tr('セルはまだありません。<br>タイムラインの「区間」をクリックするか、Enter キーでいまいる区間をセルにできます。'));
   }
 
   // セルを選んでいるときに一覧の上に出る帯（連結・選択の解除）
@@ -229,10 +231,10 @@ export class Sidebar {
     const n = this.app.ui.selectedCells.size;
     if (!n) return '';
     return `<div class="selbar">
-      <span class="selbar-count">${n}件のセルを選択中</span>
+      <span class="selbar-count">${tr('{n}件のセルを選択中', { n })}</span>
       <span class="spacer"></span>
-      <button class="btn small primary" data-sact="merge" title="選んだセルを1つにまとめる">連結</button>
-      <button class="btn small" data-sact="clear" title="選択を解除 (Esc)">解除</button>
+      <button class="btn small primary" data-sact="merge" title="${tr('選んだセルを1つにまとめる')}">${tr('連結')}</button>
+      <button class="btn small" data-sact="clear" title="${tr('選択を解除 (Esc)')}">${tr('解除')}</button>
     </div>`;
   }
 
@@ -253,30 +255,30 @@ export class Sidebar {
     const memo =
       ui.editingMemo === c.id
         ? `<div class="memo-edit" data-act="noop">
-            <textarea class="memo-input" data-field="memo" data-key="memo-${c.id}" rows="2" placeholder="このセルのメモ">${escapeHtml(c.memo)}</textarea>
-            <div class="memo-hint">Enter で改行・Ctrl+Enter か外をクリックで保存・Esc で取り消し</div>
+            <textarea class="memo-input" data-field="memo" data-key="memo-${c.id}" rows="2" placeholder="${tr('このセルのメモ')}">${escapeHtml(c.memo)}</textarea>
+            <div class="memo-hint">${tr('Enter で改行・Ctrl+Enter か外をクリックで保存・Esc で取り消し')}</div>
           </div>`
-        : `<div class="memo${c.memo ? '' : ' is-empty'}" data-act="edit-memo" title="クリックで編集">${c.memo ? escapeHtml(c.memo) : 'メモを書く…'}</div>`;
+        : `<div class="memo${c.memo ? '' : ' is-empty'}" data-act="edit-memo" title="${tr('クリックで編集')}">${c.memo ? escapeHtml(c.memo) : tr('メモを書く…')}</div>`;
     const pips = [1, 2, 3].map((n) => `<i class="${n <= c.lv ? 'on' : ''}"></i>`).join('');
     const selected = ui.selectedCells.has(c.id);
     return `<article ${this.cardAttrs('cell', c, depth, (rep ? ' is-repeat' : '') + (selected ? ' is-selected' : ''))}>
       <div class="cell-head">
-        <button class="tbtn" data-act="seek" title="クリックでセルの先頭へ移動・ダブルクリックでそこから再生">${fmt(c.s, true)}–${fmt(c.e, true)}</button>
+        <button class="tbtn" data-act="seek" title="${tr('クリックでセルの先頭へ移動・ダブルクリックでそこから再生')}">${fmt(c.s, true)}–${fmt(c.e, true)}</button>
         ${this.leadBtn()}
         <span class="cell-len">${fmtLen(c.e - c.s)}</span>
-        <span class="badge-now">再生中</span>
-        ${rep ? `<span class="badge-rep">${icon('repeat')}リピート中</span>` : ''}
+        <span class="badge-now">${tr('再生中')}</span>
+        ${rep ? `<span class="badge-rep">${icon('repeat')}${tr('リピート中')}</span>` : ''}
         <span class="spacer"></span>
-        <input type="checkbox" class="cell-check" data-act="select"${selected ? ' checked' : ''} title="連結するセルとして選ぶ" aria-label="このセルを選ぶ">
-        <button class="tool" data-act="toggle" title="${open ? '閉じる' : '範囲の調整・削除'}" aria-label="その他">${icon('dots')}</button>
+        <input type="checkbox" class="cell-check" data-act="select"${selected ? ' checked' : ''} title="${tr('連結するセルとして選ぶ')}" aria-label="${tr('このセルを選ぶ')}">
+        <button class="tool" data-act="toggle" title="${open ? tr('閉じる') : tr('範囲の調整・削除')}" aria-label="${tr('その他')}">${icon('dots')}</button>
       </div>
       ${memo}
       <div class="actions">
-        <button class="act like" data-act="cycle" data-lv="${c.lv}" title="いいね（押すたびに 1 → 2 → 3 → 解除）">${icon('heart', c.lv ? 'fill' : '')}<span class="pips">${pips}</span></button>
-        <button class="act mark${c.bm ? ' on' : ''}" data-act="bm" title="ブックマーク" aria-pressed="${c.bm}">${icon('bookmark', c.bm ? 'fill' : '')}</button>
-        <button class="act talk${talk ? ' open' : ''}" data-act="talk" title="コメント" aria-expanded="${talk}">${icon('comment')}${c.comments.length ? `<span class="n">${c.comments.length}</span>` : ''}</button>
-        <button class="act rep${rep ? ' on' : ''}" data-act="repeat" title="リピート再生（同時に1つだけ）">${icon('repeat')}<span>リピート</span></button>
-        ${this.app.store.cues.length ? `<button class="act tx${tx ? ' open' : ''}" data-act="tx" title="この区間の文字起こし" aria-expanded="${tx}">${icon('text')}<span>文字起こし</span></button>` : ''}
+        <button class="act like" data-act="cycle" data-lv="${c.lv}" title="${tr('いいね（押すたびに 1 → 2 → 3 → 解除）')}">${icon('heart', c.lv ? 'fill' : '')}<span class="pips">${pips}</span></button>
+        <button class="act mark${c.bm ? ' on' : ''}" data-act="bm" title="${tr('ブックマーク')}" aria-pressed="${c.bm}">${icon('bookmark', c.bm ? 'fill' : '')}</button>
+        <button class="act talk${talk ? ' open' : ''}" data-act="talk" title="${tr('コメント')}" aria-expanded="${talk}">${icon('comment')}${c.comments.length ? `<span class="n">${c.comments.length}</span>` : ''}</button>
+        <button class="act rep${rep ? ' on' : ''}" data-act="repeat" title="${tr('リピート再生（同時に1つだけ）')}">${icon('repeat')}<span>${tr('リピート')}</span></button>
+        ${this.app.store.cues.length ? `<button class="act tx${tx ? ' open' : ''}" data-act="tx" title="${tr('この区間の文字起こし')}" aria-expanded="${tx}">${icon('text')}<span>${tr('文字起こし')}</span></button>` : ''}
       </div>
       ${tx ? this.txHtml(c) : ''}
       ${talk ? this.threadHtml(c) : ''}
@@ -287,13 +289,13 @@ export class Sidebar {
   // セルの区間の文字起こし。行を押すとその位置へ（すばやく2回で再生）、再生中の行は強調する
   txHtml(c) {
     const lines = cuesIn(this.app.store.cues, c.s, c.e);
-    if (!lines.length) return '<div class="txpanel" data-act="noop"><p class="thread-empty">この区間に字幕・文字起こしはありません。</p></div>';
+    if (!lines.length) return `<div class="txpanel" data-act="noop"><p class="thread-empty">${tr('この区間に字幕・文字起こしはありません。')}</p></div>`;
     const rows = lines
-      .map(({ cue, i }) => `<div class="tx-line" data-act="jump" data-t="${cue.s}" data-i="${i}" title="クリックでこの位置へ・ダブルクリックで再生"><span class="tx-t">${fmt(cue.s)}</span><span class="tx-x">${escapeHtml(cue.text)}</span></div>`)
+      .map(({ cue, i }) => `<div class="tx-line" data-act="jump" data-t="${cue.s}" data-i="${i}" title="${tr('クリックでこの位置へ・ダブルクリックで再生')}"><span class="tx-t">${fmt(cue.s)}</span><span class="tx-x">${escapeHtml(cue.text)}</span></div>`)
       .join('');
     return `<div class="txpanel" data-act="noop">
       <div class="tx-lines">${rows}</div>
-      <div class="tx-foot"><span>${lines.length} 行</span><span class="spacer"></span><button class="btn tiny" data-act="txcopy">テキストをコピー</button></div>
+      <div class="tx-foot"><span>${tr('{n} 行', { n: lines.length })}</span><span class="spacer"></span><button class="btn tiny" data-act="txcopy">${tr('テキストをコピー')}</button></div>
     </div>`;
   }
 
@@ -307,9 +309,9 @@ export class Sidebar {
 
   cellDetail(c) {
     return `<div class="card-detail" data-act="noop">
-      ${this.edgeRow('開始', 's', c.s)}
-      ${this.edgeRow('終了', 'e', c.e)}
-      <div class="detail-foot"><button class="btn tiny danger" data-act="delete">${icon('trash')} セルを削除</button></div>
+      ${this.edgeRow(tr('開始'), 's', c.s)}
+      ${this.edgeRow(tr('終了'), 'e', c.e)}
+      <div class="detail-foot"><button class="btn tiny danger" data-act="delete">${icon('trash')} ${tr('セルを削除')}</button></div>
     </div>`;
   }
 
@@ -317,17 +319,17 @@ export class Sidebar {
     const nudges = NUDGES.map(
       (d) => `<button class="btn tiny" data-act="nudge" data-edge="${edge}" data-d="${d}">${d > 0 ? '+' : '−'}${Math.abs(d)}</button>`,
     ).join('');
-    return `<div class="edge-row"><span class="edge-label">${label}</span><span class="edge-time">${fmt(t, true)}</span>${nudges}<button class="btn tiny" data-act="setnow" data-edge="${edge}">現在位置</button></div>`;
+    return `<div class="edge-row"><span class="edge-label">${label}</span><span class="edge-time">${fmt(t, true)}</span>${nudges}<button class="btn tiny" data-act="setnow" data-edge="${edge}">${tr('現在位置')}</button></div>`;
   }
 
   // コメントはポストの形で並べ、下の欄から投稿する
   threadHtml(o) {
     const posts = o.comments.map((cm) => this.postHtml(cm)).join('');
     return `<div class="thread" data-act="noop">
-      ${posts ? `<div class="posts">${posts}</div>` : '<p class="thread-empty">まだコメントはありません。書いた時点の再生位置と一緒に残ります。</p>'}
+      ${posts ? `<div class="posts">${posts}</div>` : `<p class="thread-empty">${tr('まだコメントはありません。書いた時点の再生位置と一緒に残ります。')}</p>`}
       <div class="compose">
-        <textarea class="compose-input" data-field="comment" data-key="c-${o.id}" rows="1" placeholder="コメント（Enter で改行・Ctrl+Enter で投稿）"></textarea>
-        <button class="btn small primary" data-act="post">投稿</button>
+        <textarea class="compose-input" data-field="comment" data-key="c-${o.id}" rows="1" placeholder="${tr('コメント（Enter で改行・Ctrl+Enter で投稿）')}"></textarea>
+        <button class="btn small primary" data-act="post">${tr('投稿')}</button>
       </div>
     </div>`;
   }
@@ -336,19 +338,19 @@ export class Sidebar {
   leadBtn(t) {
     const lead = this.app.settings.leadIn;
     const at = t === undefined ? '' : ` data-t="${t}"`;
-    return `<button class="lead-btn" data-act="lead"${at} title="${lead}秒前へ移動（ダブルクリックでそこから再生）">−${lead}秒</button>`;
+    return `<button class="lead-btn" data-act="lead"${at} title="${tr('{s}秒前へ移動（ダブルクリックでそこから再生）', { s: lead })}">${tr('−{s}秒', { s: lead })}</button>`;
   }
 
   postHtml(cm) {
     const time = Number.isFinite(cm.t)
-      ? `<button class="tbtn" data-act="jump" data-t="${cm.t}" title="この位置へ移動（ダブルクリックでそこから再生）">${fmt(cm.t)}</button>${this.leadBtn(cm.t)}`
+      ? `<button class="tbtn" data-act="jump" data-t="${cm.t}" title="${tr('この位置へ移動（ダブルクリックでそこから再生）')}">${fmt(cm.t)}</button>${this.leadBtn(cm.t)}`
       : '';
     return `<div class="post">
-      <div class="avatar" aria-hidden="true">自</div>
+      <div class="avatar" aria-hidden="true">${tr('自')}</div>
       <div class="post-body">
-        <div class="post-meta"><span class="who">あなた</span>${cm.at ? `<span>${fmtDate(cm.at)}</span>` : ''}${time}</div>
+        <div class="post-meta"><span class="who">${tr('あなた')}</span>${cm.at ? `<span>${fmtDate(cm.at)}</span>` : ''}${time}</div>
         <div class="post-text">${escapeHtml(cm.text)}</div>
-        <div class="post-acts"><button class="pact" data-act="delc" data-cid="${cm.id}">削除</button></div>
+        <div class="post-acts"><button class="pact" data-act="delc" data-cid="${cm.id}">${tr('削除')}</button></div>
       </div>
     </div>`;
   }
@@ -358,36 +360,36 @@ export class Sidebar {
   // ◆ は区間の区切りになる目印、● は瞬間のいいね・コメント。定型コメントがあればキー番号を出す
   markerIcon(m) {
     const nums = this.app.tagNumbers(m.tags).slice(0, 3).join('');
-    const kind = m.mark ? '目印（区間の区切り）' : 'この瞬間のいいね・コメント';
-    const title = nums ? `${kind}・定型コメント ${m.tags.join('、')}` : kind;
+    const kind = m.mark ? tr('目印（区間の区切り）') : tr('この瞬間のいいね・コメント');
+    const title = nums ? kind + tr('・定型コメント {tags}', { tags: m.tags.join(tr('、')) }) : kind;
     return `<span class="marker-dot lv${m.lv}${m.mark ? ' is-mark' : ''}${nums ? ' has-num' : ''}" title="${escapeHtml(title)}">${nums}</span>`;
   }
 
   markerHtml(m, depth) {
     const open = this.app.ui.expanded.has(m.id);
-    let text = '<span class="card-text muted">コメントなし</span>';
+    let text = `<span class="card-text muted">${tr('コメントなし')}</span>`;
     if (m.comments.length) text = `<span class="card-text">${escapeHtml(commentSummary(m.comments))}</span>`;
     else if (m.tags.length) text = '';
     const tagEdit = m.tags.length
-      ? `<div class="edge-row"><span class="edge-label">タグ</span><span class="tag-chips">${m.tags
-          .map((t) => `<span class="tag-chip tag-edit">${escapeHtml(t)}<button data-act="deltag" data-tag="${escapeHtml(t)}" title="このタグを外す" aria-label="${escapeHtml(t)}を外す">${icon('x')}</button></span>`)
+      ? `<div class="edge-row"><span class="edge-label">${tr('タグ')}</span><span class="tag-chips">${m.tags
+          .map((t) => `<span class="tag-chip tag-edit">${escapeHtml(t)}<button data-act="deltag" data-tag="${escapeHtml(t)}" title="${tr('このタグを外す')}" aria-label="${escapeHtml(tr('{tag}を外す', { tag: t }))}">${icon('x')}</button></span>`)
           .join('')}</span></div>`
       : '';
     return `<div ${this.cardAttrs('marker', m, depth, '')}>
       <div class="card-row">
         ${this.markerIcon(m)}
-        <div class="card-main" data-act="seek" title="クリックでこの目印へ移動・ダブルクリックでそこから再生"><span class="card-time">${fmt(m.t, true)}</span>${tagChips(m.tags)}${text}</div>
+        <div class="card-main" data-act="seek" title="${tr('クリックでこの目印へ移動・ダブルクリックでそこから再生')}"><span class="card-time">${fmt(m.t, true)}</span>${tagChips(m.tags)}${text}</div>
         ${this.leadBtn()}
-        <button class="like-cycle" data-act="cycle" title="いいね（クリックで 0→1→2→3→0）">${hearts(m.lv)}</button>
-        <button class="tool${m.bm ? ' on' : ''}" data-act="bm" title="ブックマーク">${icon('bookmark', m.bm ? 'fill' : '')}</button>
-        <button class="tool chev" data-act="toggle" title="${open ? '閉じる' : '詳細・編集'}">${icon('chevron')}</button>
+        <button class="like-cycle" data-act="cycle" title="${tr('いいね（クリックで 0→1→2→3→0）')}">${hearts(m.lv)}</button>
+        <button class="tool${m.bm ? ' on' : ''}" data-act="bm" title="${tr('ブックマーク')}">${icon('bookmark', m.bm ? 'fill' : '')}</button>
+        <button class="tool chev" data-act="toggle" title="${open ? tr('閉じる') : tr('詳細・編集')}">${icon('chevron')}</button>
       </div>
       ${open ? `<div class="card-detail" data-act="noop">
-        ${this.edgeRow('位置', 't', m.t)}
-        <div class="edge-row"><span class="edge-label">区切り</span><label class="check-inline"><input type="checkbox" data-act="markflag"${m.mark ? ' checked' : ''}> 区間の区切りにする</label></div>
+        ${this.edgeRow(tr('位置'), 't', m.t)}
+        <div class="edge-row"><span class="edge-label">${tr('区切り')}</span><label class="check-inline"><input type="checkbox" data-act="markflag"${m.mark ? ' checked' : ''}> ${tr('区間の区切りにする')}</label></div>
         ${tagEdit}
         ${this.threadHtml(m)}
-        <div class="detail-foot"><button class="btn tiny danger" data-act="delete">${icon('trash')} 目印を削除</button></div>
+        <div class="detail-foot"><button class="btn tiny danger" data-act="delete">${icon('trash')} ${tr('目印を削除')}</button></div>
       </div>` : ''}
     </div>`;
   }
@@ -472,8 +474,8 @@ export class Sidebar {
       case 'txcopy': {
         const text = cuesIn(store.cues, o.s, o.e).map(({ cue }) => cue.text).join('\n');
         navigator.clipboard.writeText(text).then(
-          () => app.hint(`${fmt(o.s)} – ${fmt(o.e)} の文字起こしをコピーしました`),
-          () => app.hint('コピーできませんでした'),
+          () => app.hint(tr('{range} の文字起こしをコピーしました', { range: `${fmt(o.s)} – ${fmt(o.e)}` })),
+          () => app.hint(tr('コピーできませんでした')),
         );
         break;
       }
@@ -510,7 +512,7 @@ export class Sidebar {
       case 'delete':
         if (kind === 'cell') store.deleteCell(id);
         else store.deleteMarker(id);
-        app.hint(`${kind === 'cell' ? 'セル' : '目印'}を削除しました（Ctrl+Z で元に戻せます）`);
+        app.hint(kind === 'cell' ? tr('セルを削除しました（Ctrl+Z で元に戻せます）') : tr('目印を削除しました（Ctrl+Z で元に戻せます）'));
         break;
     }
   }

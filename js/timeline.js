@@ -1,4 +1,5 @@
 import { $, clamp, fmt, round2, cellLabel } from './util.js';
+import { tr } from './i18n.js';
 
 const LANE_H = 10;
 const LANE_GAP = 3;
@@ -95,7 +96,7 @@ export class Timeline {
     el.classList.toggle('is-empty', !count);
     if (!count) {
       el.style.height = '';
-      el.textContent = d ? 'まだセルはありません。下の「区間」をクリック（ドラッグで複数区間）するとセルになります' : '';
+      el.textContent = d ? tr('まだセルはありません。下の「区間」をクリック（ドラッグで複数区間）するとセルになります') : '';
       return;
     }
     el.style.height = count * (LANE_H + LANE_GAP) - LANE_GAP + 'px';
@@ -110,7 +111,7 @@ export class Timeline {
       b.style.width = ((c.e - c.s) / d) * 100 + '%';
       b.style.top = lanes.get(c.id) * (LANE_H + LANE_GAP) + 'px';
       b.dataset.id = c.id;
-      b.title = `${fmt(c.s)} – ${fmt(c.e)}  ${cellLabel(c) || '（メモなし）'}`;
+      b.title = `${fmt(c.s)} – ${fmt(c.e)}  ${cellLabel(c) || tr('（メモなし）')}`;
       frag.appendChild(b);
     }
     el.appendChild(frag);
@@ -154,7 +155,7 @@ export class Timeline {
       p.dataset.id = m.id;
       p.title =
         fmt(m.t, true) +
-        (m.tags.length ? '  ' + m.tags.map((t) => `［${t}］`).join('') : '') +
+        (m.tags.length ? '  ' + m.tags.map((t) => tr('［{tag}］', { tag: t })).join('') : '') +
         (m.comments.length ? '  ' + m.comments[0].text : '');
       frag.appendChild(p);
     }
@@ -163,7 +164,7 @@ export class Timeline {
       const g = document.createElement('div');
       g.className = 'tl-pin is-ghost';
       g.style.left = (pin.t / d) * 100 + '%';
-      g.title = `${fmt(pin.t, true)}  コメントを書いている位置`;
+      g.title = `${fmt(pin.t, true)}  ${tr('コメントを書いている位置')}`;
       frag.appendChild(g);
     }
     layer.appendChild(frag);
@@ -227,7 +228,7 @@ export class Timeline {
       s.style.left = (a / d) * 100 + '%';
       s.style.width = ((b - a) / d) * 100 + '%';
       s.dataset.i = i;
-      s.title = `${fmt(a)} – ${fmt(b)}　クリックでセルに（ドラッグで複数区間）`;
+      s.title = `${fmt(a)} – ${fmt(b)}　${tr('クリックでセルに（ドラッグで複数区間）')}`;
       frag.appendChild(s);
     }
     el.appendChild(frag);
@@ -269,7 +270,7 @@ export class Timeline {
         if (i === i1) return;
         i1 = i;
         this.highlightSegs(i0, i1);
-        this.app.hint(`${rangeText()} をセルにします（離すと作成）`, true);
+        this.app.hint(tr('{range} をセルにします（離すと作成）', { range: rangeText() }), true);
       };
       const end = (ev) => {
         el.removeEventListener('pointermove', move);
@@ -340,9 +341,9 @@ export class Timeline {
       el.dataset.id = m.id;
       el.title =
         fmt(m.t, true) +
-        (m.tags.length ? '  ' + m.tags.map((t) => `［${t}］`).join('') : '') +
+        (m.tags.length ? '  ' + m.tags.map((t) => tr('［{tag}］', { tag: t })).join('') : '') +
         (m.comments.length ? '  ' + m.comments[0].text : '') +
-        '\nドラッグで位置を調整';
+        '\n' + tr('ドラッグで位置を調整');
       // 定型コメントを付けた目印は、つまみにキー番号（4〜9）を出す
       const nums = this.app.tagNumbers(m.tags).slice(0, 3).join('');
       el.innerHTML = nums ? `<div class="tz-knob has-num">${nums}</div>` : '<div class="tz-knob"></div>';
@@ -404,7 +405,7 @@ export class Timeline {
           this.dragEl.hidden = true;
           if (moved) {
             this.store.touch();
-            this.app.hint(`目印を ${fmt(m.t, true)} に動かしました`);
+            this.app.hint(tr('目印を {time} に動かしました', { time: fmt(m.t, true) }));
           } else {
             this.app.focusMarker(m.id);
           }

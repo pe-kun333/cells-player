@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>プライバシーとデータの扱い｜区間セルプレイヤー</title>
+<title>プライバシーとデータの扱い｜区間セルプレイヤー / Privacy & data | Cells Player</title>
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <style>
   :root {
@@ -32,6 +32,9 @@
   a { color: var(--accent-text); }
   strong { color: var(--text); }
   .back { font-size: 14px; }
+  .top { display: flex; align-items: center; gap: 16px; }
+  .lang-switch { margin-left: auto; font-size: 14px; }
+  [hidden] { display: none !important; }
   .updated { font-size: 13px; color: var(--text-3); margin: 0; }
   .summary {
     margin: 24px 0 0; padding: 16px 20px; border-radius: 12px;
@@ -49,8 +52,11 @@
 </style>
 </head>
 <body>
-<main>
-  <a class="back" href="./">← 区間セルプレイヤーに戻る</a>
+<main lang="ja" id="ja">
+  <div class="top">
+    <a class="back" href="./">← 区間セルプレイヤーに戻る</a>
+    <a class="lang-switch" href="?lang=en" lang="en">English</a>
+  </div>
   <h1>プライバシーとデータの扱い</h1>
   <p class="updated">最終更新: 2026年9月29日</p>
 
@@ -128,5 +134,105 @@
     ソースコードは <a href="https://github.com/pe-kun333/cells-player" target="_blank" rel="noopener">GitHub</a> で公開しています。
   </p>
 </main>
+<main lang="en" id="en" hidden>
+  <div class="top">
+    <a class="back" href="./">← Back to Cells Player</a>
+    <a class="lang-switch" href="?lang=ja" lang="ja">日本語</a>
+  </div>
+  <h1>Privacy &amp; data</h1>
+  <p class="updated">Last updated: September 29, 2026</p>
+
+  <div class="summary">
+    <ul>
+      <li><strong>The video and audio files you open are never uploaded.</strong> They are played only inside the browser on your PC.</li>
+      <li><strong>Markers, cells, comments, transcripts, your vocabulary and settings are saved only in this browser.</strong> They are not sent to the developer's servers, and the developer cannot see them.</li>
+      <li>There are no accounts, no ads, no analytics and no tracking cookies.</li>
+      <li>The app talks to Google services only when you open a YouTube video and while you use speech recognition (see below).</li>
+    </ul>
+  </div>
+
+  <h2>What is saved and where</h2>
+  <table>
+    <tr><th>Data</th><th>Where</th></tr>
+    <tr><td>Markers, cells, comments, likes, bookmarks, captions and transcripts</td><td>IndexedDB in this browser (per media)</td></tr>
+    <tr><td>List of recently opened media (names and counts)</td><td>IndexedDB in this browser</td></tr>
+    <tr><td>Vocabulary</td><td>IndexedDB in this browser</td></tr>
+    <tr><td>Settings (shortcut seconds, display options, language, etc.)</td><td>localStorage in this browser</td></tr>
+  </table>
+  <p>
+    For local files, the app records the file name and an identifier (hash) made from the beginning of the file and its size, so that the same notes appear the next time you open it.
+    It does not save the file contents or the folder location. For YouTube videos and URLs, it records the URL and title.
+  </p>
+  <p>
+    So that the app can start offline, the app's own files (HTML, CSS, JavaScript, icons) may be stored in your browser. They do not contain any of your data.
+  </p>
+
+  <h2>Features that use external services</h2>
+
+  <h3>When you open a YouTube video</h3>
+  <p>
+    YouTube URLs are played with the embedded YouTube player (YouTube API Services).
+    Playback and viewing information is then sent to YouTube (Google) and handled according to Google's privacy policy.
+    By using this feature, you agree to the <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener">YouTube Terms of Service</a>.
+    For how Google handles information, see the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a>.
+  </p>
+  <p>
+    The app only receives what it needs for playback from YouTube (position, duration, title, etc.). It does not connect to your YouTube account.
+    Markers and notes on YouTube videos are saved only in this browser, like all other data.
+  </p>
+
+  <h3>While you use speech recognition (Chrome)</h3>
+  <p>
+    After you start "Transcribe", until you stop it, audio from the microphone (or the input you selected as the microphone, such as "Stereo Mix") is sent through the browser to Google's servers and converted to text.
+    The recognized text is saved in this browser as a transcript. If you do not use speech recognition, no audio is sent.
+  </p>
+
+  <h3>When you open video or audio by URL</h3>
+  <p>Your browser loads it directly from the server at that URL.</p>
+
+  <h3>Hosting of this page</h3>
+  <p>
+    When this app is published as a website, the hosting service may keep ordinary access logs (IP address, browser type, date and time, etc.).
+    What you do in the app and your data are not sent to the hosting service.
+  </p>
+
+  <h2>Exporting and deleting your data</h2>
+  <ul>
+    <li>"Export" saves the notes for the open media as a JSON file, and "Import" brings them back. The vocabulary can be exported as CSV.</li>
+    <li>Captions and transcripts can be exported as .srt / .vtt / text from "Tools" in "Transcript" (bottom right).</li>
+    <li>
+      To delete all data, delete this site's data in your browser.
+      In Chrome: click the icon at the left of the address bar → "Site settings" → "Delete data".
+    </li>
+    <li>Clearing your browsing data also deletes your notes. Export important notes first.</li>
+  </ul>
+
+  <h2>Changes to this page</h2>
+  <p>If the way data is handled changes, this page will be updated along with the "Last updated" date above.</p>
+
+  <h2>Contact</h2>
+  <p>
+    Please send questions and bug reports to <a href="https://github.com/pe-kun333/cells-player/issues" target="_blank" rel="noopener">GitHub Issues</a>.
+    The source code is available on <a href="https://github.com/pe-kun333/cells-player" target="_blank" rel="noopener">GitHub</a>.
+  </p>
+</main>
+<script>
+  // アプリと同じ決め方で言語を選ぶ（?lang= → アプリの設定 → ブラウザの言語）
+  (() => {
+    let lang = new URLSearchParams(location.search).get('lang');
+    if (lang !== 'ja' && lang !== 'en') {
+      try {
+        const s = JSON.parse(localStorage.getItem('cellsplayer:settings') || 'null');
+        if (s && (s.lang === 'ja' || s.lang === 'en')) lang = s.lang;
+      } catch {}
+    }
+    if (lang !== 'ja' && lang !== 'en') lang = /^ja\b/i.test(navigator.languages?.[0] || navigator.language || 'ja') ? 'ja' : 'en';
+    document.documentElement.lang = lang;
+    document.getElementById('ja').hidden = lang !== 'ja';
+    document.getElementById('en').hidden = lang !== 'en';
+    if (lang === 'en') document.title = 'Privacy & data | Cells Player';
+    else document.title = 'プライバシーとデータの扱い｜区間セルプレイヤー';
+  })();
+</script>
 </body>
 </html>

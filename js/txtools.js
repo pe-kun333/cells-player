@@ -1,6 +1,7 @@
 import { $ } from './util.js';
 import { saveSettings } from './store.js';
 import { toSrt, toVtt, toText, autoSegments } from './transcript.js';
+import { tr, trMaybe } from './i18n.js';
 
 // 文字起こしのツール: 書き出し（.srt / .vtt / テキスト）、時刻のずれの補正、自動でセルにする
 export class TxTools {
@@ -20,7 +21,7 @@ export class TxTools {
   open() {
     const { app } = this;
     if (!app.store.cues.length) {
-      app.hint('先に字幕・文字起こしを入れてください（「字幕を読み込む」「貼り付け」「音声認識」）');
+      app.hint(tr('先に字幕・文字起こしを入れてください（「字幕を読み込む」「貼り付け」「音声認識」）'));
       return;
     }
     this.form.gap.value = app.settings.splitGap;
@@ -32,9 +33,9 @@ export class TxTools {
 
   update() {
     const t = this.app.store.doc?.transcript;
-    $('#txToolsInfo').textContent = t ? `「${t.name}」 ${t.cues.length} 行` : '';
+    $('#txToolsInfo').textContent = t ? tr('「{name}」 {n} 行', { name: trMaybe(t.name), n: t.cues.length }) : '';
     const off = t?.offset || 0;
-    $('#txOffset').textContent = `ずらした合計 ${off > 0 ? '+' : ''}${off.toFixed(1)} 秒`;
+    $('#txOffset').textContent = tr('ずらした合計 {off} 秒', { off: `${off > 0 ? '+' : ''}${off.toFixed(1)}` });
   }
 
   options() {
@@ -52,7 +53,9 @@ export class TxTools {
   preview() {
     const segs = autoSegments(this.app.store.cues, this.options());
     const fresh = segs.filter((r) => !this.app.store.findCell(r.s, r.e));
-    $('#txSplitMsg').textContent = `この設定だと ${segs.length} 個のセルになります${fresh.length < segs.length ? `（すでにある ${segs.length - fresh.length} 個は作りません）` : ''}`;
+    $('#txSplitMsg').textContent =
+      tr('この設定だと {n} 個のセルになります', { n: segs.length }) +
+      (fresh.length < segs.length ? tr('（すでにある {n} 個は作りません）', { n: segs.length - fresh.length }) : '');
   }
 
   onClick(e) {
@@ -74,9 +77,9 @@ export class TxTools {
       this.dialog.close();
       if (made.length) {
         app.revealCell(made[0].id);
-        app.hint(`文字起こしから ${made.length} 個のセルを作りました（Ctrl+Z でまとめて元に戻せます）`);
+        app.hint(tr('文字起こしから {n} 個のセルを作りました（Ctrl+Z でまとめて元に戻せます）', { n: made.length }));
       } else {
-        app.hint('新しく作るセルはありませんでした（同じ範囲のセルがすでにあります）');
+        app.hint(tr('新しく作るセルはありませんでした（同じ範囲のセルがすでにあります）'));
       }
     }
   }
@@ -93,6 +96,6 @@ export class TxTools {
     a.download = `${base}.${ext}`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    this.app.hint(`文字起こしを「${base}.${ext}」として書き出しました`);
+    this.app.hint(tr('文字起こしを「{file}」として書き出しました', { file: `${base}.${ext}` }));
   }
 }

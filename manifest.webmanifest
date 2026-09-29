@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "区間セルプレイヤー",
-  "short_name": "セルプレイヤー",
-  "description": "動画・音声に目印とセル（区間）を付けて、いいね・コメント・リピート・シャドーイングで学習や鑑賞に使うプレイヤー",
+  "name": "区間セルプレイヤー (Cells Player)",
+  "short_name": "Cells Player",
+  "description": "動画・音声に目印とセル（区間）を付けて、いいね・コメント・リピート・シャドーイングで学習や鑑賞に使うプレイヤー / A player for studying and enjoying video and audio with markers, cells, likes, comments, repeat and shadowing",
   "lang": "ja",
   "dir": "ltr",
   "start_url": "./",
