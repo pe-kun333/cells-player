@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>区間セルプレイヤー</title>
+<meta name="description" content="動画・音声に目印とセル（区間）を付けて、いいね・コメント・リピート・シャドーイングで学習や鑑賞に使うプレイヤー。ファイルはブラウザの中だけで再生します。">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222221" media="(prefers-color-scheme: dark)">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19.5 12.572l-7.5 7.428l-7.5-7.428a5 5 0 1 1 7.5-6.566a5 5 0 1 1 7.5 6.572"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M18 7v14l-6-4l-6 4v-14a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4z"/></symbol>
+    <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M4 12v-3a3 3 0 0 1 3-3h13m-3-3l3 3l-3 3"/><path d="M20 12v3a3 3 0 0 1-3 3h-13m3 3l-3-3l3-3"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><circle cx="12" cy="11" r="3"/><path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6l6-6"/></symbol>
+    <symbol id="i-cell" viewBox="0 0 24 24"><path d="M8 5H5v14h3M16 5h3v14h-3"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><circle cx="6" cy="17" r="3"/><circle cx="17" cy="15" r="3"/><path d="M9 17V5l11-2v12"/></symbol>
+    <symbol id="i-comment" viewBox="0 0 24 24"><path d="M8 9h8M8 13h6M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-5l-5 3v-3h-2a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3z"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="M15 8a5 5 0 0 1 0 8M17.7 5a9 9 0 0 1 0 14M6 15h-2a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h2l3.5-4.5a.8.8 0 0 1 1.5.5v14a.8.8 0 0 1-1.5.5z"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14l-4-4l4-4M5 10h11a4 4 0 1 1 0 8h-1"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 14l4-4l-4-4M19 10h-11a4 4 0 1 0 0 8h1"/></symbol>
+    <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h14"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M4 5v14l12-7z"/><path d="M20 5v14"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 5v14l-12-7z"/><path d="M4 5v14"/></symbol>
+    <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.828 2.828 0 1 0-4-4l-10.5 10.5v4"/><path d="M13.5 6.5l4 4"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1-2-2v-14a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></symbol>
+  </defs>
+</svg>
+
+<div id="bootError" class="boot-error">
+  このページはファイルを直接開いても動きません。<br>
+  同じフォルダにある <b>start.bat</b> をダブルクリックして起動するか、公開されている URL から開いてください。
+</div>
+
+<header class="topbar">
+  <div class="brand">区間セルプレイヤー</div>
+  <button id="btnOpenFile" class="btn">ファイルを開く</button>
+  <form id="urlForm" class="url-form" autocomplete="off">
+    <input id="urlInput" type="text" placeholder="YouTube または動画・音声の URL" spellcheck="false">
+    <button class="btn" type="submit">開く</button>
+  </form>
+  <div class="media-title" id="mediaTitle"></div>
+  <div class="spacer"></div>
+  <button id="btnUndo" class="btn icon-btn" title="元に戻す (Ctrl+Z)" aria-label="元に戻す"><svg class="i" aria-hidden="true"><use href="#i-undo"/></svg></button>
+  <button id="btnRedo" class="btn icon-btn" title="やり直す (Ctrl+Shift+Z)" aria-label="やり直す"><svg class="i" aria-hidden="true"><use href="#i-redo"/></svg></button>
+  <button id="btnWords" class="btn" title="単語帳（W キーで、いまの字幕の言葉を追加）">単語帳</button>
+  <button id="btnExport" class="btn">書き出し</button>
+  <button id="btnImport" class="btn">読み込み</button>
+  <button id="btnSettings" class="btn">設定</button>
+  <button id="btnHelp" class="btn icon-btn" title="ショートカット (?)" aria-label="ショートカット">?</button>
+  <input type="file" id="fileInput" accept="video/*,audio/*,.mkv,.flac,.opus" hidden>
+  <input type="file" id="importInput" accept=".json,application/json" hidden>
+</header>
+
+<main class="layout">
+  <section class="left">
+    <div class="stage" id="stage">
+      <div class="stage-media" id="stageMedia"></div>
+      <div class="audio-cover" id="audioCover" hidden>
+        <svg class="i" aria-hidden="true"><use href="#i-music"/></svg>
+        <div id="audioTitle"></div>
+      </div>
+      <div class="empty" id="emptyState">
+        <div class="empty-main">
+          <div class="empty-title">動画や音声ファイルをここにドロップ</div>
+          <div class="empty-sub">または上の「ファイルを開く」、YouTube の URL を入力して「開く」</div>
+          <button class="btn primary" id="btnEmptyOpen"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg> ファイルを開く</button>
+        </div>
+        <div class="recent" id="recentList"></div>
+        <div class="empty-foot">
+          ファイルはこのブラウザの中だけで再生され、どこにも送信されません。メモもこのブラウザに保存されます。
+          <a href="privacy.html" target="_blank" rel="noopener">プライバシーとデータの扱い</a>
+        </div>
+      </div>
+      <div class="caption" id="caption" hidden></div>
+      <div class="loading" id="loading">読み込み中…</div>
+    </div>
+    <!-- YouTube のときは、プレーヤーの上に重ねず、この帯に字幕を出す -->
+    <div class="caption-bar" id="captionBar" hidden></div>
+
+    <div class="controls">
+      <button id="btnPlay" class="btn icon-btn" title="再生 / 一時停止 (Space)" aria-label="再生"><svg class="i" aria-hidden="true"><use href="#i-play"/></svg></button>
+      <button id="btnBack" class="btn small" title="5秒戻る (←)">−5秒</button>
+      <button id="btnFwd" class="btn small" title="5秒進む (→)">+5秒</button>
+      <span class="time" id="timeText">0:00.0 / 0:00</span>
+      <span class="spacer"></span>
+      <span class="badge" id="modeBadge" hidden>YouTube（軽量モード）</span>
+      <button id="btnCC" class="btn small" title="字幕・文字起こしを読み込む（.srt / .vtt / JSON）"><svg class="i" aria-hidden="true"><use href="#i-text"/></svg><span id="ccLabel">字幕を読み込む</span></button>
+      <button id="btnTxPaste" class="btn small" title="YouTube の「文字起こしを表示」などからコピーした文字を貼り付けて読み込む（Ctrl+V でも開きます）">貼り付け</button>
+      <button id="btnLive" class="btn small live-btn"><i class="live-dot" aria-hidden="true"></i><span>音声認識</span></button>
+      <input type="file" id="txInput" accept=".srt,.vtt,.json,.txt" hidden>
+      <label class="ctl">速度 <select id="rateSelect"><option value="1">1x</option></select></label>
+      <label class="ctl" title="音量"><svg class="i" aria-hidden="true"><use href="#i-volume"/></svg><input type="range" id="volume" min="0" max="1" step="0.05" value="1"></label>
+    </div>
+
+    <div class="timeline" id="timeline">
+      <div class="tl-row"><span class="tl-label">セル</span><div class="tl-lanes" id="tlLanes"></div></div>
+      <div class="tl-row"><span class="tl-label">全体</span><div class="tl-track tl-main" id="tlMain"></div></div>
+      <div class="tl-row"><span class="tl-label">区間</span><div class="tl-track tl-segs" id="tlSegs"></div></div>
+      <div class="tl-row"><span class="tl-label">拡大</span><div class="tl-track tl-zoom" id="tlZoom"></div></div>
+    </div>
+
+    <div class="practice-card" id="practiceCard" hidden></div>
+
+    <div class="moment" id="moment">
+      <div class="moment-head">
+        <span class="moment-title">この瞬間</span>
+        <span class="moment-time" id="momentTime">0:00.0</span>
+        <span class="target-chip" id="targetChip"></span>
+      </div>
+      <div class="moment-actions">
+        <div class="group">
+          <button id="btnMarkNow" class="btn" title="いまの位置に目印 (M)"><svg class="i" aria-hidden="true"><use href="#i-pin"/></svg> 目印 <kbd>M</kbd></button>
+          <span id="offsetButtons" class="group"></span>
+        </div>
+        <div class="group" id="likeButtons">
+          <button class="btn like-btn" data-lv="1" title="いいね 1 (1)"><span class="hearts"><svg class="i h on" aria-hidden="true"><use href="#i-heart"/></svg></span></button>
+          <button class="btn like-btn" data-lv="2" title="いいね 2 (2)"><span class="hearts"><svg class="i h on" aria-hidden="true"><use href="#i-heart"/></svg><svg class="i h on" aria-hidden="true"><use href="#i-heart"/></svg></span></button>
+          <button class="btn like-btn" data-lv="3" title="いいね 3 (3)"><span class="hearts"><svg class="i h on" aria-hidden="true"><use href="#i-heart"/></svg><svg class="i h on" aria-hidden="true"><use href="#i-heart"/></svg><svg class="i h on" aria-hidden="true"><use href="#i-heart"/></svg></span></button>
+        </div>
+        <button class="btn icon-btn" id="btnMomentBm" title="ブックマーク (B)" aria-label="ブックマーク"><svg class="i" aria-hidden="true"><use href="#i-bookmark"/></svg></button>
+        <span class="spacer"></span>
+        <button class="btn" id="btnMakeCell" title="いまいる区間（前後の目印の間）をセルにする (Enter)"><svg class="i" aria-hidden="true"><use href="#i-cell"/></svg> 区間をセル化 <kbd>Enter</kbd></button>
+      </div>
+      <div class="quick-row">
+        <select id="presetSetSelect" title="よく使うコメントのセットを切り替え"></select>
+        <span id="quickButtons" class="quick-buttons"></span>
+        <button class="btn icon-btn" id="btnEditPresets" title="よく使うコメントを編集" aria-label="よく使うコメントを編集"><svg class="i" aria-hidden="true"><use href="#i-pencil"/></svg></button>
+      </div>
+      <div class="comment-row">
+        <button class="btn" id="btnCommentMark" title="いまの瞬間を固定してコメントを書く (C)"><svg class="i" aria-hidden="true"><use href="#i-comment"/></svg> ここにコメント <kbd>C</kbd></button>
+        <span class="pin-chip" id="pinChip" hidden></span>
+        <input id="commentInput" class="field comment-input" type="text" placeholder="コメント（Enter で保存、Esc で取り消し）" autocomplete="off">
+      </div>
+      <div class="hint" id="momentHint"></div>
+      <div class="feed-head">前後の目印</div>
+      <div class="feed" id="feed"></div>
+    </div>
+  </section>
+
+  <aside class="sidebar">
+    <div class="side-head">
+      <div class="tabs" id="sideTabs" role="tablist">
+        <button class="tab" data-tab="cells" role="tab">セル</button>
+        <button class="tab" data-tab="markers" role="tab">目印</button>
+        <button class="tab" data-tab="all" role="tab">すべて</button>
+      </div>
+      <div class="side-search">
+        <input id="sideSearch" type="search" class="field" placeholder="メモ・コメント・タグを検索" autocomplete="off">
+        <select id="sideSort" title="並び順">
+          <option value="time">時間順</option>
+          <option value="like">いいねが多い順</option>
+          <option value="new">作った順（新しい順）</option>
+          <option value="comments">コメントが多い順</option>
+        </select>
+      </div>
+      <div class="side-filters">
+        <select id="filterLike" title="いいねで絞り込み">
+          <option value="0">いいね: すべて</option>
+          <option value="1">いいね 1 以上</option>
+          <option value="2">いいね 2 以上</option>
+          <option value="3">いいね 3 のみ</option>
+        </select>
+        <select id="filterTag" title="よく使うコメント（タグ）で絞り込み"><option value="">タグ: すべて</option></select>
+        <button class="btn small" id="filterBm" title="ブックマークしたものだけ表示"><svg class="i" aria-hidden="true"><use href="#i-bookmark"/></svg> のみ</button>
+      </div>
+      <div class="side-digest">
+        <button class="btn small" id="btnDigest" title="いま一覧に並んでいるセル・目印を、上から順に続けて再生します（絞り込み・検索・並び順がそのまま使われます）"><svg class="i" aria-hidden="true"><use href="#i-play"/></svg> 一覧を連続再生</button>
+        <span class="spacer"></span>
+        <span class="count" id="sideCount"></span>
+      </div>
+      <div class="digest-bar" id="digestBar" hidden></div>
+      <div class="repeat-bar" id="repeatBar" hidden></div>
+    </div>
+    <div class="side-list" id="sideList"></div>
+    <section class="mlist" id="momentList" aria-label="瞬間のコメント">
+      <div class="mlist-head">
+        <button class="mlist-title" id="mlistToggle" aria-expanded="true" title="開く / 閉じる" aria-label="開く / 閉じる">
+          <svg class="i" aria-hidden="true"><use href="#i-chevron"/></svg>
+        </button>
+        <div class="mlist-tabs" role="tablist">
+          <button data-mode="comments" role="tab">瞬間のコメント<span class="mlist-count" data-count="comments"></span></button>
+          <button data-mode="transcript" role="tab">文字起こし<span class="mlist-count" data-count="transcript"></span></button>
+        </div>
+        <span class="spacer"></span>
+        <div class="mlist-sync" role="group" aria-label="再生との連動">
+          <button data-sync="1" title="再生位置に合わせてスクロールする">連動</button>
+          <button data-sync="0" title="自由にスクロールする">連動しない</button>
+        </div>
+      </div>
+      <div class="mlist-tools" id="mlistTools">
+        <button data-tool="shadow" title="1行ずつ再生して止まるので、そのあいだに同じように声に出す練習"><svg class="i" aria-hidden="true"><use href="#i-repeat"/></svg>シャドーイング</button>
+        <button data-tool="dictation" title="字幕を隠して1行ずつ再生し、聞こえたとおりに入力して答え合わせする練習"><svg class="i" aria-hidden="true"><use href="#i-pencil"/></svg>ディクテーション</button>
+        <span class="spacer"></span>
+        <button data-tool="tools" title="書き出し（.srt / .vtt / テキスト）・時刻のずれの補正・自動でセルにする"><svg class="i" aria-hidden="true"><use href="#i-dots"/></svg>ツール</button>
+      </div>
+      <div class="mlist-body" id="mlistBody"></div>
+    </section>
+  </aside>
+</main>
+
+<div class="drop-hint" id="dropHint" hidden><div>ここにドロップして開く</div></div>
+<div class="toast" id="toast" hidden></div>
+
+<dialog id="settingsDialog">
+  <form method="dialog" id="settingsForm" class="dialog-body">
+    <h2>設定</h2>
+    <label class="set-row">
+      <span>少し前に付ける目印（秒）<small>カンマ区切り、最大5つ</small></span>
+      <input class="field" name="offsets" type="text">
+    </label>
+    <label class="set-row">
+      <span>近くの目印をまとめる範囲（秒）<small>この範囲に目印があれば新しく作らない</small></span>
+      <input class="field" name="mergeWindow" type="number" min="0" max="10" step="0.5">
+    </label>
+    <label class="set-row">
+      <span>目印を「対象」にしておく範囲（秒）<small>作った目印から再生位置がこれ以上離れると外れる</small></span>
+      <input class="field" name="targetRange" type="number" min="2" max="120" step="1">
+    </label>
+    <label class="set-row">
+      <span>「少し前から」で戻る秒数<small>瞬間のコメントや目印・セルに少し前から移動するとき</small></span>
+      <input class="field" name="leadIn" type="number" min="1" max="30" step="1">
+    </label>
+    <label class="set-row">
+      <span>連続再生で目印のあと再生する秒数<small>目印は「少し前から」の秒数だけ前から、ここまで再生します</small></span>
+      <input class="field" name="momentClip" type="number" min="1" max="60" step="1">
+    </label>
+    <label class="set-row">
+      <span>拡大ストリップの表示範囲</span>
+      <select name="zoomRange">
+        <option value="15">前後 15 秒</option>
+        <option value="30">前後 30 秒</option>
+        <option value="60">前後 60 秒</option>
+        <option value="120">前後 120 秒</option>
+      </select>
+    </label>
+    <div class="set-row wide">
+      <span>字幕・文字起こし<small id="txInfo">読み込んでいません</small></span>
+      <span class="set-actions">
+        <button type="button" class="btn small" id="btnTxReload">読み込む</button>
+        <button type="button" class="btn small" id="btnTxPaste2">貼り付け</button>
+        <button type="button" class="btn small" id="btnLiveHelp">音声認識</button>
+        <button type="button" class="btn small danger" id="btnTxRemove">外す</button>
+      </span>
+    </div>
+    <label class="set-row check">
+      <input name="captions" type="checkbox">
+      <span>動画の上に字幕を表示する<small>外すと、字幕・文字起こし・音声認識の文字は右下の「文字起こし」やセルの中だけに出ます（T キーや「字幕」ボタンでも切り替えられます）</small></span>
+    </label>
+    <div class="set-row wide">
+      <span>保存場所<small id="storageInfo"></small></span>
+    </div>
+    <label class="set-row check">
+      <input name="pauseOnMark" type="checkbox">
+      <span>コメントマーク（C）を使ったら再生を止める</span>
+    </label>
+    <label class="set-row check">
+      <input name="resumeAfterComment" type="checkbox">
+      <span>コメントを送信・取り消ししたら再生を再開する<small>コメントマークで止めたときだけ</small></span>
+    </label>
+    <div class="dialog-foot">
+      <button class="btn primary" value="save">保存</button>
+      <button class="btn" value="cancel">キャンセル</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="presetDialog">
+  <form method="dialog" id="presetForm" class="dialog-body">
+    <h2>よく使うコメント</h2>
+    <div class="preset-sets">
+      <select name="set" title="編集するセット"></select>
+      <button type="button" class="btn small" id="btnAddSet">セットを追加</button>
+      <button type="button" class="btn small danger" id="btnDelSet">このセットを削除</button>
+    </div>
+    <label class="set-row">
+      <span>セットの名前</span>
+      <input class="field" name="setName" type="text" autocomplete="off">
+    </label>
+    <div class="preset-grid">
+      <label><kbd>4</kbd><input class="field" data-item type="text" autocomplete="off"></label>
+      <label><kbd>5</kbd><input class="field" data-item type="text" autocomplete="off"></label>
+      <label><kbd>6</kbd><input class="field" data-item type="text" autocomplete="off"></label>
+      <label><kbd>7</kbd><input class="field" data-item type="text" autocomplete="off"></label>
+      <label><kbd>8</kbd><input class="field" data-item type="text" autocomplete="off"></label>
+      <label><kbd>9</kbd><input class="field" data-item type="text" autocomplete="off"></label>
+    </div>
+    <p class="dialog-note">名前を変えると、それ以降は別のタグとして記録されます。すでに付けた目印は元の名前のまま残ります。空欄のボタンは使われません。</p>
+    <div class="dialog-msg" id="presetMsg"></div>
+    <div class="dialog-foot">
+      <button class="btn primary" value="save">保存</button>
+      <button class="btn" value="cancel">キャンセル</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="pasteDialog">
+  <form method="dialog" id="pasteForm" class="dialog-body">
+    <h2>文字起こしを貼り付け</h2>
+    <p class="dialog-note">
+      YouTube の場合: 動画の説明欄の下にある「文字起こしを表示」を押し、出てきた一覧（「0:05」のような時刻つき）を選んでコピーして、ここに貼り付けます。
+      時刻が表示されていないときは、一覧の「︙」から「タイムスタンプを表示」にしてください。.srt や .vtt の中身をそのまま貼っても読み込めます。
+    </p>
+    <textarea class="field paste-area" name="text" rows="10" placeholder="0:00&#10;こんにちは。今日は…&#10;0:05&#10;…" spellcheck="false"></textarea>
+    <div class="paste-preview" id="pastePreview"></div>
+    <div class="dialog-foot">
+      <button class="btn primary" value="load">読み込む</button>
+      <button class="btn" value="cancel">キャンセル</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="liveDialog">
+  <form method="dialog" id="liveForm" class="dialog-body">
+    <h2>音声認識の準備</h2>
+    <p class="dialog-note live-note">
+      Chrome の音声認識は<b>マイクの音</b>を聞いて文字にします。流れている動画や音声を文字起こしするには、<b>PC の音をマイクとして入力する</b>設定をします。
+    </p>
+    <ol class="live-steps">
+      <li>Windows の「設定」→「システム」→「サウンド」→「その他のサウンド設定」を開き、「録音」タブの <b>ステレオ ミキサー</b> を右クリックして「有効」にします（表示されないときは、空いている所を右クリックして「無効なデバイスの表示」）。</li>
+      <li>このページの最初の開始で、マイクの使用を「許可」します。</li>
+      <li>アドレスバー右のマイクのアイコン（またはサイトの設定）で、マイクを <b>ステレオ ミキサー</b> に切り替えます。</li>
+    </ol>
+    <p class="dialog-note">
+      ステレオ ミキサーがない PC では、仮想オーディオ機器（VB-Audio Virtual Cable など）で同じことができます。普通のマイクのままでも、スピーカーの音を拾って認識できます（精度は下がります）。
+      YouTube の音声も同じように文字起こしできます。
+    </p>
+    <p class="dialog-note live-warn">音声は Google のサーバーに送られて認識されます。インターネット接続が必要です。句読点は付きません。</p>
+    <label class="set-row">
+      <span>認識する言語</span>
+      <select name="lang">
+        <option value="ja-JP">日本語</option>
+        <option value="en-US">英語（アメリカ）</option>
+        <option value="en-GB">英語（イギリス）</option>
+        <option value="zh-CN">中国語（簡体）</option>
+        <option value="ko-KR">韓国語</option>
+        <option value="fr-FR">フランス語</option>
+        <option value="de-DE">ドイツ語</option>
+        <option value="es-ES">スペイン語</option>
+      </select>
+    </label>
+    <div class="dialog-foot">
+      <button class="btn primary" value="start">音声認識を始める</button>
+      <button class="btn" value="cancel">閉じる</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="helpDialog">
+  <form method="dialog" class="dialog-body">
+    <h2>ショートカット</h2>
+    <table class="keys">
+      <tr><td><kbd>Space</kbd></td><td>再生 / 一時停止</td></tr>
+      <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>5秒戻る / 進む（<kbd>Shift</kbd> で1秒）</td></tr>
+      <tr><td><kbd>,</kbd> <kbd>.</kbd></td><td>コマ送り（ローカルファイルのみ）</td></tr>
+      <tr><td><kbd>M</kbd></td><td>いまの位置に目印</td></tr>
+      <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td><td>この瞬間にいいね（同じ段階をもう一度で解除）</td></tr>
+      <tr><td><kbd>4</kbd> 〜 <kbd>9</kbd></td><td>よく使うコメント（もう一度で外す）</td></tr>
+      <tr><td><kbd>B</kbd></td><td>この瞬間をブックマーク</td></tr>
+      <tr><td><kbd>C</kbd></td><td>コメントマーク（いまの瞬間を固定してコメントを書く。Enter で保存、Esc で取り消し）</td></tr>
+      <tr><td><kbd>Enter</kbd></td><td>いまいる区間をセルにする</td></tr>
+      <tr><td><kbd>R</kbd></td><td>再生位置のセルをリピート / 停止</td></tr>
+      <tr><td><kbd>T</kbd></td><td>字幕の表示 / 非表示（読み込んでいなければ読み込む）</td></tr>
+      <tr><td><kbd>Ctrl</kbd> + <kbd>V</kbd></td><td>コピーした文字起こしを貼り付けて読み込む</td></tr>
+      <tr><td><kbd>W</kbd></td><td>単語帳に追加（選んでいる文字と、いまの字幕の行が入ります）</td></tr>
+      <tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>前 / 次の目印へ</td></tr>
+      <tr><td><kbd>Ctrl</kbd> + <kbd>←</kbd> <kbd>→</kbd></td><td>対象の目印を 0.1 秒ずつ動かす</td></tr>
+      <tr><td><kbd>Delete</kbd></td><td>対象の目印を削除</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>対象の目印を外す</td></tr>
+      <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>元に戻す（<kbd>Shift</kbd> 付きでやり直す）</td></tr>
+    </table>
+    <h3 class="help-sub">文字起こし（右下の「文字起こし」タブ）</h3>
+    <table class="keys">
+      <tr><td>行をクリック</td><td>移動・コメント・編集・単語帳・削除</td></tr>
+      <tr><td><kbd>Shift</kbd> + クリック</td><td>範囲を選んで「セルにする」</td></tr>
+      <tr><td>シャドーイング</td><td>1行ずつ再生して止まる。止まっている間に声に出す</td></tr>
+      <tr><td>ディクテーション</td><td>字幕を隠して1行ずつ再生。入力して <kbd>Enter</kbd> で答え合わせ（<kbd>Shift</kbd> + <kbd>Enter</kbd> でもう一度聞く）</td></tr>
+      <tr><td>ツール</td><td>.srt / .vtt / テキストで書き出し、時刻のずれを直す、すき間や長さで自動的にセルにする</td></tr>
+    </table>
+    <h3 class="help-sub">このアプリについて</h3>
+    <div class="about-row">
+      <a href="privacy.html" target="_blank" rel="noopener">プライバシーとデータの扱い</a>
+      <a href="https://github.com/pe-kun333/cells-player" target="_blank" rel="noopener">ソースコード・不具合の報告（GitHub）</a>
+      <span class="spacer"></span>
+      <button type="button" class="btn small" id="btnInstall" hidden title="この PC にアプリとして入れると、専用のウィンドウで開き、オフラインでも起動できます">アプリとしてインストール</button>
+    </div>
+    <div class="dialog-foot"><button class="btn primary" value="close">閉じる</button></div>
+  </form>
+</dialog>
+
+<dialog id="wordAddDialog">
+  <form method="dialog" id="wordAddForm" class="dialog-body">
+    <h2>単語帳に追加</h2>
+    <div class="word-context" id="wordContext"></div>
+    <label class="set-row">
+      <span>言葉</span>
+      <input class="field" name="word" type="text" autocomplete="off" spellcheck="false">
+    </label>
+    <label class="set-row">
+      <span>意味・メモ<small>あとからでも書けます</small></span>
+      <input class="field" name="note" type="text" autocomplete="off">
+    </label>
+    <div class="dialog-msg" id="wordMsg"></div>
+    <div class="dialog-foot">
+      <button class="btn primary" value="save">追加</button>
+      <button class="btn" value="cancel" formnovalidate>キャンセル</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="wordsDialog" class="wide-dialog">
+  <form method="dialog" class="dialog-body">
+    <h2>単語帳</h2>
+    <div class="words-bar">
+      <div class="seg" role="group" aria-label="表示する範囲">
+        <button type="button" data-scope="media">このメディア</button>
+        <button type="button" data-scope="all">すべて</button>
+      </div>
+      <input id="wordsSearch" type="search" class="field" placeholder="言葉・メモ・前後の文を検索" autocomplete="off">
+    </div>
+    <div class="words-count" id="wordsCount"></div>
+    <div class="words-list" id="wordsList"></div>
+    <div class="dialog-foot">
+      <button class="btn primary" value="close">閉じる</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="btnWordsCsv" title="表示している言葉を CSV で書き出す（Anki や Excel で使えます）">CSV で書き出し</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="txToolsDialog">
+  <form method="dialog" id="txToolsForm" class="dialog-body">
+    <h2>文字起こしのツール</h2>
+    <p class="dialog-note" id="txToolsInfo"></p>
+    <section class="tool-sec">
+      <h3>書き出し</h3>
+      <div class="tool-row">
+        <button type="button" class="btn small" data-tx="srt">.srt</button>
+        <button type="button" class="btn small" data-tx="vtt">.vtt</button>
+        <button type="button" class="btn small" data-tx="txt">テキスト</button>
+        <span class="muted small-note">テキストは「[0:05] 文」の形。貼り付けで読み込み直せます</span>
+      </div>
+    </section>
+    <section class="tool-sec">
+      <h3>時刻のずれを直す</h3>
+      <div class="tool-row">
+        <button type="button" class="btn small" data-tx="shift" data-d="-1">−1秒</button>
+        <button type="button" class="btn small" data-tx="shift" data-d="-0.1">−0.1秒</button>
+        <button type="button" class="btn small" data-tx="shift" data-d="0.1">+0.1秒</button>
+        <button type="button" class="btn small" data-tx="shift" data-d="1">+1秒</button>
+        <span class="muted small-note" id="txOffset"></span>
+      </div>
+      <p class="dialog-note">字幕が声より早く出るときは「+」、遅れて出るときは「−」。すべての行が動きます（Ctrl+Z で戻せます）。</p>
+    </section>
+    <section class="tool-sec">
+      <h3>自動でセルにする</h3>
+      <div class="tool-row">
+        <label>すき間 <input class="field num" name="gap" type="number" min="0.3" max="60" step="0.5"> 秒以上あいたら区切る</label>
+      </div>
+      <div class="tool-row">
+        <label>1つのセルは長くても <input class="field num" name="max" type="number" min="5" max="1800" step="5"> 秒まで</label>
+      </div>
+      <div class="tool-row">
+        <button type="button" class="btn small primary" data-tx="split"><svg class="i" aria-hidden="true"><use href="#i-cell"/></svg>セルを作る</button>
+        <span class="muted small-note" id="txSplitMsg"></span>
+      </div>
+    </section>
+    <div class="dialog-foot">
+      <button class="btn" value="close">閉じる</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

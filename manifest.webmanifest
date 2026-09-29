@@ -1,0 +1,41 @@
+{
+  "id": "./",
+  "name": "区間セルプレイヤー",
+  "short_name": "セルプレイヤー",
+  "description": "動画・音声に目印とセル（区間）を付けて、いいね・コメント・リピート・シャドーイングで学習や鑑賞に使うプレイヤー",
+  "lang": "ja",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f5f3",
+  "theme_color": "#ffffff",
+  "categories": ["education", "entertainment", "productivity"],
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "file_handlers": [
+    {
+      "action": "./",
+      "accept": {
+        "video/mp4": [".mp4", ".m4v"],
+        "video/webm": [".webm"],
+        "video/x-matroska": [".mkv"],
+        "video/quicktime": [".mov"],
+        "video/ogg": [".ogv"],
+        "audio/mpeg": [".mp3"],
+        "audio/mp4": [".m4a"],
+        "audio/aac": [".aac"],
+        "audio/wav": [".wav"],
+        "audio/ogg": [".ogg", ".oga", ".opus"],
+        "audio/flac": [".flac"],
+        "application/x-subrip": [".srt"],
+        "text/vtt": [".vtt"]
+      }
+    }
+  ],
+  "launch_handler": { "client_mode": "focus-existing" }
+}

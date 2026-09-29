@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>プライバシーとデータの扱い｜区間セルプレイヤー</title>
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f5f5f3; --panel: #ffffff; --line: #e3e2de; --text: #1d1d1b; --text-2: #5c5b57; --text-3: #8c8a84;
+    --accent: #2b6cd4; --accent-bg: #e7f0fc; --accent-text: #1d59b5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #181817; --panel: #222221; --line: #33332f; --text: #ebeae5; --text-2: #b3b1aa; --text-3: #83817b;
+      --accent: #6aa2f0; --accent-bg: #1b2d47; --accent-text: #9cc3f7;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.8 "Segoe UI", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 24px; line-height: 1.4; margin: 8px 0 4px; }
+  h2 { font-size: 18px; margin: 36px 0 8px; padding-top: 16px; border-top: 1px solid var(--line); }
+  h3 { font-size: 15.5px; margin: 20px 0 4px; }
+  p, li { color: var(--text-2); }
+  ul { padding-left: 1.4em; }
+  li { margin: 4px 0; }
+  a { color: var(--accent-text); }
+  strong { color: var(--text); }
+  .back { font-size: 14px; }
+  .updated { font-size: 13px; color: var(--text-3); margin: 0; }
+  .summary {
+    margin: 24px 0 0; padding: 16px 20px; border-radius: 12px;
+    background: var(--accent-bg); border: 1px solid var(--line);
+  }
+  .summary ul { margin: 0; }
+  .summary li { color: var(--text); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--text); white-space: nowrap; font-weight: 600; }
+  td { color: var(--text-2); }
+  @media (max-width: 560px) {
+    th { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="./">← 区間セルプレイヤーに戻る</a>
+  <h1>プライバシーとデータの扱い</h1>
+  <p class="updated">最終更新: 2026年9月29日</p>
+
+  <div class="summary">
+    <ul>
+      <li><strong>開いた動画・音声ファイルは、どこにも送信しません。</strong>あなたの PC のブラウザの中だけで再生します。</li>
+      <li><strong>目印・セル・コメント・文字起こし・単語帳・設定は、このブラウザの中にだけ保存されます。</strong>運営者のサーバーには送られず、運営者が見ることはできません。</li>
+      <li>アカウント登録、広告、アクセス解析、追跡のための Cookie はありません。</li>
+      <li>YouTube の動画を開いたときと、音声認識を使っているときだけ、Google のサービスとやり取りします（下記）。</li>
+    </ul>
+  </div>
+
+  <h2>保存されるデータと保存場所</h2>
+  <table>
+    <tr><th>データ</th><th>保存場所</th></tr>
+    <tr><td>目印・セル・コメント・いいね・ブックマーク・字幕や文字起こし</td><td>このブラウザの IndexedDB（メディアごと）</td></tr>
+    <tr><td>最近開いたメディアの一覧（名前・件数）</td><td>このブラウザの IndexedDB</td></tr>
+    <tr><td>単語帳</td><td>このブラウザの IndexedDB</td></tr>
+    <tr><td>設定（ショートカットの秒数、表示の切り替えなど）</td><td>このブラウザの localStorage</td></tr>
+  </table>
+  <p>
+    ローカルのファイルについては、次に開いたときに同じメモを出すため、ファイル名と、ファイルの先頭の一部と大きさから作った識別用の値（ハッシュ）を記録します。
+    ファイルの中身やフォルダの場所は保存しません。YouTube や URL で開いたものは、その URL とタイトルを記録します。
+  </p>
+  <p>
+    オフラインでも起動できるよう、アプリ自体のファイル（HTML・CSS・JavaScript・アイコン）をブラウザに保存しておくことがあります。これにあなたのデータは含まれません。
+  </p>
+
+  <h2>外部のサービスとやり取りする機能</h2>
+
+  <h3>YouTube の動画を開いたとき</h3>
+  <p>
+    YouTube の URL を開くと、YouTube の埋め込みプレーヤー（YouTube API サービス）で再生します。
+    このとき、再生や視聴の情報は YouTube（Google）に送られ、Google のプライバシーポリシーに従って扱われます。
+    この機能を使うことで、<a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener">YouTube の利用規約</a>に同意したものとみなされます。
+    Google による情報の扱いは <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google プライバシーポリシー</a>をご覧ください。
+  </p>
+  <p>
+    このアプリが YouTube から受け取るのは、再生に必要な情報（再生位置・長さ・タイトルなど）だけです。YouTube のアカウントには接続しません。
+    YouTube の動画に付けた目印やメモも、ほかのデータと同じくこのブラウザの中にだけ保存されます。
+  </p>
+
+  <h3>音声認識（Chrome）を使っているとき</h3>
+  <p>
+    「音声認識」を始めると、止めるまでの間、マイク（または「ステレオ ミキサー」など、マイクとして選んだ入力）の音声がブラウザの機能を通じて Google のサーバーに送られ、文字に変換されます。
+    認識された文字は文字起こしとしてこのブラウザに保存されます。音声認識を使わなければ、音声が送られることはありません。
+  </p>
+
+  <h3>URL で動画・音声を開いたとき</h3>
+  <p>その URL のサーバーから、あなたのブラウザが直接読み込みます。</p>
+
+  <h3>このページの配信</h3>
+  <p>
+    このアプリを Web サイトとして公開している場合、置いているホスティングサービスが、一般的なアクセスの記録（IP アドレス、ブラウザの種類、日時など）を残すことがあります。
+    アプリの中で行った操作やデータがホスティングサービスに送られることはありません。
+  </p>
+
+  <h2>データの持ち出し・削除</h2>
+  <ul>
+    <li>「書き出し」で、開いているメディアのメモを JSON ファイルに保存できます。「読み込み」で戻せます。単語帳は CSV で書き出せます。</li>
+    <li>字幕・文字起こしは、右下の「文字起こし」の「ツール」から .srt / .vtt / テキストで書き出せます。</li>
+    <li>
+      すべてのデータを消すには、ブラウザでこのサイトのデータを削除してください。
+      Chrome では、アドレスバー左のアイコン →「サイトの設定」→「データを削除」で消せます。
+    </li>
+    <li>ブラウザの閲覧データを消去したときも、メモは消えます。大事なメモは書き出しておいてください。</li>
+  </ul>
+
+  <h2>このページの変更</h2>
+  <p>データの扱いを変えるときは、このページを更新し、上の「最終更新」の日付を変えます。</p>
+
+  <h2>お問い合わせ</h2>
+  <p>
+    ご質問や不具合の報告は、<a href="https://github.com/pe-kun333/cells-player/issues" target="_blank" rel="noopener">GitHub の Issues</a> へお寄せください。
+    ソースコードは <a href="https://github.com/pe-kun333/cells-player" target="_blank" rel="noopener">GitHub</a> で公開しています。
+  </p>
+</main>
+</body>
+</html>
