@@ -564,6 +564,7 @@ export const EN = {
   '{n} 件': (v) => pl(v.n, 'result'),
   'いいね・ブックマークした場面はまだありません。': "You haven't liked or bookmarked any scenes yet.",
   '見つかりませんでした。': 'Nothing found.',
+  'まだありません。': 'Nothing here yet.',
   'さらに {n} 件': (v) => `${pl(v.n, 'more result')}`,
   'いま開いている': 'Open now',
   '{n} 本のメディア': (v) => pl(v.n, 'video', 'videos'),

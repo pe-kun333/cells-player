@@ -116,8 +116,9 @@ export class Library {
       const who = (x) => (x.src ? doc.shares?.find((s) => s.id === x.src) || { by: '?', color: 0 } : null);
       for (const c of doc.cells) {
         const base = { doc, t: c.s, lv: c.lv, bm: c.bm, who: who(c), focus: { kind: 'cell', id: c.id }, obj: c };
-        // primary: 「いいね・ブックマークだけ」で、1つのセル・目印を1行で見せるときに使う行
-        if (c.memo || c.lv || c.bm) out.push({ ...base, kind: 'cell', text: c.memo, range: [c.s, c.e], primary: true });
+        // primary: 「いいね・ブックマークだけ」で、1つのセル・目印を1行で見せるときに使う行。
+        // メモのないセルも入れておく（「セル」を選んだときに、すべてのセルを並べるため）
+        out.push({ ...base, kind: 'cell', text: c.memo, range: [c.s, c.e], primary: true });
         for (const cm of c.comments || []) out.push({ ...base, kind: 'comment', t: Number.isFinite(cm.t) ? cm.t : c.s, text: cm.text });
       }
       for (const m of doc.markers) {
@@ -157,10 +158,12 @@ export class Library {
     const terms = this.terms();
     const fav = this.favEl.checked;
     this.addable = [];
-    if (!terms.length && !fav) {
+    // 何も探さず「すべて」のときはメディアの一覧。「セル」「コメント」などを選んだときは、その種類をすべて並べる
+    if (!terms.length && !fav && this.kind === 'all') {
       this.renderMedia();
       return;
     }
+    const browse = !terms.length && !fav;
     const hits = [];
     let total = 0;
     for (const e of this.entries) {
@@ -169,7 +172,6 @@ export class Library {
       // 探す言葉がなく「いいね・ブックマークだけ」のときは、1つの場面を1行にする
       if (fav && !terms.length && !e.primary) continue;
       if (!terms.every((t) => e.hay.includes(t))) continue;
-      if (!fav && !e.text && !e.sub) continue;
       total++;
       if (hits.length < MAX_HITS) hits.push(e);
     }
@@ -178,7 +180,8 @@ export class Library {
       ? tr('{n} 件（最初の {m} 件を表示）', { n: total, m: hits.length })
       : tr('{n} 件', { n: total });
     if (!hits.length) {
-      this.listEl.innerHTML = `<div class="lib-empty">${fav && !terms.length ? tr('いいね・ブックマークした場面はまだありません。') : tr('見つかりませんでした。')}</div>`;
+      const empty = browse ? tr('まだありません。') : fav && !terms.length ? tr('いいね・ブックマークした場面はまだありません。') : tr('見つかりませんでした。');
+      this.listEl.innerHTML = `<div class="lib-empty">${empty}</div>`;
       return;
     }
     // メディアごとにまとめる（新しく更新した順。メディアの中は時間順）
