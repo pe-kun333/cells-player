@@ -1337,11 +1337,12 @@ document.addEventListener(
   true,
 );
 
-// YouTube の画面をクリックするとキー操作が iframe に取られるので、親ページへ戻す
+// YouTube の動画をクリックするとキー操作が iframe に取られるので、親ページへ戻す。
+// ライブチャットの iframe は書き込むところなので戻さない（戻すと入力欄からすぐ外れてしまう）
 window.addEventListener('blur', () => {
   setTimeout(() => {
     const a = document.activeElement;
-    if (a && a.tagName === 'IFRAME') {
+    if (a && a.tagName === 'IFRAME' && a.closest('#stageMedia')) {
       a.blur();
       window.focus();
     }
