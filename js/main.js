@@ -16,7 +16,7 @@ import { Broadcast } from './broadcast.js';
 import { ShareDialog, ShareLayers, decodeShare, shareIdOf, shareFromText } from './share.js';
 import { XStrip } from './xstrip.js';
 import { Library } from './library.js';
-import { Playlist } from './playlist.js';
+import { Playlist, isPlaylistJson } from './playlist.js';
 import { $, clamp, fmt, round2, escapeHtml, icon, cellLabel } from './util.js';
 import { tr, trMaybe, lang, isEn, translatePage } from './i18n.js';
 
@@ -1211,7 +1211,6 @@ function exportJson() {
 }
 
 async function importJsonFile(file) {
-  if (!requireMedia()) return;
   let data;
   try {
     data = JSON.parse(await file.text());
@@ -1219,6 +1218,12 @@ async function importJsonFile(file) {
     toast(tr('JSON ファイルとして読み込めませんでした'));
     return;
   }
+  // プレイリストのファイルは、メディアを開いていなくても読み込める（ライブラリの右側に出す）
+  if (isPlaylistJson(data)) {
+    playlist.load(data, file.name);
+    return;
+  }
+  if (!requireMedia()) return;
   // メモの書き出しファイルでなければ、文字起こし（Whisper・cellview など）として読む
   if (!isNotesJson(data)) {
     loadTranscriptFile(file);
@@ -1349,9 +1354,7 @@ $('#urlForm').addEventListener('submit', (e) => {
 $('#btnUndo').addEventListener('click', () => store.undo());
 $('#btnRedo').addEventListener('click', () => store.redo());
 $('#btnExport').addEventListener('click', exportJson);
-$('#btnImport').addEventListener('click', () => {
-  if (requireMedia()) $('#importInput').click();
-});
+$('#btnImport').addEventListener('click', () => $('#importInput').click());
 $('#importInput').addEventListener('change', (e) => {
   if (e.target.files[0]) importJsonFile(e.target.files[0]);
   e.target.value = '';

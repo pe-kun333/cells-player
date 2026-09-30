@@ -323,7 +323,7 @@ export class Library {
     }
     if (e.target.closest('[data-addall]')) {
       const n = this.app.playlist.add(this.addable || []);
-      this.app.hint(tr('{n} 件をプレイリストに入れました', { n }));
+      this.app.playlist.flash(tr('{n} 件をプレイリストに入れました', { n }));
       return;
     }
     const more = e.target.closest('[data-more]');

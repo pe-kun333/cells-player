@@ -64,6 +64,9 @@ The right side of the Library is the playlist. Line up cells and markers from di
 - YouTube and URL videos are opened automatically. The browser can't open files on your computer by itself, so playback stops there; open the same file with "Open file" to continue
 - Videos that can't be opened (embedding not allowed, deleted, etc.) are skipped. If a video doesn't start, a hint appears: press ▶ to play it, or "Next" to skip it
 - YouTube may show an ad when the video switches
+- Save to file: give the playlist a name and press "Save to file" to save it as `name.playlist.json`. Load it with "Load from file" (or "Import" at the top, or by dropping the file) to use it again
+  - If there is already a list, you can choose "Replace it" or "Add to the end". Keep several playlists as files and switch between them
+  - The file also holds a copy of each item's range, note and video title, so the YouTube items play on another PC or browser too
 
 ## Share links (share on X and elsewhere)
 

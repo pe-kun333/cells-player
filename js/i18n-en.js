@@ -627,6 +627,24 @@ export const EN = {
   'プレイリストに入れました（{n} 件目）。ライブラリ（L）の右側で並べ替え・再生できます':
     'Added to the playlist (item {n}). Reorder and play it on the right side of the Library (L)',
   'プレイリストから外しました': 'Removed from the playlist',
+  '「{file}」として保存しました': 'Saved as "{file}"',
+  'プレイリストのファイルとして読み込めませんでした': "Couldn't read this as a playlist file",
+  '「{name}」を読み込みました（{n} 件）': (v) => `Loaded "${v.name}" (${pl(v.n, 'item')})`,
+  '（読めなかった {n} 件は飛ばしました）': (v) => ` (skipped ${pl(v.n, 'item')} that couldn't be read)`,
+  '「{name}」から {n} 件を後ろに足しました（入っていたものは飛ばしました）': (v) =>
+    `Added ${pl(v.n, 'item')} from "${v.name}" to the end (skipped items already in the playlist)`,
+  '「{name}」（{n} 件）を読み込みます。いまのリスト（{m} 件）をどうしますか？': (v) =>
+    `Loading "${v.name}" (${pl(v.n, 'item')}). What should happen to the current list (${pl(v.m, 'item')})?`,
+  '置き換える': 'Replace it',
+  '後ろに足す': 'Add to the end',
+  'プレイリストの名前（保存するときのファイル名になります）': 'Playlist name (used as the file name when you save)',
+  'このプレイリストをファイル（.playlist.json）に保存します。読み込むと、また使えます':
+    'Save this playlist to a file (.playlist.json). Load it again to use it later',
+  'ファイルに保存': 'Save to file',
+  '保存したプレイリストのファイルを読み込みます': 'Load a saved playlist file',
+  'ファイルから読み込む': 'Load from file',
+  '書き出したメモ（.cells.json）や、保存したプレイリスト（.playlist.json）を読み込みます':
+    'Import exported notes (.cells.json) or a saved playlist (.playlist.json)',
 
   // ---- 共有 ----
   '共有': 'Share',

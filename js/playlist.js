@@ -4,10 +4,56 @@ import { tr } from './i18n.js';
 // プレイリスト: すべてのメディアのセル・目印を好きな順に並べて、動画をまたいで続けて再生する。
 // 1件は元のセル・目印を指し（mediaId + ref）、範囲・メモ・題名の写しも持つ（元が消えても、写しの範囲で再生できる）。
 // 並べ替え・再生はライブラリの右側で行い、再生そのものは連続再生（digest.js）が受け持つ。
-// YouTube・URL のメディアは自動で開き、手元のファイルはそこで止まって開いてもらう
+// YouTube・URL のメディアは自動で開き、手元のファイルはそこで止まって開いてもらう。
+// ファイル（.playlist.json）に保存・読み込みでき、いくつものプレイリストを使い分けたり、別の PC へ持っていったりできる
 
 const cellText = (c) => cellLabel(c, 60) || (c.comments?.[0]?.text || '').slice(0, 60);
 const markerText = (m) => [(m.tags || []).join(tr('・')), m.comments?.[0]?.text].filter(Boolean).join('　').slice(0, 80);
+
+const MAX_ITEMS = 5000;
+const NOTE_MS = 5000;
+
+// プレイリストのファイルか
+export function isPlaylistJson(data) {
+  return !!data && typeof data === 'object' && data.app === 'cells-player' && data.kind === 'playlist' && Array.isArray(data.items);
+}
+
+// メディアの id から、種類と開く URL を決める（ファイルに書かれた URL は使わない）
+function mediaOf(mediaId) {
+  const yt = /^yt:([\w-]{11})$/.exec(mediaId);
+  if (yt) return { source: 'youtube', url: `https://www.youtube.com/watch?v=${yt[1]}` };
+  if (mediaId.startsWith('u:')) {
+    const url = mediaId.slice(2);
+    return /^https?:\/\//i.test(url) ? { source: 'url', url } : null;
+  }
+  if (/^[fn]:/.test(mediaId)) return { source: 'local', url: '' };
+  return null;
+}
+
+// ファイルの1件を確かめて、使える形にする（おかしなものは null）
+function cleanItem(x) {
+  if (!x || typeof x !== 'object') return null;
+  const str = (v, max) => (typeof v === 'string' ? v.slice(0, max) : '');
+  const num = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
+  const mediaId = str(x.mediaId, 2100);
+  const ref = str(x.ref, 100);
+  const media = mediaId && ref && mediaOf(mediaId);
+  if (!media) return null;
+  const base = { id: uid(), mediaId, title: str(x.title, 300), ...media, ref, label: str(x.label, 200), at: Date.now() };
+  if (x.kind === 'cell') {
+    const s = num(x.s);
+    const e = num(x.e);
+    return s !== null && e !== null && e > s ? { ...base, kind: 'cell', s, e } : null;
+  }
+  if (x.kind === 'marker') {
+    const t = num(x.t);
+    return t !== null ? { ...base, kind: 'marker', t } : null;
+  }
+  return null;
+}
+
+// ファイル名に使えない文字を置き換える
+const safeName = (s) => s.replace(/[\\/:*?"<>|]/g, '_').trim();
 
 export class Playlist {
   constructor(app) {
@@ -15,8 +61,20 @@ export class Playlist {
     this.dialog = $('#libraryDialog');
     this.panel = $('#plPanel');
     this.dragFrom = -1;
+    this.pending = null; // 読み込んだファイル（いまのリストと置き換えるか、後ろに足すかを選んでもらう）
+    this.note = '';      // パネルの中に出すお知らせ（ダイアログの上では、下のヒントが見えないため）
+    this.noteTimer = null;
+    this.fileInput = $('#playlistInput');
+    this.fileInput.addEventListener('change', (e) => {
+      const f = e.target.files[0];
+      e.target.value = '';
+      if (f) this.importFile(f);
+    });
     this.panel.addEventListener('click', (e) => this.onClick(e));
     this.panel.addEventListener('keydown', (e) => this.onKeydown(e));
+    this.panel.addEventListener('change', (e) => {
+      if (e.target.id === 'plName') this.setName(e.target.value);
+    });
     this.panel.addEventListener('dragstart', (e) => this.onDragStart(e));
     this.panel.addEventListener('dragover', (e) => this.onDragOver(e));
     this.panel.addEventListener('drop', (e) => this.onDrop(e));
@@ -25,6 +83,125 @@ export class Playlist {
 
   get items() {
     return this.app.store.playlist.items;
+  }
+
+  get name() {
+    return this.app.store.playlist.name || '';
+  }
+
+  setName(v) {
+    const name = String(v).trim().slice(0, 80);
+    if (name === this.name) return;
+    this.app.store.playlist.name = name;
+    this.save();
+  }
+
+  // パネルの中に少しの間お知らせを出す
+  flash(msg) {
+    this.note = msg;
+    clearTimeout(this.noteTimer);
+    this.noteTimer = setTimeout(() => {
+      this.note = '';
+      this.renderIfOpen();
+    }, NOTE_MS);
+    this.renderIfOpen();
+  }
+
+  // ---- ファイルに保存・読み込み ----
+
+  // 元のセル・目印の id と、範囲・メモ・題名の写しを書く（写しがあるので、メモのない別の PC でも YouTube の分は再生できる）
+  exportData() {
+    return {
+      app: 'cells-player',
+      kind: 'playlist',
+      version: 1,
+      name: this.name,
+      exportedAt: new Date().toISOString(),
+      items: this.items.map((it) => ({
+        mediaId: it.mediaId,
+        title: it.title,
+        source: it.source,
+        url: it.url,
+        kind: it.kind,
+        ref: it.ref,
+        ...(it.kind === 'cell' ? { s: it.s, e: it.e } : { t: it.t }),
+        label: it.label,
+      })),
+    };
+  }
+
+  exportFile() {
+    if (!this.items.length) return;
+    const file = `${safeName(this.name) || tr('プレイリスト')}.playlist.json`;
+    const blob = new Blob([JSON.stringify(this.exportData(), null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = file;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    this.flash(tr('「{file}」として保存しました', { file }));
+  }
+
+  async importFile(file) {
+    let data;
+    try {
+      data = JSON.parse(await file.text());
+    } catch {
+      data = null;
+    }
+    if (!isPlaylistJson(data)) {
+      this.app.openLibrary();
+      this.flash(tr('プレイリストのファイルとして読み込めませんでした'));
+      return;
+    }
+    this.load(data, file.name);
+  }
+
+  // 読み込んだ中身: いまのリストが空ならそのまま使い、あれば置き換えるか後ろに足すかを選んでもらう
+  load(data, fileName = '') {
+    const seen = new Set();
+    const items = [];
+    let skipped = 0; // 読めなかったもの（同じものが2つあったときは数えない）
+    for (const x of data.items.slice(0, MAX_ITEMS)) {
+      const it = cleanItem(x);
+      if (!it) {
+        skipped++;
+        continue;
+      }
+      const key = `${it.mediaId}|${it.ref}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      items.push(it);
+    }
+    const name = (typeof data.name === 'string' && data.name.trim()) || fileName.replace(/(\.playlist)?\.json$/i, '');
+    this.pending = { name: name.slice(0, 80), items, skipped };
+    if (!this.dialog.open) this.app.openLibrary();
+    if (!this.items.length) this.applyPending('replace');
+    else this.render();
+  }
+
+  applyPending(mode) {
+    const p = this.pending;
+    this.pending = null;
+    if (!p) return;
+    if (mode === 'replace') {
+      this.items.splice(0, this.items.length, ...p.items);
+      this.app.store.playlist.name = p.name;
+      this.save();
+      this.flash(
+        tr('「{name}」を読み込みました（{n} 件）', { name: p.name || tr('プレイリスト'), n: p.items.length }) +
+          (p.skipped ? tr('（読めなかった {n} 件は飛ばしました）', { n: p.skipped }) : ''),
+      );
+      return;
+    }
+    let n = 0;
+    for (const it of p.items) {
+      if (this.has(it.mediaId, it.ref)) continue;
+      this.items.push(it);
+      n++;
+    }
+    if (n) this.save();
+    this.flash(tr('「{name}」から {n} 件を後ろに足しました（入っていたものは飛ばしました）', { name: p.name || tr('プレイリスト'), n }));
   }
 
   save() {
@@ -174,17 +351,35 @@ export class Playlist {
     }, 0);
     const now = this.app.playlistNow();
     const none = items.length ? '' : ' disabled';
+    const p = this.pending;
+    const load = p
+      ? `<div class="pl-load">
+          <div>${escapeHtml(tr('「{name}」（{n} 件）を読み込みます。いまのリスト（{m} 件）をどうしますか？', { name: p.name || tr('プレイリスト'), n: p.items.length, m: items.length }))}</div>
+          <div class="pl-tools">
+            <button type="button" class="btn small primary" data-pl="load-replace">${tr('置き換える')}</button>
+            <button type="button" class="btn small" data-pl="load-append">${tr('後ろに足す')}</button>
+            <button type="button" class="btn small" data-pl="load-cancel">${tr('キャンセル')}</button>
+          </div>
+        </div>`
+      : '';
     this.panel.innerHTML = `
       <div class="pl-head">
         <h3>${tr('プレイリスト')}</h3>
         <span class="count">${items.length ? tr('{n} 件・{len}', { n: items.length, len: fmtLen(total) }) : ''}</span>
       </div>
+      <input id="plName" type="text" class="field pl-name" value="${escapeHtml(this.name)}" maxlength="80" placeholder="${tr('プレイリストの名前（保存するときのファイル名になります）')}" autocomplete="off">
       <div class="pl-tools">
         <button type="button" class="btn small primary" data-pl="play"${none}>${icon('play')} ${tr('最初から再生')}</button>
         <button type="button" class="btn small" data-pl="group"${none} title="${tr('同じ動画のものを続けて並べます（動画の切り替えが減ります）')}">${tr('同じ動画をまとめる')}</button>
+      </div>
+      <div class="pl-tools">
+        <button type="button" class="btn small" data-pl="save"${none} title="${tr('このプレイリストをファイル（.playlist.json）に保存します。読み込むと、また使えます')}">${icon('file')} ${tr('ファイルに保存')}</button>
+        <button type="button" class="btn small" data-pl="open" title="${tr('保存したプレイリストのファイルを読み込みます')}">${tr('ファイルから読み込む')}</button>
         <span class="spacer"></span>
         <button type="button" class="btn small" data-pl="clear"${none}>${tr('すべて外す')}</button>
       </div>
+      ${load}
+      ${this.note ? `<div class="pl-note" role="status">${escapeHtml(this.note)}</div>` : ''}
       ${
         items.length
           ? `<ol class="pl-list">${items.map((it, i) => this.rowHtml(it, i, items[i - 1], now)).join('')}</ol>`
@@ -228,14 +423,31 @@ export class Playlist {
     }
     if (act === 'group') {
       this.groupByMedia();
-      this.app.hint(tr('同じ動画のものをまとめました'));
+      this.flash(tr('同じ動画のものをまとめました'));
       return;
     }
     if (act === 'clear') {
       if (confirm(tr('プレイリストの {n} 件をすべて外しますか？（セル・目印そのものは消えません）', { n: this.items.length }))) {
         this.items.splice(0);
+        this.app.store.playlist.name = '';
         this.save();
       }
+      return;
+    }
+    if (act === 'save') {
+      this.setName(this.panel.querySelector('#plName')?.value ?? this.name);
+      this.exportFile();
+      return;
+    }
+    if (act === 'open') {
+      this.fileInput.click();
+      return;
+    }
+    if (act?.startsWith('load-')) {
+      if (act === 'load-cancel') {
+        this.pending = null;
+        this.render();
+      } else this.applyPending(act === 'load-replace' ? 'replace' : 'append');
       return;
     }
     const del = e.target.closest('[data-del]');
@@ -250,6 +462,12 @@ export class Playlist {
 
   // Alt+↑↓ で並べ替え（ドラッグできないとき用）
   onKeydown(e) {
+    // 名前の欄の Enter でダイアログを閉じない（決めるだけ）
+    if (e.target.id === 'plName' && e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) {
+      e.preventDefault();
+      this.setName(e.target.value);
+      return;
+    }
     if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
     const b = e.target.closest('[data-play]');
     if (!b) return;
