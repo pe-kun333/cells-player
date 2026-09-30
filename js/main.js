@@ -14,6 +14,7 @@ import { Digest } from './digest.js';
 import { LiveCaption } from './live.js';
 import { Broadcast } from './broadcast.js';
 import { ShareDialog, ShareLayers, decodeShare, shareIdOf, shareFromText } from './share.js';
+import { XStrip } from './xstrip.js';
 import { $, clamp, fmt, round2, escapeHtml, icon, cellLabel } from './util.js';
 import { tr, trMaybe, lang, isEn, translatePage } from './i18n.js';
 
@@ -85,6 +86,7 @@ const txtools = new TxTools(app);
 const broadcast = new Broadcast(app);
 const shareDialog = new ShareDialog(app);
 const shareLayers = new ShareLayers(app);
+const xstrip = new XStrip(app);
 // ライブ配信を見ている間に作った目印・セルには印を付ける（あとでアーカイブの時刻に合わせるため）
 store.liveNow = () => !!app.player?.isLive();
 let txIndex = -2; // いま表示・強調している字幕の行（変わったときだけ描き直す）
@@ -122,6 +124,7 @@ function renderAll() {
   sidebar.render();
   commentList.render();
   shareLayers.render();
+  xstrip.render();
   updateCaptionButton();
   txIndex = -2; // 字幕の表示を次の監視で描き直す
   $('#btnUndo').disabled = !store.canUndo;
@@ -375,15 +378,17 @@ app.toggleQuickTag = (index) => {
 };
 
 // pin: コメントマークで固定した位置 { markerId, t }。目印はここで（送信した時点で）作る
-app.commentAt = (text, pin) => {
-  if (!requireMedia()) return;
+// extra: コメントに付ける印（X に投稿した内容なら { via: 'x' }）。コメントを付けた目印を返す
+app.commentAt = (text, pin, extra) => {
+  if (!requireMedia()) return null;
   let m = pin?.markerId ? store.getMarker(pin.markerId) : null;
   const t = clamp(pin ? pin.t : app.now(), 0, app.duration());
   if (!m) m = store.nearestMarker(t, app.settings.mergeWindow);
-  if (m) store.addComment('marker', m.id, text, m.t);
-  else m = store.addMarker(t, { comments: [makeComment(text, t)] });
+  if (m) store.addComment('marker', m.id, text, m.t, extra);
+  else m = store.addMarker(t, { comments: [makeComment(text, t, extra)] });
   settle(m, app.now(), pin?.fromTarget ? { commented: true } : null);
   app.hint(tr('{time} の目印にコメントしました', { time: fmt(m.t, true) }));
+  return m;
 };
 
 app.moveMarker = (id, t) => {

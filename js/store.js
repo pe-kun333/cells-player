@@ -125,8 +125,9 @@ function guessMark(m) {
   return !(m.lv || m.bm || tags.length || comments.length);
 }
 
-export function makeComment(text, t) {
-  return { id: uid(), text, t: round2(t), at: Date.now() };
+// extra: { via: 'x' } など（X に投稿した内容を残したコメント）
+export function makeComment(text, t, extra = {}) {
+  return { id: uid(), text, t: round2(t), at: Date.now(), ...extra };
 }
 
 function emptyDoc(meta) {
@@ -639,11 +640,18 @@ export class Store {
     return kind === 'cell' ? this.getCell(id) : this.getMarker(id);
   }
 
-  addComment(kind, id, text, t) {
+  addComment(kind, id, text, t, extra) {
     this.mutate(() => {
       const item = this.getItem(kind, id);
-      if (item) item.comments.push(makeComment(text, t));
+      if (item) item.comments.push(makeComment(text, t, extra));
     });
+  }
+
+  // ライブ配信などで X に書き込むときのハッシュタグ（動画ごと、# は付けずに持つ）
+  setXTags(tags) {
+    this.mutate((doc) => {
+      doc.xTags = tags;
+    }, { record: false });
   }
 
   deleteComment(kind, id, commentId) {

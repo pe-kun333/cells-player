@@ -610,6 +610,27 @@ export const EN = {
 
   // ---- ライブ配信 ----
   'ライブチャット': 'Live chat',
+  'X に書く（Enter で投稿画面へ）': 'Write for X (Enter to open the post screen)',
+  'X に書く内容': 'Text for X',
+  'リンク': 'Link',
+  'その時刻の動画へのリンクを付ける（アーカイブになったあとは、その場面から見られます）':
+    'Add a link to the video at this time (after archiving, it opens at that scene)',
+  'ハッシュタグ入りの X の投稿画面を開く。書いた内容は、その時刻の瞬間のコメントとしても残ります':
+    'Open the post screen on X with your hashtags. What you write is also saved as a moment comment at that time',
+  '#ハッシュタグ（空白で区切って5つまで）': '#hashtags (up to 5, separated by spaces)',
+  'ハッシュタグ': 'Hashtags',
+  '登録': 'Save',
+  'クリックで変える': 'Click to change',
+  'このハッシュタグの X の最新の投稿を、画面の左端に別のウィンドウで開く': 'Open the latest posts with these hashtags on X in a separate window at the left edge of the screen',
+  'X で見る': 'View on X',
+  'ハッシュタグ {tags} を登録しました（この動画で使います）': 'Saved hashtags {tags} (used for this video)',
+  'ハッシュタグを外しました': 'Hashtags removed',
+  '{time} の瞬間のコメントとしても残ります': 'Also saved as a moment comment at {time}',
+  'X に書く内容か、ハッシュタグを入れてください': 'Enter something to write or a hashtag',
+  'X の投稿画面を開きました（投稿は X の画面で）。書いた内容は {time} の瞬間のコメントにも残しました':
+    'Opened the post screen on X (post it there). What you wrote is also saved as a moment comment at {time}',
+  'X の投稿画面を開きました（投稿は X の画面で）': 'Opened the post screen on X (post it there)',
+  'X に投稿した内容': 'Posted on X',
   'YouTube のライブチャット': 'YouTube live chat',
   '再読み込み': 'Reload',
   'チャットを読み込み直す（YouTube にログインしたあとなど）': 'Reload the chat (after signing in to YouTube, for example)',

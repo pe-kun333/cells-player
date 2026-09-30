@@ -62,6 +62,7 @@ Open the URL of a live stream (`…/watch?v=…` or `…/live/…`) to add marke
 
 - The "LIVE" button next to the time shows how far you are behind the latest part. Press it to jump back to the latest
 - During a live stream, the YouTube live chat is shown on the left (YouTube's own chat embed). If you are signed in to YouTube in this browser, you can post with your own account. Turn it off with "Chat" or in Settings. If it doesn't show or you can't post, "Pop out" opens the chat on YouTube
+- The X strip under the chat saves the stream's hashtags (per video). "View on X" opens the latest posts with those hashtags on X in a tall window at the left edge of the screen (X pages can't be embedded in the app). "Post on X" opens X's post screen with your text and hashtags (you do the posting); your text is also saved as a moment comment marked "X". Turn on "Link" to add a link to the video at that time
 - Everything you add during the stream is still there when you open the same URL after the stream has been archived
 - If the beginning or middle was cut from the archive, the times can be off. When you open the archive, use "Align live notes with the archive": click a marker you added during the stream, move the archive to that same scene, and press "Align all" (if the middle was cut, use a marker after the cut with "From here on")
 - To fix it later, use "Align live notes" next to the playback buttons (Ctrl+Z to undo)

@@ -103,7 +103,7 @@ export class CommentList {
       const sh = store.shareOf(m);
       if (m.comments.length) {
         m.comments.forEach((c, i) =>
-          rows.push({ key: c.id, id: m.id, t: m.t, text: c.text, tags: i === 0 ? m.tags : [], sh, by: c.by }),
+          rows.push({ key: c.id, id: m.id, t: m.t, text: c.text, tags: i === 0 ? m.tags : [], sh, by: c.by, via: c.via }),
         );
       } else if (m.tags.length) {
         rows.push({ key: 'm:' + m.id, id: m.id, t: m.t, text: '', tags: m.tags, sh });
@@ -126,7 +126,7 @@ export class CommentList {
       el.textContent = n ? String(n) : '';
     }
     const rows = this.mode === 'transcript' ? transcript : comments;
-    const key = this.mode + '\u0003' + rows.map((r) => `${r.key}:${r.t}:${r.tags.join('\u0001')}:${r.text}:${r.sh?.id || ''}:${r.sh?.color ?? ''}`).join('\u0002');
+    const key = this.mode + '\u0003' + rows.map((r) => `${r.key}:${r.t}:${r.tags.join('\u0001')}:${r.text}:${r.sh?.id || ''}:${r.sh?.color ?? ''}:${r.via || ''}`).join('\u0002');
     if (key === this.key && this.body.childElementCount) {
       this.tick(this.app.now());
       return;
@@ -198,7 +198,8 @@ export class CommentList {
     // 共有で読み込んだコメント・取り込んだコメントには、書いた人の名前を付ける
     const whoName = r.by || r.sh?.by;
     const who = whoName ? `<span class="mwho"${r.sh ? ` style="--who:${whoColor(r.sh)}"` : ''}>${escapeHtml(whoName)}</span>` : '';
-    html = `<div class="mrow${inRange ? ' is-selected' : ''}" data-key="${escapeHtml(r.key)}" title="${escapeHtml(full)}"><span class="mt">${fmt(r.t)}</span>${who}${tags}<span class="mx">${escapeHtml(text)}</span></div>`;
+    const viaX = r.via === 'x' ? `<span class="via-x" title="${tr('X に投稿した内容')}">X</span>` : '';
+    html = `<div class="mrow${inRange ? ' is-selected' : ''}" data-key="${escapeHtml(r.key)}" title="${escapeHtml(full)}"><span class="mt">${fmt(r.t)}</span>${who}${viaX}${tags}<span class="mx">${escapeHtml(text)}</span></div>`;
     if (!last) return html;
 
     // 選んだ範囲の最後の行の下に、操作のボタンを出す

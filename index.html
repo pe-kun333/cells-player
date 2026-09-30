@@ -80,6 +80,16 @@
       <button type="button" class="btn tiny" id="btnChatClose" title="チャットを閉じる" aria-label="閉じる"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
     </div>
     <div class="chat-frame" id="chatFrame"></div>
+    <!-- X: ハッシュタグの登録・X で見る・X に投稿（X の画面は埋め込めないので、別の画面で開く） -->
+    <div class="x-strip" id="xStrip">
+      <div class="xs-row" id="xsTags"></div>
+      <form class="xs-row" id="xsForm" autocomplete="off">
+        <span class="xs-pin" id="xsPin" hidden></span>
+        <input class="field xs-input" id="xsInput" type="text" maxlength="280" placeholder="X に書く（Enter で投稿画面へ）" aria-label="X に書く内容">
+        <button type="button" class="btn tiny" id="xsLink" title="その時刻の動画へのリンクを付ける（アーカイブになったあとは、その場面から見られます）">リンク</button>
+        <button type="submit" class="btn tiny primary" title="ハッシュタグ入りの X の投稿画面を開く。書いた内容は、その時刻の瞬間のコメントとしても残ります">X に投稿</button>
+      </form>
+    </div>
     <p class="chat-note">書き込むには、このブラウザで YouTube にログインしてください。コメントは YouTube のチャット画面から、あなたのアカウントで投稿されます（このアプリはその内容を受け取りません）。</p>
   </aside>
   <section class="left">
