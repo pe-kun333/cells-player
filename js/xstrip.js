@@ -2,12 +2,37 @@ import { $, fmt, escapeHtml } from './util.js';
 import { saveSettings } from './store.js';
 import { tr } from './i18n.js';
 
-// ライブチャットの下の X の帯。
+// ライブチャットの下の帯（チャットと X に書く）。
 // 1行目: 動画ごとに登録したハッシュタグと「X で見る」（X のそのハッシュタグの最新の投稿を、画面の左端に縦長の別ウィンドウで開く）
-// 2行目: X に書く欄と「X に投稿」（ハッシュタグ入りの X の投稿画面を開く。投稿するかどうかは X の画面で本人が決める）。
-//   書いた内容は、書き始めた時刻の「瞬間のコメント」としてアプリにも残す（X に投稿した印 via: 'x' を付ける）。
+// 2・3行目: 共通の書く欄と送り先のボタン
+//   チャットへ: 文をコピーする（埋め込んだ YouTube のチャットには、ブラウザの安全の仕組みでアプリから書き込めないため、
+//               チャットの入力欄をクリックして貼り付けてもらう）
+//   X へ:      ハッシュタグ入りの X の投稿画面を開く（投稿するかどうかは X の画面で本人が決める）
+//   両方:      その両方
+//   書いた内容は、書き始めた時刻の「瞬間のコメント」としてアプリにも残し、送った先の印（via）を付ける。
+//   Enter は、最後に使った送り先で送る
 // X のページはほかのサイトに埋め込めないので、投稿の一覧はアプリの中には出さない
 const MAX_TAGS = 5;
+const SEND_LABELS = { chat: 'チャットへ', x: 'X へ', both: '両方' };
+
+// クリップボードにコピーする（使えないときは古い方法で）
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {}
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+  document.body.appendChild(ta);
+  ta.select();
+  let ok = false;
+  try {
+    ok = document.execCommand('copy');
+  } catch {}
+  ta.remove();
+  return ok;
+}
 
 // 「#ライブ ＃雑談, test」→ ['ライブ', '雑談', 'test']（X のハッシュタグに使えない記号は除く）
 export function parseTags(text) {
@@ -27,6 +52,8 @@ export class XStrip {
     this.input = $('#xsInput');
     this.pinEl = $('#xsPin');
     this.linkBtn = $('#xsLink');
+    this.sendBtns = [...this.form.querySelectorAll('[data-send]')];
+    this.chatFrame = $('#chatFrame');
     this.editing = false;
     this.pinT = null; // 書き始めた時刻（瞬間のコメントとして残す位置）
     this.key = '';
@@ -61,14 +88,28 @@ export class XStrip {
     });
     this.form.addEventListener('submit', (e) => {
       e.preventDefault();
-      this.post();
+      this.send(this.sendTo);
     });
+    for (const b of this.sendBtns) b.addEventListener('click', () => this.send(b.dataset.send));
     this.linkBtn.addEventListener('click', () => {
       app.settings.xLink = !app.settings.xLink;
       saveSettings(app.settings);
       this.renderLink();
     });
     this.renderLink();
+    this.renderSend();
+  }
+
+  // Enter で送る先（最後に使った送り先）
+  get sendTo() {
+    const s = this.app.settings.sendTo;
+    return s === 'x' || s === 'both' ? s : 'chat';
+  }
+
+  renderSend() {
+    const to = this.sendTo;
+    for (const b of this.sendBtns) b.classList.toggle('primary', b.dataset.send === to);
+    this.input.placeholder = tr('書く（Enter で「{dest}」）', { dest: tr(SEND_LABELS[to]) });
   }
 
   get tags() {
@@ -172,7 +213,8 @@ export class XStrip {
     this.linkBtn.setAttribute('aria-pressed', String(on));
   }
 
-  post() {
+  // dest: 'chat'（コピーして貼ってもらう）/ 'x'（X の投稿画面を開く）/ 'both'
+  async send(dest) {
     const { app } = this;
     if (!app.player || !app.store.doc) {
       app.toast(tr('先に動画か音声を開いてください'));
@@ -180,25 +222,52 @@ export class XStrip {
     }
     const text = this.input.value.trim();
     const tags = this.tags;
-    if (!text && !tags.length) {
-      app.hint(tr('X に書く内容か、ハッシュタグを入れてください'));
+    const toChat = dest !== 'x';
+    const toX = dest !== 'chat';
+    // X へはハッシュタグだけでも送れる。チャットへは書いた文が要る
+    if (!text && (toChat || !tags.length)) {
+      app.hint(toChat ? tr('先に書く欄に書いてください') : tr('X に書く内容か、ハッシュタグを入れてください'));
       this.input.focus();
       return;
     }
+    if (app.settings.sendTo !== dest) {
+      app.settings.sendTo = dest;
+      saveSettings(app.settings);
+      this.renderSend();
+    }
     const t = this.pinT ?? app.now();
+    // 先にコピーしてから X の画面を開く（開くと、このページが選ばれていない状態になりコピーできないため）
+    const copied = toChat ? await copyText(text) : false;
+    if (toX) this.openX(text, tags, t);
+    this.input.value = '';
+    this.setPin(null);
+    const m = text ? app.commentAt(text, { markerId: null, t, fromTarget: false }, { via: toChat && toX ? 'chat+x' : toChat ? 'chat' : 'x' }) : null;
+    const saved = m ? tr('（{time} の瞬間のコメントにも残しました）', { time: fmt(m.t, true) }) : '';
+    if (toChat) {
+      this.flashChat();
+      if (!copied) app.hint(tr('コピーできませんでした。書いた内容を、チャットの入力欄に直接書いてください') + saved, true);
+      else if (toX) app.hint(tr('コピーして、X の投稿画面を開きました。チャットには、入力欄をクリックして Ctrl+V → Enter で送れます') + saved, true);
+      else app.hint(tr('コピーしました。左のチャットの入力欄をクリックして Ctrl+V → Enter で送れます') + saved, true);
+    } else {
+      app.hint(tr('X の投稿画面を開きました（投稿は X の画面で）') + saved);
+    }
+  }
+
+  // ハッシュタグ入りの X の投稿画面を、アプリが隠れないよう小さな別ウィンドウで開く
+  openX(text, tags, t) {
     const id = this.videoId();
     let url = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
     if (tags.length) url += `&hashtags=${encodeURIComponent(tags.join(','))}`;
     // その時刻の動画へのリンク（ライブ中の再生位置は、アーカイブの時刻とふつう同じ）
-    if (app.settings.xLink && id) url += `&url=${encodeURIComponent(`https://youtu.be/${id}?t=${Math.floor(t)}`)}`;
-    window.open(url, '_blank', 'noopener');
-    this.input.value = '';
-    this.setPin(null);
-    if (text) {
-      const m = app.commentAt(text, { markerId: null, t, fromTarget: false }, { via: 'x' });
-      if (m) app.hint(tr('X の投稿画面を開きました（投稿は X の画面で）。書いた内容は {time} の瞬間のコメントにも残しました', { time: fmt(m.t, true) }));
-    } else {
-      app.hint(tr('X の投稿画面を開きました（投稿は X の画面で）'));
-    }
+    if (this.app.settings.xLink && id) url += `&url=${encodeURIComponent(`https://youtu.be/${id}?t=${Math.floor(t)}`)}`;
+    const w = window.open(url, 'cellsplayer-xpost', 'popup,width=600,height=520');
+    if (w) w.opener = null;
+  }
+
+  // 貼り付ける先（チャット欄）を少しのあいだ目立たせる
+  flashChat() {
+    this.chatFrame.classList.add('is-paste');
+    clearTimeout(this.flashTimer);
+    this.flashTimer = setTimeout(() => this.chatFrame.classList.remove('is-paste'), 2500);
   }
 }

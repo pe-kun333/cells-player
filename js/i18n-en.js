@@ -610,13 +610,26 @@ export const EN = {
 
   // ---- ライブ配信 ----
   'ライブチャット': 'Live chat',
-  'X に書く（Enter で投稿画面へ）': 'Write for X (Enter to open the post screen)',
-  'X に書く内容': 'Text for X',
+  'チャット・X に書く内容': 'Text for the chat or X',
+  '書く（Enter で「{dest}」）': 'Write here (Enter: {dest})',
+  'チャットへ': 'To chat',
+  'X へ': 'To X',
+  '両方': 'Both',
+  'X へ送るとき、その時刻の動画へのリンクを付ける（アーカイブになったあとは、その場面から見られます）':
+    'When sending to X, add a link to the video at this time (after archiving, it opens at that scene)',
+  '文をコピーして、瞬間のコメントにも残す。チャットの入力欄をクリックして Ctrl+V → Enter で送れます':
+    'Copy the text and save it as a moment comment. Click the chat input box and press Ctrl+V, then Enter to send it',
+  'ハッシュタグ入りの X の投稿画面を開く。書いた内容は、瞬間のコメントにも残ります':
+    'Open the post screen on X with your hashtags. What you write is also saved as a moment comment',
+  'チャット用にコピーして、X の投稿画面も開く': 'Copy it for the chat and also open the post screen on X',
+  '先に書く欄に書いてください': 'Write something in the box first',
+  '（{time} の瞬間のコメントにも残しました）': ' (also saved as a moment comment at {time})',
+  'コピーできませんでした。書いた内容を、チャットの入力欄に直接書いてください': "Couldn't copy. Please type it directly in the chat input box",
+  'コピーして、X の投稿画面を開きました。チャットには、入力欄をクリックして Ctrl+V → Enter で送れます':
+    'Copied, and opened the post screen on X. For the chat, click its input box and press Ctrl+V, then Enter',
+  'コピーしました。左のチャットの入力欄をクリックして Ctrl+V → Enter で送れます': 'Copied. Click the chat input box on the left and press Ctrl+V, then Enter to send',
+  'ライブチャットに送った内容': 'Sent to the live chat',
   'リンク': 'Link',
-  'その時刻の動画へのリンクを付ける（アーカイブになったあとは、その場面から見られます）':
-    'Add a link to the video at this time (after archiving, it opens at that scene)',
-  'ハッシュタグ入りの X の投稿画面を開く。書いた内容は、その時刻の瞬間のコメントとしても残ります':
-    'Open the post screen on X with your hashtags. What you write is also saved as a moment comment at that time',
   '#ハッシュタグ（空白で区切って5つまで）': '#hashtags (up to 5, separated by spaces)',
   'ハッシュタグ': 'Hashtags',
   '登録': 'Save',
@@ -627,8 +640,6 @@ export const EN = {
   'ハッシュタグを外しました': 'Hashtags removed',
   '{time} の瞬間のコメントとしても残ります': 'Also saved as a moment comment at {time}',
   'X に書く内容か、ハッシュタグを入れてください': 'Enter something to write or a hashtag',
-  'X の投稿画面を開きました（投稿は X の画面で）。書いた内容は {time} の瞬間のコメントにも残しました':
-    'Opened the post screen on X (post it there). What you wrote is also saved as a moment comment at {time}',
   'X の投稿画面を開きました（投稿は X の画面で）': 'Opened the post screen on X (post it there)',
   'X に投稿した内容': 'Posted on X',
   'YouTube のライブチャット': 'YouTube live chat',

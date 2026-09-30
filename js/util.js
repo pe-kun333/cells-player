@@ -74,6 +74,16 @@ export function commentSummary(comments) {
   return comments.length > 1 ? tr('{first}（他 {n} 件）', { first, n: comments.length - 1 }) : first;
 }
 
+// コメントを送った先の印（via: 'x' / 'chat' / 'chat+x'）
+export function viaBadges(via) {
+  if (!via) return '';
+  const parts = String(via).split('+');
+  return (
+    (parts.includes('chat') ? `<span class="via yt" title="${tr('ライブチャットに送った内容')}">YT</span>` : '') +
+    (parts.includes('x') ? `<span class="via x" title="${tr('X に投稿した内容')}">X</span>` : '')
+  );
+}
+
 // 共有で読み込んだ人ごとの色（明るい画面でも暗い画面でも見分けやすい中間の色）
 export const WHO_COLORS = ['#d9822b', '#2f9e8f', '#8f5bd6', '#d6457a', '#4f86d9', '#7a9a2c'];
 export const whoColor = (sh) => WHO_COLORS[(sh?.color ?? 0) % WHO_COLORS.length];

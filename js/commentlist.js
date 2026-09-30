@@ -1,4 +1,4 @@
-import { $, fmt, escapeHtml, icon, whoColor } from './util.js';
+import { $, fmt, escapeHtml, icon, whoColor, viaBadges } from './util.js';
 import { saveSettings } from './store.js';
 import { tr } from './i18n.js';
 
@@ -198,7 +198,7 @@ export class CommentList {
     // 共有で読み込んだコメント・取り込んだコメントには、書いた人の名前を付ける
     const whoName = r.by || r.sh?.by;
     const who = whoName ? `<span class="mwho"${r.sh ? ` style="--who:${whoColor(r.sh)}"` : ''}>${escapeHtml(whoName)}</span>` : '';
-    const viaX = r.via === 'x' ? `<span class="via-x" title="${tr('X に投稿した内容')}">X</span>` : '';
+    const viaX = viaBadges(r.via);
     html = `<div class="mrow${inRange ? ' is-selected' : ''}" data-key="${escapeHtml(r.key)}" title="${escapeHtml(full)}"><span class="mt">${fmt(r.t)}</span>${who}${viaX}${tags}<span class="mx">${escapeHtml(text)}</span></div>`;
     if (!last) return html;
 

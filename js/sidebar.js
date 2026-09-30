@@ -1,4 +1,4 @@
-import { $, fmt, fmtLen, fmtDate, escapeHtml, hearts, icon, commentSummary, tagChips, whoColor } from './util.js';
+import { $, fmt, fmtLen, fmtDate, escapeHtml, hearts, icon, commentSummary, tagChips, whoColor, viaBadges } from './util.js';
 import { saveSettings } from './store.js';
 import { cuesIn } from './transcript.js';
 import { tr } from './i18n.js';
@@ -382,7 +382,7 @@ export class Sidebar {
     return `<div class="post">
       ${avatar}
       <div class="post-body">
-        <div class="post-meta"><span class="who">${who ? escapeHtml(who) : tr('あなた')}</span>${cm.via === 'x' ? `<span class="via-x" title="${tr('X に投稿した内容')}">X</span>` : ''}${cm.at ? `<span>${fmtDate(cm.at)}</span>` : ''}${time}</div>
+        <div class="post-meta"><span class="who">${who ? escapeHtml(who) : tr('あなた')}</span>${viaBadges(cm.via)}${cm.at ? `<span>${fmtDate(cm.at)}</span>` : ''}${time}</div>
         <div class="post-text">${escapeHtml(cm.text)}</div>
         ${sh ? '' : `<div class="post-acts"><button class="pact" data-act="delc" data-cid="${cm.id}">${tr('削除')}</button></div>`}
       </div>
