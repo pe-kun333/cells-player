@@ -1,6 +1,7 @@
 import { $, fmt, escapeHtml, icon, whoColor, viaBadges } from './util.js';
 import { saveSettings } from './store.js';
 import { tr } from './i18n.js';
+import { subTextAt } from './transcript.js';
 
 // 右サイドバーの下の一覧。「瞬間のコメント」（目印のコメントと定型コメント）と「文字起こし」（字幕の行）を
 // 切り替えて、時間順に小さく並べる。
@@ -114,7 +115,11 @@ export class CommentList {
 
   // 文字起こし: 字幕の行ごとに1行（目印ではないので id はなく、行の id を cueId に持つ）
   collectTranscript() {
-    return this.app.store.cues.map((c) => ({ key: 'tx:' + c.id, id: null, cueId: c.id, t: c.s, e: c.e, text: c.text, tags: [] }));
+    const cues2 = this.app.store.cues2;
+    return this.app.store.cues.map((c) => ({
+      key: 'tx:' + c.id, id: null, cueId: c.id, t: c.s, e: c.e, text: c.text, tags: [],
+      sub: cues2.length ? subTextAt(cues2, c.s, c.e) : '', // 2つめの字幕（訳など）の文
+    }));
   }
 
   render() {
@@ -199,7 +204,7 @@ export class CommentList {
     const whoName = r.by || r.sh?.by;
     const who = whoName ? `<span class="mwho"${r.sh ? ` style="--who:${whoColor(r.sh)}"` : ''}>${escapeHtml(whoName)}</span>` : '';
     const viaX = viaBadges(r.via);
-    html = `<div class="mrow${inRange ? ' is-selected' : ''}" data-key="${escapeHtml(r.key)}" title="${escapeHtml(full)}"><span class="mt">${fmt(r.t)}</span>${who}${viaX}${tags}<span class="mx">${escapeHtml(text)}</span></div>`;
+    html = `<div class="mrow${inRange ? ' is-selected' : ''}" data-key="${escapeHtml(r.key)}" title="${escapeHtml(full)}"><span class="mt">${fmt(r.t)}</span>${who}${viaX}${tags}<span class="mx">${escapeHtml(text)}${r.sub ? `<span class="msub">${escapeHtml(r.sub)}</span>` : ''}</span></div>`;
     if (!last) return html;
 
     // 選んだ範囲の最後の行の下に、操作のボタンを出す

@@ -144,6 +144,7 @@
       <span class="badge" id="modeBadge" hidden>YouTube（軽量モード）</span>
       <button id="btnLiveSync" class="btn small" hidden title="ライブ中に付けた目印・セルの時刻を、アーカイブに合わせる">ライブの記録を合わせる</button>
       <button id="btnCC" class="btn small" title="字幕・文字起こしを読み込む（.srt / .vtt / JSON）"><svg class="i" aria-hidden="true"><use href="#i-text"/></svg><span id="ccLabel">字幕を読み込む</span></button>
+      <select id="capMode" class="cap-mode" hidden title="字幕が2つあるときの出し方（両方・片方だけ）" aria-label="字幕の出し方"></select>
       <button id="btnTxPaste" class="btn small" title="YouTube の「文字起こしを表示」などからコピーした文字を貼り付けて読み込む（Ctrl+V でも開きます）">貼り付け</button>
       <button id="btnLive" class="btn small live-btn"><i class="live-dot" aria-hidden="true"></i><span>音声認識</span></button>
       <input type="file" id="txInput" accept=".srt,.vtt,.json,.txt" hidden>
@@ -310,6 +311,15 @@
         <button type="button" class="btn small danger" id="btnTxRemove">外す</button>
       </span>
     </div>
+    <div class="set-row wide">
+      <span>2つめの字幕（訳など）<small id="tx2Info">読み込んでいません</small><small>日本語と英語のように、1つめと並べて表示します。練習・セルの文字起こし・字幕の編集は1つめで行います</small></span>
+      <span class="set-actions">
+        <button type="button" class="btn small" id="btnTx2Load">読み込む</button>
+        <button type="button" class="btn small" id="btnTxSwap" title="1つめと2つめを入れ替えます（練習や編集を、もう片方の字幕で行いたいとき）">1つめと入れ替える</button>
+        <button type="button" class="btn small danger" id="btnTx2Remove">外す</button>
+      </span>
+      <input type="file" id="tx2Input" accept=".srt,.vtt,.json,.txt" hidden>
+    </div>
     <label class="set-row check">
       <input name="liveChat" type="checkbox">
       <span>ライブ配信のときは、YouTube のチャットを左に表示する<small>チャットに書き込むには、このブラウザで YouTube にログインしておきます（再生ボタンの並びの「チャット」でも切り替えられます）</small></span>
@@ -360,6 +370,18 @@
     <div class="dialog-msg" id="presetMsg"></div>
     <div class="dialog-foot">
       <button class="btn primary" value="save">保存</button>
+      <button class="btn" value="cancel">キャンセル</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="trackDialog">
+  <form method="dialog" class="dialog-body">
+    <h2>字幕の読み込み</h2>
+    <p class="dialog-note" id="trackMsg"></p>
+    <div class="dialog-foot">
+      <button class="btn primary" value="second">2つめの字幕として並べて出す</button>
+      <button class="btn" value="replace">いまの字幕と置き換える</button>
       <button class="btn" value="cancel">キャンセル</button>
     </div>
   </form>

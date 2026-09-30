@@ -130,6 +130,7 @@ export class Library {
         if (out.length > first) out[first].primary = true;
       }
       for (const q of doc.transcript?.cues || []) out.push({ doc, kind: 'cue', t: q.s, text: q.text, lv: 0, bm: false });
+      for (const q of doc.transcript2?.cues || []) out.push({ doc, kind: 'cue', t: q.s, text: q.text, lv: 0, bm: false });
     }
     // 単語帳（メディアの id で結び付ける。メモが消えていても、単語のメディアの名前で出す）
     const byId = new Map(this.docs.map((d) => [d.id, d]));

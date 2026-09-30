@@ -39,6 +39,7 @@ export const DEFAULT_SETTINGS = {
   momentListSync: true,      // 「瞬間のコメント」を再生位置に連動させる
   momentListMode: 'comments', // サイドバー下の一覧に出すもの（comments: 瞬間のコメント / transcript: 文字起こし）
   captions: true,            // 字幕を動画の上に表示する
+  capMode: 'both',           // 字幕が2つあるときの出し方（both: 両方・1つめが上 / swap: 両方・2つめが上 / main: 1つめだけ / sub: 2つめだけ）
   liveChat: true,            // ライブ配信のときに、YouTube のチャットを左に表示する
   liveLang: isEn ? 'en-US' : 'ja-JP', // 音声認識の言語
   lang: null,                // 表示の言語（null ならブラウザの言語に合わせる）
@@ -311,6 +312,11 @@ export class Store {
     return this.doc?.transcript?.cues || [];
   }
 
+  // 2つめの字幕（訳など。1つめと並べて表示する。練習・セルの文字起こし・編集は1つめで行う）
+  get cues2() {
+    return this.doc?.transcript2?.cues || [];
+  }
+
   // 音声認識の結果を1行追加する。key が同じ行（確定前に保存した同じ文の仮の行）は置き換える。
   // 同じ時間帯を聞き直したときは、前に認識した行（15秒以上前に作ったもの）を新しい結果で置き換える。
   // ファイルや貼り付けで読み込んだ行（live でないもの）は消さない
@@ -335,6 +341,35 @@ export class Store {
     if (transcript) withIds(transcript.cues);
     this.mutate((doc) => {
       doc.transcript = transcript;
+    }, { record: false });
+  }
+
+  setTranscript2(transcript) {
+    if (transcript) withIds(transcript.cues);
+    this.mutate((doc) => {
+      if (transcript) doc.transcript2 = transcript;
+      else delete doc.transcript2;
+    }, { record: false });
+  }
+
+  // 1つめの字幕を外す。2つめがあれば、それを1つめにする
+  removeTranscript() {
+    const next = this.doc?.transcript2 || null;
+    this.dropTranscriptUndo();
+    this.mutate((doc) => {
+      doc.transcript = next;
+      delete doc.transcript2;
+    }, { record: false });
+  }
+
+  // 1つめと2つめを入れ替える（練習や編集を、もう片方の字幕で行いたいとき）
+  swapTranscripts() {
+    this.dropTranscriptUndo();
+    this.mutate((doc) => {
+      const a = doc.transcript || null;
+      doc.transcript = doc.transcript2 || null;
+      if (a) doc.transcript2 = a;
+      else delete doc.transcript2;
     }, { record: false });
   }
 
@@ -390,6 +425,7 @@ export class Store {
     } catch {}
     this.doc = saved && saved.version === 1 ? saved : emptyDoc(meta);
     if (this.doc.transcript) withIds(this.doc.transcript.cues);
+    if (this.doc.transcript2) withIds(this.doc.transcript2.cues);
     // タグ機能より前に保存された目印にも tags を用意しておく
     for (const m of this.doc.markers) {
       if (!Array.isArray(m.tags)) m.tags = [];
@@ -766,6 +802,7 @@ export class Store {
       markers: d.markers.filter((m) => !m.src),
       cells: d.cells.filter((c) => !c.src),
       ...(d.transcript ? { transcript: d.transcript } : {}),
+      ...(d.transcript2 ? { transcript2: d.transcript2 } : {}),
       ...(d.live ? { live: d.live } : {}),
     };
   }
@@ -820,6 +857,8 @@ export class Store {
       // 書き出したファイルに字幕が入っていて、いまのメディアにまだ字幕がなければ引き継ぐ
       const t = data.transcript;
       if (!doc.transcript && t && Array.isArray(t.cues) && t.cues.length) doc.transcript = { ...t, cues: withIds(t.cues) };
+      const t2 = data.transcript2;
+      if (!doc.transcript2 && t2 && Array.isArray(t2.cues) && t2.cues.length) doc.transcript2 = { ...t2, cues: withIds(t2.cues) };
     });
     return { addedM, addedC };
   }

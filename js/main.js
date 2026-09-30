@@ -9,7 +9,7 @@ import { Moment } from './moment.js';
 import { Sidebar } from './sidebar.js';
 import { PresetDialog } from './presets.js';
 import { CommentList } from './commentlist.js';
-import { parseTranscript, isNotesJson, cueIndexAt } from './transcript.js';
+import { parseTranscript, isNotesJson, cueIndexAt, guessLang } from './transcript.js';
 import { Digest } from './digest.js';
 import { LiveCaption } from './live.js';
 import { Broadcast } from './broadcast.js';
@@ -1019,7 +1019,7 @@ $('#recentList').addEventListener('click', (e) => {
 // ---- 字幕・文字起こし ----
 
 function applyTranscript(cues, name) {
-  store.setTranscript({ name, cues });
+  store.setTranscript({ name, cues, lang: guessLang(cues) });
   renderAll();
   toast(
     tr('字幕「{name}」を読み込みました（{n} 行）。セルの「文字起こし」でその区間の文字を見られます', { name: trMaybe(name), n: cues.length }) +
@@ -1027,7 +1027,52 @@ function applyTranscript(cues, name) {
   );
 }
 
-async function loadTranscriptFile(file) {
+// 2つめの字幕（訳など）: 1つめと並べて出す
+function applyTranscript2(cues, name) {
+  store.setTranscript2({ name, cues, lang: guessLang(cues) });
+  renderAll();
+  toast(tr('2つめの字幕「{name}」を読み込みました（{n} 行）。「字幕」ボタンの横で、両方か片方だけかを選べます', { name: trMaybe(name), n: cues.length }));
+}
+
+// 字幕の言語の名前（日本語・英語。分からなければ「字幕1」「字幕2」）
+function trackLang(t) {
+  if (!t) return '';
+  if (!t.lang) t.lang = guessLang(t.cues);
+  return t.lang;
+}
+app.trackLabels = () => {
+  const name = (l) => (l === 'ja' ? tr('日本語') : l === 'en' ? tr('英語') : '');
+  const a = name(trackLang(store.doc?.transcript));
+  const b = name(trackLang(store.doc?.transcript2));
+  return a && b && a !== b ? [a, b] : [tr('字幕1'), tr('字幕2')];
+};
+
+// すでに字幕があるときに、新しい字幕を 2つめとして並べるか、置き換えるかを選んでもらう（'second' / 'replace' / 'cancel'）
+function askTrack(name) {
+  const dlg = $('#trackDialog');
+  const cur = store.doc?.transcript;
+  const sub = store.doc?.transcript2;
+  $('#trackMsg').textContent =
+    tr('いまは字幕「{cur}」を読み込んでいます。「{name}」をどうしますか？', { cur: trMaybe(cur?.name || ''), name: trMaybe(name) }) +
+    (sub ? tr('（「2つめの字幕として並べて出す」にすると、いまの2つめの字幕「{name}」と入れ替わります）', { name: trMaybe(sub.name) }) : '');
+  dlg.returnValue = '';
+  dlg.showModal();
+  return new Promise((resolve) => {
+    dlg.addEventListener('close', () => resolve(dlg.returnValue || 'cancel'), { once: true });
+  });
+}
+
+// slot: 'main'（1つめ）/ 'second'（2つめ）。指定がなく、すでに字幕があれば選んでもらう
+async function addTranscript(cues, name, slot) {
+  if (!slot) slot = store.doc?.transcript ? await askTrack(name) : 'main';
+  if (!store.doc || slot === 'cancel') return false;
+  if (slot === 'second') applyTranscript2(cues, name);
+  else applyTranscript(cues, name);
+  updateTxInfo();
+  return true;
+}
+
+async function loadTranscriptFile(file, slot) {
   if (!requireMedia()) return;
   let cues;
   try {
@@ -1036,7 +1081,7 @@ async function loadTranscriptFile(file) {
     toast(err.message);
     return;
   }
-  applyTranscript(cues, file.name);
+  await addTranscript(cues, file.name, slot);
 }
 
 // ---- 貼り付けで読み込む ----
@@ -1089,14 +1134,19 @@ pasteForm.addEventListener('submit', (e) => {
     if (!pasteForm.text.value.trim()) $('#pastePreview').textContent = tr('文字起こしを貼り付けてください');
     return;
   }
-  const had = store.doc?.transcript;
-  if (had && !confirm(tr('いまの字幕「{name}」を、貼り付けた文字起こしに置き換えますか？', { name: trMaybe(had.name) }))) {
+  // 字幕の名前として保存する（言語を切り替えても変えない。表示するときだけ訳す）
+  const name = '貼り付けた文字起こし';
+  // すでに字幕があるときは、2つめとして並べるか置き換えるかを選んでもらう（やめたら貼り付けの画面に戻る）
+  if (store.doc?.transcript) {
     e.preventDefault();
+    askTrack(name).then((slot) => {
+      if (slot === 'cancel') return;
+      $('#pasteDialog').close();
+      addTranscript(cues, name, slot);
+    });
     return;
   }
-  // 字幕の名前として保存する（言語を切り替えても変えない。表示するときだけ訳す）
-  applyTranscript(cues, '貼り付けた文字起こし');
-  updateTxInfo();
+  addTranscript(cues, name, 'main');
 });
 
 // 入力欄の外で Ctrl+V したら、貼り付けた文字を入れた状態で貼り付け画面を開く
@@ -1111,14 +1161,43 @@ document.addEventListener('paste', (e) => {
 
 function updateCaptionButton() {
   const has = store.cues.length > 0;
+  const dual = has && store.cues2.length > 0;
   const b = $('#btnCC');
   b.classList.toggle('on', has && app.settings.captions);
   $('#ccLabel').textContent = has ? (app.settings.captions ? tr('字幕 オン') : tr('字幕 オフ')) : tr('字幕を読み込む');
+  const names = dual
+    ? tr('{a}「{name}」＋{b}「{name2}」', { a: app.trackLabels()[0], b: app.trackLabels()[1], name: trMaybe(store.doc.transcript.name), name2: trMaybe(store.doc.transcript2.name) })
+    : has ? trMaybe(store.doc.transcript.name) : '';
   b.title = has
-    ? tr('{name}（{n} 行）: クリックで表示を切り替え (T)。読み込み直し・外すのは「設定」から', { name: trMaybe(store.doc.transcript.name), n: store.cues.length })
+    ? tr('{name}（{n} 行）: クリックで表示を切り替え (T)。読み込み直し・外すのは「設定」から', { name: names, n: store.cues.length })
     : tr('字幕・文字起こしを読み込む（.srt / .vtt / JSON）');
+  // 字幕が2つあるときは、両方か片方だけかを選べる
+  const sel = $('#capMode');
+  sel.hidden = !dual;
+  if (dual) {
+    const [a, bb] = app.trackLabels();
+    const opts = [
+      ['both', tr('両方（{a}が上）', { a })],
+      ['swap', tr('両方（{a}が上）', { a: bb })],
+      ['main', tr('{a}だけ', { a })],
+      ['sub', tr('{a}だけ', { a: bb })],
+    ];
+    sel.innerHTML = opts.map(([v, label]) => `<option value="${v}"${v === app.settings.capMode ? ' selected' : ''}>${escapeHtml(label)}</option>`).join('');
+  }
   if (!has || !app.settings.captions) $('#caption').hidden = true;
   placeCaption();
+}
+
+$('#capMode').addEventListener('change', (e) => {
+  app.settings.capMode = e.target.value;
+  saveSettings(app.settings);
+  e.target.blur();
+  app.refreshCaption();
+});
+
+// いまの字幕の出し方（字幕が1つだけなら 'main'）
+function capMode() {
+  return store.cues2.length && store.cues.length ? app.settings.capMode || 'both' : 'main';
 }
 
 // YouTube の埋め込みプレーヤーの上には何も重ねない（YouTube の規約）。字幕は動画のすぐ下の帯に出す。
@@ -1130,6 +1209,9 @@ function placeCaption() {
   const home = below ? bar : $('#stage');
   if (cap.parentElement !== home) home.append(cap);
   bar.hidden = !(below && app.settings.captions && (store.cues.length > 0 || live.active));
+  // 2行（1つめと2つめ）出すときは、帯の高さを多めに取っておく
+  const mode = capMode();
+  bar.classList.toggle('is-dual', mode === 'both' || mode === 'swap');
   document.body.classList.toggle('caption-below', !bar.hidden);
 }
 
@@ -1152,23 +1234,33 @@ function updateTranscript(now) {
   const cues = store.cues;
   const i = cues.length ? cueIndexAt(cues, now) : -1;
   const inside = i >= 0 && now < cues[i].e;
+  // 2つめの字幕（訳など）は、1つめとは別に、その時刻の行を出す
+  const cues2 = store.cues2;
+  const j = cues2.length ? cueIndexAt(cues2, now) : -1;
+  const inside2 = j >= 0 && now < cues2[j].e;
+  const mode = capMode();
   const liveOn = live.active && app.settings.captions;
   const interim = liveOn ? live.interim : '';
   const recent = liveOn && !interim ? live.recentText() : '';
   // 練習中: シャドーイングは待ち時間もその行を出したまま、ディクテーションは答え合わせまで隠す
   const pr = practice.captionOverride();
-  const key = pr
+  const key = (pr
     ? `pr:${pr.hide ? 'hide' : pr.text}:${i}`
-    : interim || recent ? `live:${interim}:${recent}:${i}` : i * 2 + (inside ? 1 : 0);
+    : interim || recent ? `live:${interim}:${recent}:${i}` : i * 2 + (inside ? 1 : 0)) + `|${j * 2 + (inside2 ? 1 : 0)}|${mode}`;
   if (key === txIndex) return;
   txIndex = key;
   const cap = $('#caption');
   cap.classList.toggle('is-live', !!interim && !pr);
-  const text = pr
+  let text = pr
     ? pr.hide ? '' : pr.text
     : interim || recent || (inside && app.settings.captions ? cues[i].text : '');
-  cap.hidden = !text;
-  if (text) cap.textContent = text;
+  // 「2つめだけ」のときは 1つめを出さない（練習と音声認識の文字は出す）
+  if (mode === 'sub' && !pr && !interim && !recent) text = '';
+  const text2 = mode !== 'main' && app.settings.captions && !interim && !recent && inside2 ? cues2[j].text : '';
+  const line = (s, cls) => (s ? `<span class="cap-line ${cls}">${escapeHtml(s)}</span>` : '');
+  const html = mode === 'swap' ? line(text2, 'cap-sub') + line(text, 'cap-main') : line(text, 'cap-main') + line(text2, 'cap-sub');
+  cap.hidden = !html;
+  if (html) cap.innerHTML = html;
   sidebar.markTranscript(i);
 }
 
@@ -1241,8 +1333,14 @@ async function importJsonFile(file) {
 
 function updateTxInfo() {
   const t = store.doc?.transcript;
-  $('#txInfo').textContent = t ? tr('{name}（{n} 行）', { name: trMaybe(t.name), n: t.cues.length }) : tr('読み込んでいません');
+  const t2 = store.doc?.transcript2;
+  const [a, b] = app.trackLabels();
+  const info = (x, label) => (x ? tr('{name}（{n} 行）', { name: trMaybe(x.name), n: x.cues.length }) + (label && t && t2 ? ` ・${label}` : '') : tr('読み込んでいません'));
+  $('#txInfo').textContent = info(t, a);
   $('#btnTxRemove').hidden = !t;
+  $('#tx2Info').textContent = info(t2, b);
+  $('#btnTx2Remove').hidden = !t2;
+  $('#btnTxSwap').hidden = !t2;
 }
 
 $('#btnTxReload').addEventListener('click', () => $('#txInput').click());
@@ -1257,9 +1355,33 @@ $('#btnTxPaste2').addEventListener('click', () => {
 $('#btnTxRemove').addEventListener('click', () => {
   if (!store.doc?.transcript) return;
   if (!confirm(tr('字幕「{name}」を外しますか？（元のファイルはそのまま残ります）', { name: trMaybe(store.doc.transcript.name) }))) return;
-  store.setTranscript(null);
+  store.removeTranscript(); // 2つめの字幕があれば、それが1つめになる
   updateTxInfo();
   app.hint(tr('字幕を外しました'));
+});
+$('#btnTx2Load').addEventListener('click', () => $('#tx2Input').click());
+$('#tx2Input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (file) await loadTranscriptFile(file, store.doc?.transcript ? 'second' : 'main');
+});
+$('#btnTx2Remove').addEventListener('click', () => {
+  const t2 = store.doc?.transcript2;
+  if (!t2) return;
+  if (!confirm(tr('字幕「{name}」を外しますか？（元のファイルはそのまま残ります）', { name: trMaybe(t2.name) }))) return;
+  store.setTranscript2(null);
+  updateTxInfo();
+  app.hint(tr('2つめの字幕を外しました'));
+});
+$('#btnTxSwap').addEventListener('click', () => {
+  if (!store.doc?.transcript2) return;
+  if (live.active) {
+    app.hint(tr('音声認識の間は入れ替えられません'));
+    return;
+  }
+  store.swapTranscripts();
+  updateTxInfo();
+  app.hint(tr('1つめと2つめの字幕を入れ替えました（練習・セルの文字起こし・編集は1つめの字幕で行います）'));
 });
 
 function updateStorageInfo() {
@@ -1366,7 +1488,8 @@ $('#txInput').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   e.target.value = '';
   if (!file) return;
-  await loadTranscriptFile(file);
+  // 「字幕を読み込む」・設定の1つめの「読み込む」から: 1つめの字幕にする（2つめは設定の2つめの欄から）
+  await loadTranscriptFile(file, 'main');
   updateTxInfo();
 });
 const presetDialog = new PresetDialog(app, () => {

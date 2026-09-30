@@ -576,6 +576,34 @@ export const EN = {
   '「{title}」は手元のファイルです。同じファイルを開くと、メモが復元されます': '"{title}" is a file on your computer. Open the same file to bring back its notes',
   'すべて見る・検索（ライブラリ）': 'See all and search (Library)',
 
+  // ---- 2つの字幕 ----
+  '2つめの字幕「{name}」を読み込みました（{n} 行）。「字幕」ボタンの横で、両方か片方だけかを選べます': (v) =>
+    `Loaded the second subtitles "${v.name}" (${pl(v.n, 'line')}). Next to the "Captions" button, choose to show both or just one`,
+  '英語': 'English',
+  '字幕1': 'Subtitles 1',
+  '字幕2': 'Subtitles 2',
+  'いまは字幕「{cur}」を読み込んでいます。「{name}」をどうしますか？': 'Subtitles "{cur}" are already loaded. What should happen with "{name}"?',
+  '（「2つめの字幕として並べて出す」にすると、いまの2つめの字幕「{name}」と入れ替わります）':
+    ' ("Show side by side as the second subtitles" replaces the current second subtitles "{name}".)',
+  '{a}「{name}」＋{b}「{name2}」': '{a} "{name}" + {b} "{name2}"',
+  '両方（{a}が上）': 'Both ({a} on top)',
+  '{a}だけ': '{a} only',
+  '2つめの字幕を外しました': 'Removed the second subtitles',
+  '音声認識の間は入れ替えられません': "Can't swap them during speech recognition",
+  '1つめと2つめの字幕を入れ替えました（練習・セルの文字起こし・編集は1つめの字幕で行います）':
+    'Swapped the first and second subtitles (practice, cell transcripts and editing use the first subtitles)',
+  '字幕が2つあるときの出し方（両方・片方だけ）': 'How to show two subtitles (both, or just one)',
+  '字幕の出し方': 'Subtitle display',
+  '2つめの字幕（訳など）': 'Second subtitles (a translation, etc.)',
+  '日本語と英語のように、1つめと並べて表示します。練習・セルの文字起こし・字幕の編集は1つめで行います':
+    'Shown together with the first ones, like Japanese and English. Practice, cell transcripts and subtitle editing use the first subtitles',
+  '1つめと2つめを入れ替えます（練習や編集を、もう片方の字幕で行いたいとき）':
+    'Swap the first and second subtitles (to practice or edit with the other one)',
+  '1つめと入れ替える': 'Swap with the first',
+  '字幕の読み込み': 'Load subtitles',
+  '2つめの字幕として並べて出す': 'Show side by side as the second subtitles',
+  'いまの字幕と置き換える': 'Replace the current subtitles',
+
   // ---- プレイリスト ----
   'プレイリスト': 'Playlist',
   '{n} 件・{len}': (v) => `${pl(v.n, 'item')} · ${v.len}`,

@@ -1,6 +1,6 @@
 import { $, fmt, fmtLen, fmtDate, escapeHtml, hearts, icon, commentSummary, tagChips, whoColor, viaBadges } from './util.js';
 import { saveSettings } from './store.js';
-import { cuesIn } from './transcript.js';
+import { cuesIn, subTextAt } from './transcript.js';
 import { tr } from './i18n.js';
 
 const NUDGES = [-1, -0.1, 0.1, 1];
@@ -313,8 +313,13 @@ export class Sidebar {
   txHtml(c) {
     const lines = cuesIn(this.app.store.cues, c.s, c.e);
     if (!lines.length) return `<div class="txpanel" data-act="noop"><p class="thread-empty">${tr('この区間に字幕・文字起こしはありません。')}</p></div>`;
+    const cues2 = this.app.store.cues2;
+    const sub = (cue) => {
+      const t = cues2.length ? subTextAt(cues2, cue.s, cue.e) : '';
+      return t ? `<span class="tx-sub">${escapeHtml(t)}</span>` : '';
+    };
     const rows = lines
-      .map(({ cue, i }) => `<div class="tx-line" data-act="jump" data-t="${cue.s}" data-i="${i}" title="${tr('クリックでこの位置へ・ダブルクリックで再生')}"><span class="tx-t">${fmt(cue.s)}</span><span class="tx-x">${escapeHtml(cue.text)}</span></div>`)
+      .map(({ cue, i }) => `<div class="tx-line" data-act="jump" data-t="${cue.s}" data-i="${i}" title="${tr('クリックでこの位置へ・ダブルクリックで再生')}"><span class="tx-t">${fmt(cue.s)}</span><span class="tx-x">${escapeHtml(cue.text)}${sub(cue)}</span></div>`)
       .join('');
     return `<div class="txpanel" data-act="noop">
       <div class="tx-lines">${rows}</div>

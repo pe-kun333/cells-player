@@ -45,6 +45,15 @@ Press "?" at the top right for the list of keyboard shortcuts.
 
 For YouTube videos, captions are shown in a strip just below the player instead of over it, following YouTube's terms.
 
+## Two subtitles (Japanese and English side by side)
+
+After loading subtitles, load another set (a translation, for example) to show two lines together.
+
+- When subtitles are already loaded and you load, drop or paste another file, choose "Show side by side as the second subtitles" or "Replace the current subtitles". You can also load them from "Second subtitles" in Settings
+- Next to the "Captions" button, choose "Both (Japanese on top)", "Both (English on top)", "Japanese only" or "English only" (the language is guessed from the subtitle text)
+- The second subtitles are a little smaller and in a different color. They also appear under each line in a cell's "Transcript" and in the "Transcript" list at the bottom right
+- Practice (shadowing and dictation), cell transcripts and subtitle editing use the first subtitles. To use the other one, press "Swap with the first" in Settings
+
 ## Library (all your videos and search)
 
 "Library" at the top (or the L key) lists every video and audio file you have notes for.

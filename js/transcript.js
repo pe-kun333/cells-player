@@ -243,3 +243,36 @@ export function cuesIn(cues, s, e) {
   }
   return out;
 }
+
+// 2つめの字幕（訳など）のうち、s〜e の行に当たる文。行の区切りが1つめと違っても合うよう、
+// まん中の時刻が s〜e に入る行をつなぐ（なければ、一番長く重なる行）
+export function subTextAt(cues, s, e) {
+  if (!cues.length) return '';
+  const parts = [];
+  let best = null;
+  let bestOverlap = 0;
+  for (let j = Math.max(0, cueIndexAt(cues, s) - 1); j < cues.length && cues[j].s < e; j++) {
+    const c = cues[j];
+    const mid = (c.s + c.e) / 2;
+    if (mid >= s && mid < e) parts.push(c.text);
+    const overlap = Math.min(c.e, e) - Math.max(c.s, s);
+    if (overlap > bestOverlap) {
+      bestOverlap = overlap;
+      best = c;
+    }
+  }
+  if (parts.length) return parts.join(' ');
+  return best ? best.text : '';
+}
+
+// 字幕の言語の見当（'ja' / 'en' / ''）。日本語の文字が多ければ日本語、よく出る英単語が多ければ英語
+const EN_COMMON = new Set(['the', 'and', 'you', 'to', 'is', 'it', 'of', 'that', 'in', 'a', 'i', 'what', 'this', 'we', 'for', 'my', 'on', 'do', 'be', 'are', 'not', 'have', 'so', 'just', 'me', 'was', 'with', 'your']);
+export function guessLang(cues) {
+  const text = cues.slice(0, 300).map((c) => c.text).join(' ');
+  const ja = (text.match(/[\u3040-\u30ff\u3400-\u9fff]/g) || []).length;
+  const latin = (text.match(/[A-Za-z]/g) || []).length;
+  if (ja && ja >= latin * 0.3) return 'ja';
+  const words = text.toLowerCase().match(/[a-z]+/g) || []; // it's → it + s
+  const hits = words.filter((w) => EN_COMMON.has(w)).length;
+  return words.length >= 5 && hits / words.length > 0.08 ? 'en' : '';
+}
