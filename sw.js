@@ -11,6 +11,7 @@ const APP_FILES = [
   './manifest.webmanifest',
   './css/style.css',
   './js/main.js',
+  './js/broadcast.js',
   './js/commentlist.js',
   './js/db.js',
   './js/digest.js',

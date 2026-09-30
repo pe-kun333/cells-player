@@ -162,6 +162,14 @@ export class Store {
     this.kv = null;
     this.index = []; // 最近開いたメディア
     this.words = []; // 単語帳（すべてのメディア共通）
+    // ライブ配信を見ているか（main が差し込む）。ライブ中に作った目印・セル・字幕の行には fromLive を付け、
+    // あとでアーカイブの時刻に合わせるときに、それだけをずらす
+    this.liveNow = () => false;
+  }
+
+  // ライブ中に作ったものの印
+  liveFlag() {
+    return this.liveNow() ? { fromLive: true } : {};
   }
 
   // 起動時に一度だけ呼ぶ（localStorage からの引っ越しもここで行う）
@@ -212,7 +220,7 @@ export class Store {
         const overlap = Math.min(c.e, cue.e) - Math.max(c.s, cue.s);
         return overlap < 0.5 * Math.min(c.e - c.s, cue.e - cue.s);
       });
-      cues.push({ ...cue, id: uid(), live: true, key, at: now });
+      cues.push({ ...cue, id: uid(), live: true, key, at: now, ...this.liveFlag() });
       cues.sort((a, b) => a.s - b.s || a.e - b.e);
       doc.transcript.cues = cues;
     }, { record: false });
@@ -445,7 +453,7 @@ export class Store {
   addMarker(t, init = {}) {
     return this.mutate((doc) => {
       // mark: M や −N秒 で置いた「区間の区切り」になる目印か（いいね・コメントでできた目印は false）
-      const m = { id: uid(), t: round2(t), mark: false, lv: 0, bm: false, tags: [], comments: [], at: Date.now(), ...init };
+      const m = { id: uid(), t: round2(t), mark: false, lv: 0, bm: false, tags: [], comments: [], at: Date.now(), ...this.liveFlag(), ...init };
       doc.markers.push(m);
       return m;
     });
@@ -479,7 +487,7 @@ export class Store {
     const existing = this.findCell(s, e);
     if (existing) return { cell: existing, created: false };
     const cell = this.mutate((doc) => {
-      const c = { id: uid(), s: round2(s), e: round2(e), memo: '', lv: 0, bm: false, comments: [], at: Date.now() };
+      const c = { id: uid(), s: round2(s), e: round2(e), memo: '', lv: 0, bm: false, comments: [], at: Date.now(), ...this.liveFlag() };
       doc.cells.push(c);
       return c;
     });
@@ -491,7 +499,7 @@ export class Store {
     const fresh = ranges.filter((r) => r.e - r.s >= 0.5 && !this.findCell(r.s, r.e));
     if (!fresh.length) return [];
     return this.mutate((doc) => {
-      const made = fresh.map((r) => ({ id: uid(), s: round2(r.s), e: round2(r.e), memo: '', lv: 0, bm: false, comments: [], at: Date.now() }));
+      const made = fresh.map((r) => ({ id: uid(), s: round2(r.s), e: round2(r.e), memo: '', lv: 0, bm: false, comments: [], at: Date.now(), ...this.liveFlag() }));
       doc.cells.push(...made);
       return made;
     });
@@ -512,6 +520,7 @@ export class Store {
         bm: parts.some((c) => c.bm),
         comments: parts.flatMap((c) => c.comments).sort((a, b) => (a.at || 0) - (b.at || 0) || (a.t || 0) - (b.t || 0)),
         at: Date.now(),
+        ...(this.liveNow() || parts.every((c) => c.fromLive) ? { fromLive: true } : {}),
       };
       doc.cells = doc.cells.filter((c) => !ids.includes(c.id));
       doc.cells.push(merged);
@@ -553,6 +562,69 @@ export class Store {
     });
   }
 
+  // ---- ライブ配信 ----
+
+  // ライブ配信として見たことを記録する（base: 再生位置 0 秒の実際の時刻、エポック秒）
+  markLive(base) {
+    this.mutate((doc) => {
+      doc.live = { ...(doc.live || {}), base: round2(base), at: Date.now() };
+    }, { record: false });
+  }
+
+  // ライブ中に作った目印・セル・字幕の行の数
+  liveCounts() {
+    const n = (list) => list.filter((x) => x.fromLive).length;
+    return { markers: n(this.markers), cells: n(this.cells), cues: n(this.cues) };
+  }
+
+  // ライブ中に作ったものを delta 秒ずらす（アーカイブの時刻に合わせる）。
+  // from を渡すと、その時刻より後ろのものだけ（アーカイブの途中がカットされていたとき）。元に戻せる
+  shiftLive(delta, from = -Infinity) {
+    const hit = (t) => t >= from - 0.01;
+    const move = (t) => round2(Math.max(0, t + delta));
+    const moveComments = (item) => {
+      for (const c of item.comments) if (Number.isFinite(c.t)) c.t = move(c.t);
+    };
+    const moveRange = (x) => {
+      const len = x.e - x.s;
+      x.s = move(x.s);
+      x.e = round2(x.s + len);
+    };
+    const withCues = this.cues.some((c) => c.fromLive && hit(c.s));
+    return this.mutate((doc) => {
+      let n = 0;
+      for (const m of doc.markers) {
+        if (!m.fromLive || !hit(m.t)) continue;
+        m.t = move(m.t);
+        moveComments(m);
+        n++;
+      }
+      for (const c of doc.cells) {
+        if (!c.fromLive || !hit(c.s)) continue;
+        moveRange(c);
+        moveComments(c);
+        n++;
+      }
+      if (withCues) {
+        for (const c of doc.transcript.cues) {
+          if (!c.fromLive || !hit(c.s)) continue;
+          moveRange(c);
+          n++;
+        }
+        doc.transcript.cues.sort((a, b) => a.s - b.s || a.e - b.e);
+      }
+      return n;
+    }, { tx: withCues });
+  }
+
+  // ライブ中の記録がアーカイブと合っていることを確かめた（案内を出さない）
+  setLiveChecked(checked = true) {
+    if (!this.doc?.live) return;
+    this.mutate((doc) => {
+      doc.live.checked = checked;
+    }, { record: false });
+  }
+
   // ---- 書き出し・読み込み ----
 
   exportData() {
@@ -565,6 +637,7 @@ export class Store {
       markers: d.markers,
       cells: d.cells,
       ...(d.transcript ? { transcript: d.transcript } : {}),
+      ...(d.live ? { live: d.live } : {}),
     };
   }
 
@@ -593,6 +666,7 @@ export class Store {
           tags: Array.isArray(m.tags) ? m.tags.filter((x) => typeof x === 'string') : [],
           comments: Array.isArray(m.comments) ? m.comments : [],
           at: m.at || 0,
+          ...(m.fromLive ? { fromLive: true } : {}),
         });
         addedM++;
       }
@@ -607,9 +681,13 @@ export class Store {
           bm: !!c.bm,
           comments: Array.isArray(c.comments) ? c.comments : [],
           at: c.at || 0,
+          ...(c.fromLive ? { fromLive: true } : {}),
         });
         addedC++;
       }
+      // ライブ配信で付けた記録なら、その情報も引き継ぐ（アーカイブに合わせるときに使う）
+      const lv = data.live;
+      if (!doc.live && lv && typeof lv === 'object' && Number.isFinite(lv.base)) doc.live = { base: lv.base, at: lv.at || 0 };
       // 書き出したファイルに字幕が入っていて、いまのメディアにまだ字幕がなければ引き継ぐ
       const t = data.transcript;
       if (!doc.transcript && t && Array.isArray(t.cues) && t.cues.length) doc.transcript = { ...t, cues: withIds(t.cues) };

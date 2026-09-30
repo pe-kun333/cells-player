@@ -546,6 +546,56 @@ export const EN = {
   'YouTube を再生できません（公開ページか、start.bat から起動したページで開いてください）':
     'YouTube cannot play here (open the published page, or the page started from start.bat)',
   'YouTube でエラーが発生しました（コード {code}）': 'YouTube error (code {code})',
+  'チャンネルのページの URL では開けません。配信の画面を開いて、その URL（…/watch?v=… か …/live/…）を貼ってください':
+    'A channel page URL cannot be opened. Open the stream itself and paste its URL (…/watch?v=… or …/live/…)',
+
+  // ---- ライブ配信 ----
+  'ライブ': 'LIVE',
+  'ライブ −{time}': 'LIVE −{time}',
+  'ライブの最新の場面を再生しています': 'Playing the latest part of the live stream',
+  '最新の場面より {time} 遅れています。クリックで最新へ': '{time} behind live. Click to jump to the latest',
+  'ライブの最新の場面に戻りました': 'Jumped to the latest part of the live stream',
+  'ライブ中に付けた目印・セルの時刻を、アーカイブに合わせる': 'Align the times of markers and cells added during the live stream with the archive',
+  'ライブの記録を合わせる': 'Align live notes',
+  'ライブ配信です。付けた目印・セル・コメントは、配信が終わってアーカイブになったあとも、同じ URL で開けば使えます':
+    'This is a live stream. Your markers, cells and comments stay usable after the stream is archived — open the same URL',
+  'ライブ配信が終わりました。アーカイブが公開されたら、同じ URL で開くと目印を見返せます（時刻がずれていたら合わせられます）':
+    'The live stream has ended. When the archive is published, open the same URL to review your markers (you can fix the timing if it is off)',
+  '目印 {n}': (v) => pl(v.n, 'marker'),
+  'セル {n}': (v) => pl(v.n, 'cell'),
+  '字幕 {n} 行': (v) => pl(v.n, 'caption line'),
+  '配信の開始: {date}': 'Stream started: {date}',
+  'ライブ中に付けた記録をアーカイブに合わせる': 'Align live notes with the archive',
+  '閉じる（あとで「ライブの記録を合わせる」から開けます）': 'Close (reopen later with "Align live notes")',
+  'アーカイブで冒頭や途中がカットされていると、ライブ中に付けた目印の時刻がずれます。ずれていたら、次の順に合わせてください。':
+    'If the beginning or middle was cut from the archive, the times of markers added during the live stream will be off. If so, align them like this:',
+  'ライブ中に付けた目印をクリックして選ぶ': 'Click a marker you added during the live stream',
+  'アーカイブでその場面まで移動する': 'Move the archive to that same scene',
+  '「すべて合わせる」を押す（途中がカットされていたときは、カットの後ろの目印で「ここから後ろだけ」）':
+    'Press "Align all" (if the middle was cut, use a marker after the cut with "From here on")',
+  'ライブ中に付けた記録を、すべて同じだけずらす': 'Shift all live notes by the same amount',
+  'すべて合わせる': 'Align all',
+  '選んだ目印と、それより後ろにあるライブ中の記録だけをずらす': 'Shift only the selected marker and the live notes after it',
+  'ここから後ろだけ': 'From here on',
+  'ライブ中の記録を、すべて 1 秒前へ': 'Move all live notes 1 s earlier',
+  '全部 −1秒': 'All −1s',
+  'ライブ中の記録を、すべて 1 秒後ろへ': 'Move all live notes 1 s later',
+  '全部 +1秒': 'All +1s',
+  'この案内を出さないようにする': 'Stop showing this',
+  'ずれていない（完了）': 'Times are right (done)',
+  'まだ目印を選んでいません（タイムラインや右の一覧で、ライブ中に付けた目印をクリック）':
+    'No marker selected yet (click a marker added during the live stream on the timeline or in the list)',
+  '選んだ目印 {mark} → いまの位置 {now}（{delta}）': 'Selected marker {mark} → current position {now} ({delta})',
+  '秒': 's',
+  'ライブ中の記録を確かめました。あとで直したいときは「ライブの記録を合わせる」から開けます':
+    'Live notes checked. To fix them later, use "Align live notes"',
+  '先に、ライブ中に付けた目印をクリックして選んでください': 'First click a marker you added during the live stream',
+  '選んだ目印はいまの位置と同じです。アーカイブで同じ場面まで移動してから押してください':
+    'The selected marker is already at the current position. Move the archive to the same scene first',
+  '{time} から後ろのライブ中の記録 {n} 件を {d} 秒ずらしました（Ctrl+Z で戻せます）': (v) =>
+    `Shifted ${pl(v.n, 'live note')} from ${v.time} on by ${v.d}s (Ctrl+Z to undo)`,
+  'ライブ中の記録 {n} 件を {d} 秒ずらしました（Ctrl+Z で戻せます）': (v) =>
+    `Shifted ${pl(v.n, 'live note')} by ${v.d}s (Ctrl+Z to undo)`,
 
   // ---- 保存 ----
   '保存できませんでした（ブラウザの保存容量がいっぱいの可能性があります）': 'Could not save (browser storage may be full)',

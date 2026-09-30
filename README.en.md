@@ -45,6 +45,16 @@ Press "?" at the top right for the list of keyboard shortcuts.
 
 For YouTube videos, captions are shown in a strip just below the player instead of over it, following YouTube's terms.
 
+## YouTube live streams
+
+Open the URL of a live stream (`…/watch?v=…` or `…/live/…`) to add markers, cells and comments while you watch.
+
+- The "LIVE" button next to the time shows how far you are behind the latest part. Press it to jump back to the latest
+- Everything you add during the stream is still there when you open the same URL after the stream has been archived
+- If the beginning or middle was cut from the archive, the times can be off. When you open the archive, use "Align live notes with the archive": click a marker you added during the stream, move the archive to that same scene, and press "Align all" (if the middle was cut, use a marker after the cut with "From here on")
+- To fix it later, use "Align live notes" next to the playback buttons (Ctrl+Z to undo)
+- A channel's "Live" page URL can't be opened — open the stream itself and paste its URL. Streams that don't allow embedding can't be played
+
 ## Your data
 
 - Notes (markers, cells, transcripts) and the vocabulary are saved automatically in the browser's storage (IndexedDB). Opening the same file again restores them (even if the file was renamed)

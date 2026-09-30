@@ -12,6 +12,7 @@ import { CommentList } from './commentlist.js';
 import { parseTranscript, isNotesJson, cueIndexAt } from './transcript.js';
 import { Digest } from './digest.js';
 import { LiveCaption } from './live.js';
+import { Broadcast } from './broadcast.js';
 import { $, clamp, fmt, round2, escapeHtml, icon, cellLabel } from './util.js';
 import { tr, trMaybe, lang, isEn, translatePage } from './i18n.js';
 
@@ -79,6 +80,9 @@ const live = new LiveCaption(app);
 const practice = new Practice(app);
 const words = new Words(app);
 const txtools = new TxTools(app);
+const broadcast = new Broadcast(app);
+// ライブ配信を見ている間に作った目印・セルには印を付ける（あとでアーカイブの時刻に合わせるため）
+store.liveNow = () => !!app.player?.isLive();
 let txIndex = -2; // いま表示・強調している字幕の行（変わったときだけ描き直す）
 
 app.hint = (msg, sticky) => moment.hint(msg, sticky);
@@ -126,6 +130,11 @@ store.subscribe((reason) => {
   }
   if (reason === 'words') {
     words.refresh();
+    return;
+  }
+  // 長さが分かった・伸びた（ライブ配信）ときは、タイムラインだけ描き直す
+  if (reason === 'duration') {
+    timeline.render();
     return;
   }
   if (app.ui.repeatId && !store.getCell(app.ui.repeatId)) app.stopRepeat();
@@ -206,6 +215,7 @@ app.setTarget = (id, ref = app.now(), flags = {}) => {
     commented: prev ? prev.commented : false,
     ...flags,
   };
+  broadcast.notePick(id);
   renderAll();
 };
 
@@ -677,6 +687,7 @@ function closeMedia() {
   app.ui.txOpen.clear();
   if (digest.active) digest.stop();
   if (live.active) live.stop();
+  broadcast.reset();
   $('#commentInput').value = '';
   app.ui.expanded.clear();
   app.activeCells = new Set();
@@ -828,6 +839,11 @@ function openFromText(text) {
   const yt = parseYouTubeId(s);
   if (yt) {
     openYouTube(yt);
+    return;
+  }
+  // チャンネルの「ライブ」ページの URL からは、いまの配信の動画を知ることができない
+  if (/^https?:\/\/(www\.|m\.)?youtube\.com\/(@[^/]+|channel\/[^/]+|c\/[^/]+|user\/[^/]+)\/(live|streams)\/?(\?.*)?$/i.test(s)) {
+    toast(tr('チャンネルのページの URL では開けません。配信の画面を開いて、その URL（…/watch?v=… か …/live/…）を貼ってください'));
     return;
   }
   try {
@@ -1424,9 +1440,11 @@ function watch() {
   if (!p || !store.doc) return;
   const now = p.getTime();
 
-  // YouTube は読み込み直後だと長さが 0 のことがあるので、分かった時点で反映する
+  // YouTube は読み込み直後だと長さが 0 のことがあるので、分かった時点で反映する。
+  // ライブ配信は長さ（最新の位置）が伸び続けるので、10 秒ごとにだけ反映する
+  p.updateLive();
   const d = p.getDuration();
-  if (d && Math.abs(d - store.doc.duration) > 0.5) store.setDuration(d);
+  if (d && Math.abs(d - store.doc.duration) > (p.isLive() ? 10 : 0.5)) store.setDuration(d);
 
   // リピート: セルの終わりを内側から越えたら先頭へ戻す（回数・間・速度はそこで扱う）
   const rep = app.ui.repeatId && store.getCell(app.ui.repeatId);
@@ -1458,6 +1476,7 @@ function watch() {
   updateTranscript(now);
   digest.tick(now, !p.paused);
   practice.tick(now, !p.paused);
+  broadcast.tick(now);
 }
 
 // ---- 毎フレームの描画 ----

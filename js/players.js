@@ -90,6 +90,11 @@ export class LocalPlayer extends Emitter {
   isAudioOnly() {
     return this.video.videoWidth === 0;
   }
+  // ライブ配信は YouTube だけ
+  isLive() {
+    return false;
+  }
+  updateLive() {}
   destroy() {
     this.video.pause();
     this.video.removeAttribute('src');
@@ -163,6 +168,15 @@ export class YouTubePlayer extends Emitter {
     container.appendChild(this.host);
     this.p = null;
     this._paused = true;
+    // ライブ配信（updateLive で読む）
+    this.live = false;        // ライブ配信中か（再生が始まってから分かる）
+    this.liveKnown = false;   // 再生してから一度でも確かめたか
+    this.liveEnded = false;   // 見ている間にライブ配信が終わった
+    this.liveBase = null;     // 再生位置 0 秒の実際の時刻（エポック秒）
+    this.minLag = Infinity;   // 映っている場面が実際の時刻より何秒遅れているか（最小値 = 配信の遅延）
+    this.liveCheckedAt = 0;
+    this.baseCand = null;
+    this.baseHits = 0;
   }
 
   async load(videoId) {
@@ -190,12 +204,20 @@ export class YouTubePlayer extends Emitter {
             const S = YT.PlayerState;
             if (e.data === S.PLAYING) {
               this._paused = false;
+              this.liveCheckedAt = 0; // ライブかどうかは再生が始まってから分かるので、すぐに確かめ直す
               this.emit('play');
             } else if (e.data === S.PAUSED || e.data === S.ENDED || e.data === S.CUED) {
               this._paused = true;
               this.emit('pause');
             }
-            if (e.data === S.ENDED) this.emit('ended');
+            if (e.data === S.ENDED) {
+              // ライブ配信が終わった（このあとはライブとして扱わない）
+              if (this.live) {
+                this.live = false;
+                this.liveEnded = true;
+              }
+              this.emit('ended');
+            }
             this.emit('durationchange');
           },
           onError: (e) => {
@@ -224,11 +246,57 @@ export class YouTubePlayer extends Emitter {
   getTime() {
     return this.p?.getCurrentTime?.() || 0;
   }
+  // ライブ中は、いま見られる一番新しい位置（どんどん伸びる）
   getDuration() {
+    if (this.live) return this.liveEdge();
     return this.p?.getDuration?.() || 0;
   }
   seek(t) {
     this.p?.seekTo(t, true);
+  }
+
+  // ---- ライブ配信 ----
+  // 再生位置（getCurrentTime）は配信の開始からの秒数で、ふつうはアーカイブの時刻と同じになる。
+  // getMediaReferenceTime は、ライブ中だけ「映っている場面の実際の時刻」（エポック秒）を返す。
+  // ライブの最新の位置は API から取れないので、実際の時刻との遅れの最小値を配信の遅延とみなして計算する。
+  // main の監視から呼ぶ
+  updateLive() {
+    if (!this.p) return;
+    const now = performance.now();
+    if (now - this.liveCheckedAt > 1500) {
+      this.liveCheckedAt = now;
+      this.live = !this.liveEnded && !!this.p.getVideoData?.()?.isLive;
+      if (!this._paused) this.liveKnown = true;
+    }
+    if (!this.live || this._paused) return;
+    const ref = this.p.getMediaReferenceTime?.();
+    if (!(ref > 1e9)) return;
+    // 再生を始めた直後は値が揺れるので、しばらく同じ値が続いてから使う
+    const base = ref - this.getTime();
+    if (this.baseCand !== null && Math.abs(base - this.baseCand) < 0.5) this.baseHits++;
+    else {
+      this.baseCand = base;
+      this.baseHits = 0;
+    }
+    if (this.baseHits >= 5) this.liveBase = base;
+    const lag = Date.now() / 1000 - ref;
+    if (this.liveBase !== null && lag >= 0 && lag < this.minLag) this.minLag = lag;
+  }
+
+  isLive() {
+    return this.live;
+  }
+
+  // ライブの最新の位置（まだ分からなければ 0）
+  liveEdge() {
+    if (!this.live || this.liveBase === null || !Number.isFinite(this.minLag)) return 0;
+    return Math.max(this.getTime(), Date.now() / 1000 - this.minLag - this.liveBase);
+  }
+
+  // 最新の場面へ（最新より先を指定すると、YouTube が最新の位置に合わせる）
+  seekLive() {
+    this.p?.seekTo(this.getTime() + 24 * 3600, true);
+    this.play();
   }
   setRate(r) {
     this.p?.setPlaybackRate(r);

@@ -693,6 +693,28 @@ html[lang="en"] .tl-label { width: 56px; }
 .medit:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 .medit-hint { padding: 0 8px 4px 56px; font-size: 11px; color: var(--text-3); background: var(--panel-2); box-shadow: inset 3px 0 0 var(--accent); }
 
+/* ---- ライブ配信 ---- */
+.live-edge { gap: 5px; font-variant-numeric: tabular-nums; }
+.live-edge .edge-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-3); flex: none; }
+.live-edge.is-edge { border-color: var(--danger); color: var(--danger); cursor: default; }
+.live-edge.is-edge .edge-dot { background: var(--danger); animation: live-blink 1.6s ease-in-out infinite; }
+.live-sync-card {
+  flex: none; border: 1px solid var(--danger); border-radius: 12px; background: var(--panel);
+  padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 8px; font-size: 13px;
+}
+.ls-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ls-title { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.ls-title .i { color: var(--danger); }
+.ls-count { font-size: 12px; color: var(--text-3); }
+.ls-head .btn .i { width: 12px; height: 12px; }
+.ls-lead { margin: 0; color: var(--text-2); line-height: 1.6; }
+.ls-steps { margin: 0; padding-left: 1.4em; color: var(--text-2); line-height: 1.7; }
+.ls-status { padding: 6px 10px; border-radius: 8px; background: var(--panel-2); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.ls-status b { font-family: var(--mono); font-weight: 600; }
+.ls-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ls-sep { width: 1px; height: 18px; background: var(--line); margin: 0 2px; }
+.ls-note { font-size: 12px; color: var(--text-3); }
+
 /* ---- 練習（シャドーイング・ディクテーション） ---- */
 .practice-card {
   flex: none; border: 1px solid var(--accent); border-radius: 12px; background: var(--panel);

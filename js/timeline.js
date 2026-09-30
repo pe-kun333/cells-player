@@ -49,6 +49,7 @@ export class Timeline {
     this.segPts = [];
     this.W = 0;
     this.pps = 1;
+    this.worldDur = 0;
     this.major = 5;
     this.labelCenter = -Infinity;
 
@@ -302,12 +303,17 @@ export class Timeline {
     this.labelCenter = -Infinity;
     if (!d || !this.W) {
       this.world.style.width = '0px';
+      this.worldDur = 0;
       return;
     }
     this.world.style.width = d * pps + 'px';
+    this.worldDur = d;
 
     const minor = [1, 5, 10, 30, 60].find((s) => s * pps >= 7) || 120;
     this.major = { 1: 5, 5: 30, 10: 60, 30: 300, 60: 600, 120: 1200 }[minor];
+    // 1時間を超えると目盛りの数字が「1:02:03」と長くなるので、重ならないよう間隔を広げる
+    const next = { 5: 10, 10: 30, 30: 60, 60: 300, 300: 600, 600: 1200, 1200: 3600 };
+    if (d >= 3600) while (this.major * pps < 58 && next[this.major]) this.major = next[this.major];
     this.world.style.setProperty('--minor', minor * pps + 'px');
     this.world.style.setProperty('--major', this.major * pps + 'px');
 
@@ -450,6 +456,11 @@ export class Timeline {
     this.playheadEl.style.left = p + '%';
     this.playedEl.style.width = p + '%';
     if (this.W) {
+      // ライブ配信は長さが伸び続けるので、帯もそれに合わせて伸ばす
+      if (d > this.worldDur + 0.5) {
+        this.worldDur = d;
+        this.world.style.width = d * this.pps + 'px';
+      }
       this.world.style.transform = `translate3d(${this.W / 2 - now * this.pps}px,0,0)`;
       if (Math.abs(now - this.labelCenter) > this.app.settings.zoomRange) this.renderLabels(now);
     }

@@ -100,8 +100,10 @@
       <button id="btnBack" class="btn small" title="5秒戻る (←)">−5秒</button>
       <button id="btnFwd" class="btn small" title="5秒進む (→)">+5秒</button>
       <span class="time" id="timeText">0:00.0 / 0:00</span>
+      <button id="btnLiveEdge" class="btn small live-edge" hidden><i class="edge-dot" aria-hidden="true"></i><span>ライブ</span></button>
       <span class="spacer"></span>
       <span class="badge" id="modeBadge" hidden>YouTube（軽量モード）</span>
+      <button id="btnLiveSync" class="btn small" hidden title="ライブ中に付けた目印・セルの時刻を、アーカイブに合わせる">ライブの記録を合わせる</button>
       <button id="btnCC" class="btn small" title="字幕・文字起こしを読み込む（.srt / .vtt / JSON）"><svg class="i" aria-hidden="true"><use href="#i-text"/></svg><span id="ccLabel">字幕を読み込む</span></button>
       <button id="btnTxPaste" class="btn small" title="YouTube の「文字起こしを表示」などからコピーした文字を貼り付けて読み込む（Ctrl+V でも開きます）">貼り付け</button>
       <button id="btnLive" class="btn small live-btn"><i class="live-dot" aria-hidden="true"></i><span>音声認識</span></button>
@@ -117,6 +119,7 @@
       <div class="tl-row"><span class="tl-label">拡大</span><div class="tl-track tl-zoom" id="tlZoom"></div></div>
     </div>
 
+    <div class="live-sync-card" id="liveSyncCard" hidden></div>
     <div class="practice-card" id="practiceCard" hidden></div>
 
     <div class="moment" id="moment">
