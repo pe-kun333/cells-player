@@ -5,7 +5,7 @@ import { tr } from './i18n.js';
 // ライブチャットの下の帯（チャットと X に書く）。
 // 1行目: 動画ごとに登録したハッシュタグと「X で見る」（X のそのハッシュタグの最新の投稿を、画面の左端に縦長の別ウィンドウで開く）
 // 2・3行目: 共通の書く欄と送り先のボタン
-//   チャットへ: 文をコピーする（埋め込んだ YouTube のチャットには、ブラウザの安全の仕組みでアプリから書き込めないため、
+//   チャット用にコピー: 文をコピーする（埋め込んだ YouTube のチャットには、ブラウザの安全の仕組みでアプリから書き込めないため、
 //               チャットの入力欄をクリックして貼り付けてもらう）
 //   X へ:      ハッシュタグ入りの X の投稿画面を開く（投稿するかどうかは X の画面で本人が決める）
 //   両方:      その両方
@@ -13,7 +13,7 @@ import { tr } from './i18n.js';
 //   Enter は、最後に使った送り先で送る
 // X のページはほかのサイトに埋め込めないので、投稿の一覧はアプリの中には出さない
 const MAX_TAGS = 5;
-const SEND_LABELS = { chat: 'チャットへ', x: 'X へ', both: '両方' };
+const SEND_LABELS = { chat: 'チャット用にコピー', x: 'X へ', both: '両方' };
 
 // クリップボードにコピーする（使えないときは古い方法で）
 async function copyText(text) {
@@ -54,6 +54,7 @@ export class XStrip {
     this.linkBtn = $('#xsLink');
     this.sendBtns = [...this.form.querySelectorAll('[data-send]')];
     this.chatFrame = $('#chatFrame');
+    this.noteEl = $('#xsNote');
     this.editing = false;
     this.pinT = null; // 書き始めた時刻（瞬間のコメントとして残す位置）
     this.key = '';
@@ -76,6 +77,7 @@ export class XStrip {
       }
     });
     this.input.addEventListener('input', () => {
+      this.showNote('');
       if (this.input.value.trim() && this.pinT === null) this.setPin(this.app.now());
       else if (!this.input.value.trim()) this.setPin(null);
     });
@@ -224,7 +226,7 @@ export class XStrip {
     const tags = this.tags;
     const toChat = dest !== 'x';
     const toX = dest !== 'chat';
-    // X へはハッシュタグだけでも送れる。チャットへは書いた文が要る
+    // X へはハッシュタグだけでも送れる。チャット用には書いた文が要る
     if (!text && (toChat || !tags.length)) {
       app.hint(toChat ? tr('先に書く欄に書いてください') : tr('X に書く内容か、ハッシュタグを入れてください'));
       this.input.focus();
@@ -244,10 +246,15 @@ export class XStrip {
     const m = text ? app.commentAt(text, { markerId: null, t, fromTarget: false }, { via: toChat && toX ? 'chat+x' : toChat ? 'chat' : 'x' }) : null;
     const saved = m ? tr('（{time} の瞬間のコメントにも残しました）', { time: fmt(m.t, true) }) : '';
     if (toChat) {
+      // 案内は、チャットの入力欄のすぐ下（帯の一番上）に出す
       this.flashChat();
-      if (!copied) app.hint(tr('コピーできませんでした。書いた内容を、チャットの入力欄に直接書いてください') + saved, true);
-      else if (toX) app.hint(tr('コピーして、X の投稿画面を開きました。チャットには、入力欄をクリックして Ctrl+V → Enter で送れます') + saved, true);
-      else app.hint(tr('コピーしました。左のチャットの入力欄をクリックして Ctrl+V → Enter で送れます') + saved, true);
+      if (!copied) {
+        this.showNote(tr('コピーできませんでした。上のチャットの入力欄に直接書いてください'), true);
+      } else {
+        this.showNote(tr('コピーしました。↑ チャットの入力欄をクリック → Ctrl+V → Enter で送信'));
+        if (toX) app.hint(tr('X の投稿画面も開きました（投稿は X の画面で）') + saved);
+        else if (m) app.hint(tr('{time} の瞬間のコメントにも残しました', { time: fmt(m.t, true) }));
+      }
     } else {
       app.hint(tr('X の投稿画面を開きました（投稿は X の画面で）') + saved);
     }
@@ -262,6 +269,15 @@ export class XStrip {
     if (this.app.settings.xLink && id) url += `&url=${encodeURIComponent(`https://youtu.be/${id}?t=${Math.floor(t)}`)}`;
     const w = window.open(url, 'cellsplayer-xpost', 'popup,width=600,height=520');
     if (w) w.opener = null;
+  }
+
+  // 帯の一番上の案内（空文字で消す）
+  showNote(msg, isError = false) {
+    clearTimeout(this.noteTimer);
+    this.noteEl.hidden = !msg;
+    this.noteEl.textContent = msg;
+    this.noteEl.classList.toggle('is-error', isError);
+    if (msg) this.noteTimer = setTimeout(() => this.showNote(''), 15000);
   }
 
   // 貼り付ける先（チャット欄）を少しのあいだ目立たせる

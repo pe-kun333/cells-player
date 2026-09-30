@@ -612,22 +612,23 @@ export const EN = {
   'ライブチャット': 'Live chat',
   'チャット・X に書く内容': 'Text for the chat or X',
   '書く（Enter で「{dest}」）': 'Write here (Enter: {dest})',
-  'チャットへ': 'To chat',
+  'チャット用にコピー': 'Copy for chat',
   'X へ': 'To X',
   '両方': 'Both',
   'X へ送るとき、その時刻の動画へのリンクを付ける（アーカイブになったあとは、その場面から見られます）':
     'When sending to X, add a link to the video at this time (after archiving, it opens at that scene)',
-  '文をコピーして、瞬間のコメントにも残す。チャットの入力欄をクリックして Ctrl+V → Enter で送れます':
-    'Copy the text and save it as a moment comment. Click the chat input box and press Ctrl+V, then Enter to send it',
+  '文をコピーして、瞬間のコメントにも残す（チャットには自動では送られません）。上のチャットの入力欄をクリックして Ctrl+V → Enter で送ります':
+    "Copy the text and save it as a moment comment (it isn't sent to the chat automatically). Click the chat input box above and press Ctrl+V, then Enter",
   'ハッシュタグ入りの X の投稿画面を開く。書いた内容は、瞬間のコメントにも残ります':
     'Open the post screen on X with your hashtags. What you write is also saved as a moment comment',
-  'チャット用にコピーして、X の投稿画面も開く': 'Copy it for the chat and also open the post screen on X',
+  'チャット用にコピーして、X の投稿画面も開く（チャットには、入力欄に貼り付けて送ります）':
+    'Copy it for the chat and also open the post screen on X (paste it into the chat input box to send)',
   '先に書く欄に書いてください': 'Write something in the box first',
   '（{time} の瞬間のコメントにも残しました）': ' (also saved as a moment comment at {time})',
-  'コピーできませんでした。書いた内容を、チャットの入力欄に直接書いてください': "Couldn't copy. Please type it directly in the chat input box",
-  'コピーして、X の投稿画面を開きました。チャットには、入力欄をクリックして Ctrl+V → Enter で送れます':
-    'Copied, and opened the post screen on X. For the chat, click its input box and press Ctrl+V, then Enter',
-  'コピーしました。左のチャットの入力欄をクリックして Ctrl+V → Enter で送れます': 'Copied. Click the chat input box on the left and press Ctrl+V, then Enter to send',
+  'コピーできませんでした。上のチャットの入力欄に直接書いてください': "Couldn't copy. Please type it directly in the chat input box above",
+  'コピーしました。↑ チャットの入力欄をクリック → Ctrl+V → Enter で送信': 'Copied. ↑ Click the chat input box → Ctrl+V → Enter to send',
+  'X の投稿画面も開きました（投稿は X の画面で）': 'Also opened the post screen on X (post it there)',
+  '{time} の瞬間のコメントにも残しました': 'Also saved as a moment comment at {time}',
   'ライブチャットに送った内容': 'Sent to the live chat',
   'リンク': 'Link',
   '#ハッシュタグ（空白で区切って5つまで）': '#hashtags (up to 5, separated by spaces)',

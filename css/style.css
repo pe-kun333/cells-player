@@ -749,6 +749,11 @@ body.has-chat .layout { grid-template-columns: 340px minmax(0, 1fr) 380px; }
 .x-strip { display: flex; flex-direction: column; gap: 4px; padding: 6px 8px; border-top: 1px solid var(--line); font-size: 12px; }
 .xs-row { display: flex; align-items: center; gap: 5px; min-width: 0; margin: 0; }
 .xs-form { display: flex; flex-direction: column; gap: 4px; margin: 0; }
+.xs-note {
+  padding: 4px 8px; border-radius: 6px; background: var(--accent-bg); color: var(--accent-text);
+  font-size: 12px; font-weight: 600; line-height: 1.5;
+}
+.xs-note.is-error { background: none; color: var(--danger); }
 .chat-frame.is-paste { box-shadow: inset 0 0 0 2px var(--accent); transition: box-shadow 0.2s; }
 .xs-label {
   flex: none; width: 18px; height: 18px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center;
