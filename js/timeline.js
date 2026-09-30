@@ -1,4 +1,4 @@
-import { $, clamp, fmt, round2, cellLabel } from './util.js';
+import { $, clamp, fmt, round2, cellLabel, whoColor } from './util.js';
 import { tr } from './i18n.js';
 
 const LANE_H = 10;
@@ -85,6 +85,15 @@ export class Timeline {
     return [0, ...ts, d];
   }
 
+  // 共有で読み込んだものに、その人の色と名前を付ける
+  markShared(el, o) {
+    const sh = this.store.shareOf(o);
+    if (!sh) return null;
+    el.classList.add('is-shared');
+    el.style.setProperty('--who', whoColor(sh));
+    return sh;
+  }
+
   // ---- セルの段 ----
 
   renderLanes() {
@@ -108,6 +117,7 @@ export class Timeline {
     for (const c of cells) {
       const b = document.createElement('div');
       b.className = `tl-cell lv${c.lv}` + (c.id === rep ? ' is-repeat' : '') + (sel.has(c.id) ? ' is-selected' : '');
+      this.markShared(b, c);
       b.style.left = (c.s / d) * 100 + '%';
       b.style.width = ((c.e - c.s) / d) * 100 + '%';
       b.style.top = lanes.get(c.id) * (LANE_H + LANE_GAP) + 'px';
@@ -152,12 +162,14 @@ export class Timeline {
       const p = document.createElement('div');
       const hi = m.id === tid || m.id === pin?.markerId;
       p.className = `tl-pin lv${m.lv}` + (hi ? ' is-target' : '') + (m.bm ? ' is-bm' : '') + (m.mark ? '' : ' is-moment');
+      this.markShared(p, m);
       p.style.left = (m.t / d) * 100 + '%';
       p.dataset.id = m.id;
       p.title =
         fmt(m.t, true) +
         (m.tags.length ? '  ' + m.tags.map((t) => tr('［{tag}］', { tag: t })).join('') : '') +
-        (m.comments.length ? '  ' + m.comments[0].text : '');
+        (m.comments.length ? '  ' + m.comments[0].text : '') +
+        (m.src ? '\n' + tr('{name} さんの共有', { name: this.store.shareOf(m)?.by || '' }) : '');
       frag.appendChild(p);
     }
     // コメントマークで固定した、まだ目印になっていない位置（点線）
@@ -322,6 +334,7 @@ export class Timeline {
       const lane = Math.min(this.laneOf.get(c.id) ?? 0, 2);
       const b = document.createElement('div');
       b.className = `tz-band lv${c.lv}`;
+      this.markShared(b, c);
       b.style.left = c.s * pps + 'px';
       b.style.width = Math.max(2, (c.e - c.s) * pps) + 'px';
       b.style.top = 3 + lane * 4 + 'px';
@@ -343,13 +356,14 @@ export class Timeline {
       const el = document.createElement('div');
       const hi = m.id === tid || m.id === pin?.markerId;
       el.className = `tz-mark lv${m.lv}` + (hi ? ' is-target' : '') + (m.bm ? ' is-bm' : '') + (m.mark ? '' : ' is-moment');
+      const sh = this.markShared(el, m);
       el.style.left = m.t * pps + 'px';
       el.dataset.id = m.id;
       el.title =
         fmt(m.t, true) +
         (m.tags.length ? '  ' + m.tags.map((t) => tr('［{tag}］', { tag: t })).join('') : '') +
         (m.comments.length ? '  ' + m.comments[0].text : '') +
-        '\n' + tr('ドラッグで位置を調整');
+        (sh ? '\n' + tr('{name} さんの共有', { name: sh.by }) : '\n' + tr('ドラッグで位置を調整'));
       // 定型コメントを付けた目印は、つまみにキー番号（4〜9）を出す
       const nums = this.app.tagNumbers(m.tags).slice(0, 3).join('');
       el.innerHTML = nums ? `<div class="tz-knob has-num">${nums}</div>` : '<div class="tz-knob"></div>';
@@ -397,6 +411,7 @@ export class Timeline {
         const t0 = m.t;
         move = (ev) => {
           const dx = ev.clientX - startX;
+          if (m.src) return; // 共有で読み込んだ目印は動かさない
           if (!moved) {
             if (Math.abs(dx) < 3) return;
             moved = true;

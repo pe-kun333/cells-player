@@ -45,6 +45,17 @@ Press "?" at the top right for the list of keyboard shortcuts.
 
 For YouTube videos, captions are shown in a strip just below the player instead of over it, following YouTube's terms.
 
+## Share links (share on X and elsewhere)
+
+For YouTube videos (and online videos), you can make a link that contains your cells and comments and share it.
+
+- Press "Share" at the top, choose your display name, what to include (cells and notes, markers, comments, quick comments, likes), the range and where viewers start, then press "Copy link" or "Post on X" (X only opens the post screen; you do the posting)
+- People who open the link play the same video from YouTube with your cells and comments, shown in color as your shared notes. They are kept separate from their own notes
+- Shared notes can be viewed, jumped to and repeated, but not edited. Likes and comments go to the viewer's own marker at that time
+- In "Shared notes" at the top of the sidebar, you can show or hide each person, "Add to mine" to make them your own, or "Remove" them (Ctrl+Z to undo)
+- The notes are stored in the link itself (after the # in the address), so no server is used. A link is a snapshot — make a new one after adding notes
+- Files on your computer can't be shared, because viewers don't have the same file
+
 ## YouTube live streams
 
 Open the URL of a live stream (`…/watch?v=…` or `…/live/…`) to add markers, cells and comments while you watch.

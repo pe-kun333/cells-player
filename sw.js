@@ -12,6 +12,7 @@ const APP_FILES = [
   './css/style.css',
   './js/main.js',
   './js/broadcast.js',
+  './js/share.js',
   './js/commentlist.js',
   './js/db.js',
   './js/digest.js',

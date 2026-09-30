@@ -106,10 +106,10 @@ export class Moment {
       resume = true;
     }
     // M や −9秒 の直後・近くの目印があるときは、その目印を固定する
-    const { marker: m, fromTarget } = app.commentDest(now);
+    const { marker: m, fromTarget, t } = app.commentDest(now);
     app.ui.commentPin = m
       ? { markerId: m.id, t: m.t, fromTarget, resume }
-      : { markerId: null, t: Math.round(now * 100) / 100, fromTarget: false, resume };
+      : { markerId: null, t: Math.round((t ?? now) * 100) / 100, fromTarget: false, resume };
     app.onPinChange();
   }
 
@@ -270,7 +270,7 @@ export class Moment {
   renderFeed(now) {
     const { store, settings, ui } = this.app;
     const win = settings.mergeWindow;
-    const near = [...store.markers]
+    const near = [...store.ownMarkers]
       .sort((a, b) => Math.abs(a.t - now) - Math.abs(b.t - now))
       .slice(0, 6)
       .sort((a, b) => a.t - b.t);

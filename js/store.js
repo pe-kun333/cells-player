@@ -194,12 +194,99 @@ export class Store {
     for (const fn of this.listeners) fn(reason);
   }
 
+  // 画面に出す目印・セル（自分のものと、表示にしている共有のもの）
   get markers() {
-    return this.doc ? this.doc.markers : [];
+    return this.doc ? this.shownOnly(this.doc.markers) : [];
   }
 
   get cells() {
-    return this.doc ? this.doc.cells : [];
+    return this.doc ? this.shownOnly(this.doc.cells) : [];
+  }
+
+  // 自分の目印・セル（共有で読み込んだものは含めない）
+  get ownMarkers() {
+    return this.doc ? this.doc.markers.filter((m) => !m.src) : [];
+  }
+
+  get ownCells() {
+    return this.doc ? this.doc.cells.filter((c) => !c.src) : [];
+  }
+
+  // ---- 共有で読み込んだもの ----
+  // 共有リンクから読み込んだ人ごとのまとまりを doc.shares に持つ。その人の目印・セルには src（まとまりの id）が付き、
+  // 画面には出すが編集はしない（いいね・コメントは自分の目印に付く）
+
+  get shares() {
+    return this.doc?.shares || [];
+  }
+
+  shareOf(item) {
+    return item?.src ? this.shares.find((s) => s.id === item.src) || null : null;
+  }
+
+  shownOnly(list) {
+    const hidden = this.shares.filter((s) => s.shown === false);
+    if (!hidden.length) return list;
+    const ids = new Set(hidden.map((s) => s.id));
+    return list.filter((x) => !x.src || !ids.has(x.src));
+  }
+
+  // 共有の中身を加える。同じ共有をもう一度開いたときは加えずに表示にする（false を返す）。
+  // 元に戻すの対象にはしない（外すのは removeShare で、そちらは元に戻せる）
+  addShare(meta, markers, cells) {
+    const had = this.shares.find((s) => s.id === meta.id);
+    if (had) {
+      if (had.shown === false) this.setShareShown(meta.id, true);
+      return false;
+    }
+    const used = new Set(this.shares.map((s) => s.color));
+    let color = 0;
+    while (used.has(color)) color++;
+    this.mutate((doc) => {
+      doc.shares = [...(doc.shares || []), { ...meta, color, shown: true, addedAt: Date.now() }];
+      const at = meta.at ? meta.at * 1000 : Date.now();
+      const comments = (list) => list.map((c) => ({ id: uid(), text: c.text, t: c.t, at }));
+      for (const m of markers) {
+        doc.markers.push({ id: uid(), t: m.t, mark: m.mark, lv: m.lv, bm: m.bm, tags: m.tags, comments: comments(m.comments), at, src: meta.id });
+      }
+      for (const c of cells) {
+        doc.cells.push({ id: uid(), s: c.s, e: c.e, memo: c.memo, lv: c.lv, bm: c.bm, comments: comments(c.comments), at, src: meta.id });
+      }
+    }, { record: false });
+    return true;
+  }
+
+  setShareShown(id, shown) {
+    this.mutate((doc) => {
+      doc.shares = (doc.shares || []).map((s) => (s.id === id ? { ...s, shown } : s));
+    }, { record: false });
+  }
+
+  // 共有を外す（その人の目印・セルを消す）。元に戻せる
+  removeShare(id) {
+    this.mutate((doc) => {
+      doc.shares = (doc.shares || []).filter((s) => s.id !== id);
+      doc.markers = doc.markers.filter((m) => m.src !== id);
+      doc.cells = doc.cells.filter((c) => c.src !== id);
+    });
+  }
+
+  // 共有を自分のメモに取り込む（自分の目印・セルとして編集できるようになる）。
+  // コメントには書いた人の名前を残す。元に戻せる
+  adoptShare(id) {
+    const sh = this.shares.find((s) => s.id === id);
+    if (!sh) return 0;
+    return this.mutate((doc) => {
+      let n = 0;
+      for (const x of [...doc.markers, ...doc.cells]) {
+        if (x.src !== id) continue;
+        delete x.src;
+        for (const c of x.comments) c.by = sh.by;
+        n++;
+      }
+      doc.shares = doc.shares.filter((s) => s.id !== id);
+      return n;
+    });
   }
 
   // 字幕・文字起こしの行 [{ s, e, text }]（読み込んでいなければ空）
@@ -322,7 +409,7 @@ export class Store {
 
   // 履歴には目印とセルを残す。字幕を変える操作のときだけ字幕も残す（字幕は大きいので毎回は残さない）
   snapshot(withTranscript = false) {
-    const o = { markers: this.doc.markers, cells: this.doc.cells };
+    const o = { markers: this.doc.markers, cells: this.doc.cells, shares: this.doc.shares || [] };
     if (withTranscript) o.transcript = this.doc.transcript ?? null;
     return JSON.stringify(o);
   }
@@ -394,8 +481,8 @@ export class Store {
       source: doc.source,
       url: doc.url,
       duration: doc.duration,
-      markers: doc.markers.length,
-      cells: doc.cells.length,
+      markers: doc.markers.filter((m) => !m.src).length,
+      cells: doc.cells.filter((c) => !c.src).length,
       updatedAt: doc.updatedAt,
     });
     this.index = idx.slice(0, 200);
@@ -433,13 +520,15 @@ export class Store {
   // ---- 目印 ----
 
   getMarker(id) {
-    return this.markers.find((m) => m.id === id) || null;
+    return this.doc?.markers.find((m) => m.id === id) || null;
   }
 
+  // 近くの自分の目印（いいね・コメントをまとめる先。共有で読み込んだ目印には付けない）
   nearestMarker(t, win) {
     let best = null;
     let bestD = Infinity;
-    for (const m of this.markers) {
+    for (const m of this.doc?.markers || []) {
+      if (m.src) continue;
       const d = Math.abs(m.t - t);
       if (d <= win && d < bestD) {
         best = m;
@@ -476,11 +565,12 @@ export class Store {
   // ---- セル ----
 
   getCell(id) {
-    return this.cells.find((c) => c.id === id) || null;
+    return this.doc?.cells.find((c) => c.id === id) || null;
   }
 
+  // 同じ範囲の自分のセル
   findCell(s, e) {
-    return this.cells.find((c) => Math.abs(c.s - s) < 0.05 && Math.abs(c.e - e) < 0.05) || null;
+    return this.ownCells.find((c) => Math.abs(c.s - s) < 0.05 && Math.abs(c.e - e) < 0.05) || null;
   }
 
   addCell(s, e) {
@@ -508,7 +598,7 @@ export class Store {
   // 複数のセルを、最初の開始から最後の終了までの1つのセルにまとめる（元のセルは消える）。
   // メモは時間順に改行でつなぎ、コメントはすべて移し、いいねは一番高いものを残す
   mergeCells(ids) {
-    const parts = this.cells.filter((c) => ids.includes(c.id)).sort((a, b) => a.s - b.s || a.e - b.e);
+    const parts = this.ownCells.filter((c) => ids.includes(c.id)).sort((a, b) => a.s - b.s || a.e - b.e);
     if (parts.length < 2) return null;
     return this.mutate((doc) => {
       const merged = {
@@ -574,7 +664,7 @@ export class Store {
   // ライブ中に作った目印・セル・字幕の行の数
   liveCounts() {
     const n = (list) => list.filter((x) => x.fromLive).length;
-    return { markers: n(this.markers), cells: n(this.cells), cues: n(this.cues) };
+    return { markers: n(this.ownMarkers), cells: n(this.ownCells), cues: n(this.cues) };
   }
 
   // ライブ中に作ったものを delta 秒ずらす（アーカイブの時刻に合わせる）。
@@ -634,8 +724,9 @@ export class Store {
       version: 1,
       exportedAt: new Date().toISOString(),
       media: { id: d.id, title: d.title, source: d.source, url: d.url, duration: d.duration },
-      markers: d.markers,
-      cells: d.cells,
+      // 自分のメモだけ（共有で読み込んだものは含めない）
+      markers: d.markers.filter((m) => !m.src),
+      cells: d.cells.filter((c) => !c.src),
       ...(d.transcript ? { transcript: d.transcript } : {}),
       ...(d.live ? { live: d.live } : {}),
     };

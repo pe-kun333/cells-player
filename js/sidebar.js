@@ -1,9 +1,12 @@
-import { $, fmt, fmtLen, fmtDate, escapeHtml, hearts, icon, commentSummary, tagChips } from './util.js';
+import { $, fmt, fmtLen, fmtDate, escapeHtml, hearts, icon, commentSummary, tagChips, whoColor } from './util.js';
 import { saveSettings } from './store.js';
 import { cuesIn } from './transcript.js';
 import { tr } from './i18n.js';
 
 const NUDGES = [-1, -0.1, 0.1, 1];
+
+// 共有で読み込んだセル・目印でもできる操作（見る・移動する・リピートするだけ）
+const SHARED_ACTS = new Set(['seek', 'jump', 'lead', 'repeat', 'tx', 'txcopy', 'talk', 'toggle']);
 
 // 並び順（時間順以外は字下げせずに並べる）
 const SORTS = {
@@ -240,20 +243,30 @@ export class Sidebar {
 
   cardAttrs(kind, o, depth, extra) {
     const d = Math.min(depth, 4);
-    const cls = `card ${kind}-card${d ? ' is-nested' : ''}${this.app.ui.expanded.has(o.id) ? ' is-open' : ''}${extra}`;
-    return `class="${cls}" data-kind="${kind}" data-id="${o.id}" style="--depth:${d}"`;
+    const sh = this.app.store.shareOf(o);
+    const cls = `card ${kind}-card${d ? ' is-nested' : ''}${this.app.ui.expanded.has(o.id) ? ' is-open' : ''}${sh ? ' is-shared' : ''}${extra}`;
+    return `class="${cls}" data-kind="${kind}" data-id="${o.id}" style="--depth:${d}${sh ? `;--who:${whoColor(sh)}` : ''}"`;
+  }
+
+  // 共有で読み込んだものに付ける、共有した人の名前
+  whoChip(sh) {
+    return sh ? `<span class="who-chip" title="${escapeHtml(tr('{name} さんの共有', { name: sh.by }))}">${escapeHtml(sh.by)}</span>` : '';
   }
 
   // ---- セル（ポスト風のカード） ----
 
   cellHtml(c, depth) {
     const { ui } = this.app;
+    const sh = this.app.store.shareOf(c);
     const rep = ui.repeatId === c.id;
-    const open = ui.expanded.has(c.id);
+    const open = ui.expanded.has(c.id) && !sh;
     const talk = ui.commentsOpen.has(c.id);
     const tx = ui.txOpen.has(c.id) && this.app.store.cues.length > 0;
-    const memo =
-      ui.editingMemo === c.id
+    const memo = sh
+      ? c.memo
+        ? `<div class="memo is-static">${escapeHtml(c.memo)}</div>`
+        : ''
+      : ui.editingMemo === c.id
         ? `<div class="memo-edit" data-act="noop">
             <textarea class="memo-input" data-field="memo" data-key="memo-${c.id}" rows="2" placeholder="${tr('このセルのメモ')}">${escapeHtml(c.memo)}</textarea>
             <div class="memo-hint">${tr('Enter で改行・Ctrl+Enter か外をクリックで保存・Esc で取り消し')}</div>
@@ -269,14 +282,14 @@ export class Sidebar {
         <span class="badge-now">${tr('再生中')}</span>
         ${rep ? `<span class="badge-rep">${icon('repeat')}${tr('リピート中')}</span>` : ''}
         <span class="spacer"></span>
-        <input type="checkbox" class="cell-check" data-act="select"${selected ? ' checked' : ''} title="${tr('連結するセルとして選ぶ')}" aria-label="${tr('このセルを選ぶ')}">
-        <button class="tool" data-act="toggle" title="${open ? tr('閉じる') : tr('範囲の調整・削除')}" aria-label="${tr('その他')}">${icon('dots')}</button>
+        ${sh ? this.whoChip(sh) : `<input type="checkbox" class="cell-check" data-act="select"${selected ? ' checked' : ''} title="${tr('連結するセルとして選ぶ')}" aria-label="${tr('このセルを選ぶ')}">
+        <button class="tool" data-act="toggle" title="${open ? tr('閉じる') : tr('範囲の調整・削除')}" aria-label="${tr('その他')}">${icon('dots')}</button>`}
       </div>
       ${memo}
       <div class="actions">
-        <button class="act like" data-act="cycle" data-lv="${c.lv}" title="${tr('いいね（押すたびに 1 → 2 → 3 → 解除）')}">${icon('heart', c.lv ? 'fill' : '')}<span class="pips">${pips}</span></button>
-        <button class="act mark${c.bm ? ' on' : ''}" data-act="bm" title="${tr('ブックマーク')}" aria-pressed="${c.bm}">${icon('bookmark', c.bm ? 'fill' : '')}</button>
-        <button class="act talk${talk ? ' open' : ''}" data-act="talk" title="${tr('コメント')}" aria-expanded="${talk}">${icon('comment')}${c.comments.length ? `<span class="n">${c.comments.length}</span>` : ''}</button>
+        ${sh ? this.sharedMarks(c, sh, pips) : `<button class="act like" data-act="cycle" data-lv="${c.lv}" title="${tr('いいね（押すたびに 1 → 2 → 3 → 解除）')}">${icon('heart', c.lv ? 'fill' : '')}<span class="pips">${pips}</span></button>
+        <button class="act mark${c.bm ? ' on' : ''}" data-act="bm" title="${tr('ブックマーク')}" aria-pressed="${c.bm}">${icon('bookmark', c.bm ? 'fill' : '')}</button>`}
+        ${sh && !c.comments.length ? '' : `<button class="act talk${talk ? ' open' : ''}" data-act="talk" title="${tr('コメント')}" aria-expanded="${talk}">${icon('comment')}${c.comments.length ? `<span class="n">${c.comments.length}</span>` : ''}</button>`}
         <button class="act rep${rep ? ' on' : ''}" data-act="repeat" title="${tr('リピート再生（同時に1つだけ）')}">${icon('repeat')}<span>${tr('リピート')}</span></button>
         ${this.app.store.cues.length ? `<button class="act tx${tx ? ' open' : ''}" data-act="tx" title="${tr('この区間の文字起こし')}" aria-expanded="${tx}">${icon('text')}<span>${tr('文字起こし')}</span></button>` : ''}
       </div>
@@ -284,6 +297,15 @@ export class Sidebar {
       ${talk ? this.threadHtml(c) : ''}
       ${open ? this.cellDetail(c) : ''}
     </article>`;
+  }
+
+  // 共有されたセルのいいね・ブックマーク（押せない表示だけ）
+  sharedMarks(c, sh, pips) {
+    const like = c.lv
+      ? `<span class="act like is-static" data-lv="${c.lv}" title="${escapeHtml(tr('{name} さんのいいね', { name: sh.by }))}">${icon('heart', 'fill')}<span class="pips">${pips}</span></span>`
+      : '';
+    const bm = c.bm ? `<span class="act mark on is-static" title="${tr('ブックマーク')}">${icon('bookmark', 'fill')}</span>` : '';
+    return like + bm;
   }
 
   // セルの区間の文字起こし。行を押すとその位置へ（すばやく2回で再生）、再生中の行は強調する
@@ -324,7 +346,13 @@ export class Sidebar {
 
   // コメントはポストの形で並べ、下の欄から投稿する
   threadHtml(o) {
-    const posts = o.comments.map((cm) => this.postHtml(cm)).join('');
+    const sh = this.app.store.shareOf(o);
+    const posts = o.comments.map((cm) => this.postHtml(cm, sh)).join('');
+    if (sh) {
+      return `<div class="thread" data-act="noop">
+        ${posts ? `<div class="posts">${posts}</div>` : `<p class="thread-empty">${tr('コメントはありません。')}</p>`}
+      </div>`;
+    }
     return `<div class="thread" data-act="noop">
       ${posts ? `<div class="posts">${posts}</div>` : `<p class="thread-empty">${tr('まだコメントはありません。書いた時点の再生位置と一緒に残ります。')}</p>`}
       <div class="compose">
@@ -341,16 +369,22 @@ export class Sidebar {
     return `<button class="lead-btn" data-act="lead"${at} title="${tr('{s}秒前へ移動（ダブルクリックでそこから再生）', { s: lead })}">${tr('−{s}秒', { s: lead })}</button>`;
   }
 
-  postHtml(cm) {
+  // sh: 共有で読み込んだものならその共有（書いた人の名前を出し、消せないようにする）。
+  // 取り込んだ共有のコメントは cm.by に書いた人の名前を持つ
+  postHtml(cm, sh) {
     const time = Number.isFinite(cm.t)
       ? `<button class="tbtn" data-act="jump" data-t="${cm.t}" title="${tr('この位置へ移動（ダブルクリックでそこから再生）')}">${fmt(cm.t)}</button>${this.leadBtn(cm.t)}`
       : '';
+    const who = cm.by || sh?.by;
+    const avatar = who
+      ? `<div class="avatar is-who" aria-hidden="true"${sh ? ` style="--who:${whoColor(sh)}"` : ''}>${escapeHtml([...who][0] || '?')}</div>`
+      : `<div class="avatar" aria-hidden="true">${tr('自')}</div>`;
     return `<div class="post">
-      <div class="avatar" aria-hidden="true">${tr('自')}</div>
+      ${avatar}
       <div class="post-body">
-        <div class="post-meta"><span class="who">${tr('あなた')}</span>${cm.at ? `<span>${fmtDate(cm.at)}</span>` : ''}${time}</div>
+        <div class="post-meta"><span class="who">${who ? escapeHtml(who) : tr('あなた')}</span>${cm.at ? `<span>${fmtDate(cm.at)}</span>` : ''}${time}</div>
         <div class="post-text">${escapeHtml(cm.text)}</div>
-        <div class="post-acts"><button class="pact" data-act="delc" data-cid="${cm.id}">${tr('削除')}</button></div>
+        ${sh ? '' : `<div class="post-acts"><button class="pact" data-act="delc" data-cid="${cm.id}">${tr('削除')}</button></div>`}
       </div>
     </div>`;
   }
@@ -366,6 +400,8 @@ export class Sidebar {
   }
 
   markerHtml(m, depth) {
+    const sh = this.app.store.shareOf(m);
+    if (sh) return this.sharedMarkerHtml(m, depth, sh);
     const open = this.app.ui.expanded.has(m.id);
     let text = `<span class="card-text muted">${tr('コメントなし')}</span>`;
     if (m.comments.length) text = `<span class="card-text">${escapeHtml(commentSummary(m.comments))}</span>`;
@@ -391,6 +427,29 @@ export class Sidebar {
         ${this.threadHtml(m)}
         <div class="detail-foot"><button class="btn tiny danger" data-act="delete">${icon('trash')} ${tr('目印を削除')}</button></div>
       </div>` : ''}
+    </div>`;
+  }
+
+  // 共有で読み込んだ目印: 見る・移動するだけ（開くとコメントを読める）
+  sharedMarkerHtml(m, depth, sh) {
+    const open = this.app.ui.expanded.has(m.id) && m.comments.length > 0;
+    const text = m.comments.length ? `<span class="card-text">${escapeHtml(commentSummary(m.comments))}</span>` : '';
+    const like = m.lv
+      ? `<span class="like-cycle is-static" title="${escapeHtml(tr('{name} さんのいいね', { name: sh.by }))}">${hearts(m.lv)}</span>`
+      : '';
+    const chev = m.comments.length
+      ? `<button class="tool chev" data-act="toggle" title="${open ? tr('閉じる') : tr('コメントを読む')}">${icon('chevron')}</button>`
+      : '';
+    return `<div ${this.cardAttrs('marker', m, depth, '')}>
+      <div class="card-row">
+        ${this.markerIcon(m)}
+        <div class="card-main" data-act="seek" title="${tr('クリックでこの目印へ移動・ダブルクリックでそこから再生')}"><span class="card-time">${fmt(m.t, true)}</span>${tagChips(m.tags)}${text}</div>
+        ${this.leadBtn()}
+        ${like}
+        ${this.whoChip(sh)}
+        ${chev}
+      </div>
+      ${open ? `<div class="card-detail" data-act="noop">${this.threadHtml(m)}</div>` : ''}
     </div>`;
   }
 
@@ -438,6 +497,8 @@ export class Sidebar {
     };
 
     const act = actEl.dataset.act;
+    // 共有で読み込んだものは編集しない
+    if (o.src && !SHARED_ACTS.has(act)) return;
     // 移動するボタンは、すばやく2回押すと移動したうえで再生を始める
     if (act === 'seek' || act === 'lead' || act === 'jump') app.noteJump(`${id}:${act}:${actEl.dataset.t ?? ''}`);
 

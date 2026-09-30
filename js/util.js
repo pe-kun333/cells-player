@@ -73,3 +73,7 @@ export function commentSummary(comments) {
   const first = comments[0].text;
   return comments.length > 1 ? tr('{first}（他 {n} 件）', { first, n: comments.length - 1 }) : first;
 }
+
+// 共有で読み込んだ人ごとの色（明るい画面でも暗い画面でも見分けやすい中間の色）
+export const WHO_COLORS = ['#d9822b', '#2f9e8f', '#8f5bd6', '#d6457a', '#4f86d9', '#7a9a2c'];
+export const whoColor = (sh) => WHO_COLORS[(sh?.color ?? 0) % WHO_COLORS.length];

@@ -13,6 +13,7 @@ import { parseTranscript, isNotesJson, cueIndexAt } from './transcript.js';
 import { Digest } from './digest.js';
 import { LiveCaption } from './live.js';
 import { Broadcast } from './broadcast.js';
+import { ShareDialog, ShareLayers, decodeShare, shareIdOf, shareFromText } from './share.js';
 import { $, clamp, fmt, round2, escapeHtml, icon, cellLabel } from './util.js';
 import { tr, trMaybe, lang, isEn, translatePage } from './i18n.js';
 
@@ -40,6 +41,7 @@ const app = {
     commentsOpen: new Set(), // コメント欄を開いているカード
     selectedCells: new Set(), // 連結のために選んだセル
     pendingJump: null,        // 別のメディアを開いたら移動する場面 { mediaId, t }
+    pendingShare: null,       // 共有リンクの中身（動画を開いたら「〇〇さんの共有」として加える）
     txOpen: new Set(),        // 文字起こしを開いているセル
     digestId: null,           // 連続再生でいま再生しているセル・目印
     flashId: null,
@@ -81,6 +83,8 @@ const practice = new Practice(app);
 const words = new Words(app);
 const txtools = new TxTools(app);
 const broadcast = new Broadcast(app);
+const shareDialog = new ShareDialog(app);
+const shareLayers = new ShareLayers(app);
 // ライブ配信を見ている間に作った目印・セルには印を付ける（あとでアーカイブの時刻に合わせるため）
 store.liveNow = () => !!app.player?.isLive();
 let txIndex = -2; // いま表示・強調している字幕の行（変わったときだけ描き直す）
@@ -117,6 +121,7 @@ function renderAll() {
   moment.render();
   sidebar.render();
   commentList.render();
+  shareLayers.render();
   updateCaptionButton();
   txIndex = -2; // 字幕の表示を次の監視で描き直す
   $('#btnUndo').disabled = !store.canUndo;
@@ -242,19 +247,22 @@ app.releaseTarget = () => {
 };
 
 // いま、いいね・コメントがどの目印に付くか（対象 → 近くの目印 → なし）
+// （共有で読み込んだ目印は編集しないので、対象にしていても付け先にはしない）
 app.effectiveMarker = (now = app.now()) => {
   const tg = app.ui.target && store.getMarker(app.ui.target.id);
-  if (tg) return { marker: tg, kind: 'target' };
+  if (tg && !tg.src) return { marker: tg, kind: 'target' };
   const near = store.nearestMarker(now, app.settings.mergeWindow);
   return near ? { marker: near, kind: 'near' } : null;
 };
 
-// 付け先（その操作がまだ済んでいない対象 → 近くの目印 → なし）
+// 付け先（その操作がまだ済んでいない対象 → 近くの目印 → なし）。t は新しく目印を作るときの時刻。
+// 共有で読み込んだ目印を対象にしていたら、その目印は変えずに、同じ時刻の自分の目印に付ける
 function destFor(flag, now) {
   const tg = app.ui.target;
   const m = tg && !tg[flag] ? store.getMarker(tg.id) : null;
-  if (m) return { marker: m, fromTarget: true };
-  return { marker: store.nearestMarker(now, app.settings.mergeWindow), fromTarget: false };
+  if (m && !m.src) return { marker: m, fromTarget: true, t: now };
+  const t = m ? m.t : now;
+  return { marker: store.nearestMarker(t, app.settings.mergeWindow), fromTarget: false, t };
 }
 app.commentDest = (now = app.now()) => destFor('commented', now);
 app.likeMarker = (now = app.now()) => destFor('liked', now).marker;
@@ -264,16 +272,17 @@ app.bookmarkMarker = (now = app.now()) => destFor('bookmarked', now).marker;
 function tagDest(tag, now) {
   const tg = app.ui.target;
   const m = tg && !tg.tagged.includes(tag) ? store.getMarker(tg.id) : null;
-  if (m) return { marker: m, fromTarget: true };
-  return { marker: store.nearestMarker(now, app.settings.mergeWindow), fromTarget: false };
+  if (m && !m.src) return { marker: m, fromTarget: true, t: now };
+  const t = m ? m.t : now;
+  return { marker: store.nearestMarker(t, app.settings.mergeWindow), fromTarget: false, t };
 }
 app.tagMarker = (tag, now = app.now()) => tagDest(tag, now).marker;
 
 function applyMoment(flag, now, update, init) {
-  const { marker, fromTarget } = destFor(flag, now);
+  const { marker, fromTarget, t } = destFor(flag, now);
   let m = marker;
   if (m) store.updateMarker(m.id, update(m));
-  else m = store.addMarker(now, init);
+  else m = store.addMarker(t, init);
   settle(m, now, fromTarget ? { [flag]: true } : null);
   return m;
 }
@@ -283,7 +292,8 @@ app.focusMarker = (id, lead = false) => {
   const m = store.getMarker(id);
   if (!m) return;
   app.seek(lead ? app.leadTime(m.t) : m.t);
-  app.setTarget(id, m.t, FRESH);
+  // YouTube は移動に少し時間がかかるので、移動し終わるまでは「離れたので外す」をしない
+  app.setTarget(id, m.t, { ...FRESH, holdUntil: performance.now() + 1500 });
 };
 
 app.leadTime = (t) => Math.max(0, t - app.settings.leadIn);
@@ -352,10 +362,10 @@ app.toggleQuickTag = (index) => {
     return;
   }
   const now = app.now();
-  const { marker, fromTarget } = tagDest(tag, now);
+  const { marker, fromTarget, t: at } = tagDest(tag, now);
   let m = marker;
   if (m) store.updateMarker(m.id, { tags: m.tags.includes(tag) ? m.tags.filter((t) => t !== tag) : [...m.tags, tag] });
-  else m = store.addMarker(now, { tags: [tag] });
+  else m = store.addMarker(at, { tags: [tag] });
   settle(m, now, fromTarget ? { tagged: [...app.ui.target.tagged, tag] } : null);
   app.hint(
     m.tags.includes(tag)
@@ -455,6 +465,10 @@ app.revealCell = (id) => {
 };
 
 app.toggleCellSelect = (id) => {
+  if (store.getCell(id)?.src) {
+    app.hint(tr('共有されたセルは選べません（取り込むと選べます）'));
+    return;
+  }
   const sel = app.ui.selectedCells;
   if (sel.has(id)) sel.delete(id);
   else sel.add(id);
@@ -761,6 +775,7 @@ async function openMedia(meta, makePlayer, src, cleanup) {
   renderAll();
   const n = store.cells.length + store.markers.length;
   if (n) app.hint(tr('保存されていたセル {c} 件・目印 {m} 件を読み込みました', { c: store.cells.length, m: store.markers.length }));
+  applyPendingShare();
   // 単語帳から別のメディアの場面へ移動しようとしていたら、開いたところでその位置へ
   const jump = app.ui.pendingJump;
   if (jump && jump.mediaId === store.doc.id) {
@@ -768,6 +783,48 @@ async function openMedia(meta, makePlayer, src, cleanup) {
     app.seek(jump.t);
   }
 }
+
+// ---- 共有リンクを開く ----
+
+// リンクの中身を読み、その動画を開いてから「〇〇さんの共有」として加える
+async function openShare(encoded) {
+  let data;
+  try {
+    data = await decodeShare(encoded);
+  } catch {
+    toast(tr('共有リンクを読み込めませんでした（リンクが途中で切れている可能性があります）'));
+    return;
+  }
+  app.ui.pendingShare = { ...data, id: await shareIdOf(encoded) };
+  const docId = data.y ? 'yt:' + data.y : 'u:' + data.u;
+  if (store.doc?.id === docId && app.player) applyPendingShare();
+  else if (data.y) openYouTube(data.y);
+  else openUrl(data.u);
+}
+
+function applyPendingShare() {
+  const sh = app.ui.pendingShare;
+  if (!sh || !store.doc) return;
+  if (store.doc.id !== (sh.y ? 'yt:' + sh.y : 'u:' + sh.u)) return;
+  app.ui.pendingShare = null;
+  const added = store.addShare({ id: sh.id, by: sh.by, at: sh.at, title: sh.title }, sh.markers, sh.cells);
+  if (sh.st) app.seek(sh.st);
+  toast(
+    added
+      ? tr('{name} さんの共有（セル {c}・目印 {m}）を読み込みました。色付きで並びます', { name: sh.by, c: sh.cells.length, m: sh.markers.length })
+      : tr('{name} さんのこの共有は、もう読み込んであります', { name: sh.by }),
+  );
+}
+
+// アドレスの # より後ろに共有の中身があれば開く（開いたら消して、読み込み直しで何度も開かないようにする）
+function openShareFromHash() {
+  const enc = shareFromText(location.hash);
+  if (!enc) return false;
+  history.replaceState(null, '', location.pathname + location.search);
+  openShare(enc);
+  return true;
+}
+window.addEventListener('hashchange', openShareFromHash);
 
 // 単語帳などから、別のメディアの場面へ移動する（URL で開けるものは開き、ファイルは開き直してもらう）
 app.jumpToMedia = (mediaId, url, t, title) => {
@@ -836,6 +893,11 @@ function openUrl(url) {
 function openFromText(text) {
   const s = text.trim();
   if (!s) return;
+  const shared = shareFromText(s);
+  if (shared) {
+    openShare(shared);
+    return;
+  }
   const yt = parseYouTubeId(s);
   if (yt) {
     openYouTube(yt);
@@ -1455,7 +1517,7 @@ function watch() {
 
   // 作った目印から十分離れたら対象を外す
   const tg = app.ui.target;
-  if (tg && Math.abs(now - tg.ref) > app.settings.targetRange) {
+  if (tg && performance.now() > (tg.holdUntil || 0) && Math.abs(now - tg.ref) > app.settings.targetRange) {
     app.ui.target = null;
     renderAll();
   }
@@ -1547,7 +1609,8 @@ if ((qLang === 'ja' || qLang === 'en') && app.settings.lang !== qLang) {
 }
 
 const initial = new URLSearchParams(location.search).get('src');
-if (initial) openFromText(initial);
+if (openShareFromHash()) showEmpty();
+else if (initial) openFromText(initial);
 else showEmpty();
 
 // インストールしたアプリに、エクスプローラーの「プログラムから開く」などでファイルが渡されたとき。

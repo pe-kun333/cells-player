@@ -1,4 +1,4 @@
-import { $, fmt, escapeHtml, icon } from './util.js';
+import { $, fmt, escapeHtml, icon, whoColor } from './util.js';
 import { saveSettings } from './store.js';
 import { tr } from './i18n.js';
 
@@ -98,13 +98,15 @@ export class CommentList {
   // 瞬間のコメント: コメントごとに1行。コメントのない目印は、定型コメント（タグ）だけの行にする
   collectComments() {
     const rows = [];
-    for (const m of this.app.store.markers) {
+    const { store } = this.app;
+    for (const m of store.markers) {
+      const sh = store.shareOf(m);
       if (m.comments.length) {
         m.comments.forEach((c, i) =>
-          rows.push({ key: c.id, id: m.id, t: m.t, text: c.text, tags: i === 0 ? m.tags : [] }),
+          rows.push({ key: c.id, id: m.id, t: m.t, text: c.text, tags: i === 0 ? m.tags : [], sh, by: c.by }),
         );
       } else if (m.tags.length) {
-        rows.push({ key: 'm:' + m.id, id: m.id, t: m.t, text: '', tags: m.tags });
+        rows.push({ key: 'm:' + m.id, id: m.id, t: m.t, text: '', tags: m.tags, sh });
       }
     }
     return rows.sort((a, b) => a.t - b.t);
@@ -124,7 +126,7 @@ export class CommentList {
       el.textContent = n ? String(n) : '';
     }
     const rows = this.mode === 'transcript' ? transcript : comments;
-    const key = this.mode + '\u0003' + rows.map((r) => `${r.key}:${r.t}:${r.tags.join('\u0001')}:${r.text}`).join('\u0002');
+    const key = this.mode + '\u0003' + rows.map((r) => `${r.key}:${r.t}:${r.tags.join('\u0001')}:${r.text}:${r.sh?.id || ''}:${r.sh?.color ?? ''}`).join('\u0002');
     if (key === this.key && this.body.childElementCount) {
       this.tick(this.app.now());
       return;
@@ -193,7 +195,10 @@ export class CommentList {
     }
     const tags = r.tags.map((t) => `<span class="mtag">${escapeHtml(t)}</span>`).join('');
     const text = r.text.replace(/\s*\n\s*/g, ' ');
-    html = `<div class="mrow${inRange ? ' is-selected' : ''}" data-key="${escapeHtml(r.key)}" title="${escapeHtml(full)}"><span class="mt">${fmt(r.t)}</span>${tags}<span class="mx">${escapeHtml(text)}</span></div>`;
+    // 共有で読み込んだコメント・取り込んだコメントには、書いた人の名前を付ける
+    const whoName = r.by || r.sh?.by;
+    const who = whoName ? `<span class="mwho"${r.sh ? ` style="--who:${whoColor(r.sh)}"` : ''}>${escapeHtml(whoName)}</span>` : '';
+    html = `<div class="mrow${inRange ? ' is-selected' : ''}" data-key="${escapeHtml(r.key)}" title="${escapeHtml(full)}"><span class="mt">${fmt(r.t)}</span>${who}${tags}<span class="mx">${escapeHtml(text)}</span></div>`;
     if (!last) return html;
 
     // 選んだ範囲の最後の行の下に、操作のボタンを出す
@@ -337,7 +342,7 @@ export class CommentList {
     if (!r || !text) return;
     e.target.value = '';
     this.adding = false;
-    if (r.id) {
+    if (r.id && !r.sh) {
       this.app.store.addComment('marker', r.id, text, r.t);
       this.app.hint(tr('{time} の目印にコメントしました', { time: fmt(r.t, true) }));
     } else {

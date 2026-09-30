@@ -693,6 +693,49 @@ html[lang="en"] .tl-label { width: 56px; }
 .medit:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 .medit-hint { padding: 0 8px 4px 56px; font-size: 11px; color: var(--text-3); background: var(--panel-2); box-shadow: inset 3px 0 0 var(--accent); }
 
+/* ---- 共有 ---- */
+/* 共有で読み込んだものは、その人の色（--who）で見分ける */
+.share-bar {
+  display: flex; flex-direction: column; gap: 3px; padding: 6px 8px 6px 10px; border-radius: var(--radius);
+  background: var(--panel-2); font-size: 12px;
+}
+.sb-head { color: var(--text-3); font-size: 11.5px; }
+.sb-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.sb-layer { display: inline-flex; align-items: center; gap: 6px; min-width: 0; cursor: pointer; }
+.sb-layer input { margin: 0; accent-color: var(--who); }
+.sb-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--who); }
+.sb-name { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-count { color: var(--text-3); white-space: nowrap; }
+.card.is-shared { border-left: 3px solid var(--who); }
+.who-chip {
+  flex: 0 1 auto; min-width: 0; max-width: 9em; padding: 0 7px; border: 1px solid var(--who); border-radius: 999px;
+  font-size: 11px; line-height: 17px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.memo.is-static, .memo.is-static:hover { cursor: default; background: none; }
+.act.is-static, .act.is-static:hover { cursor: default; background: none; }
+.act.like.is-static { color: var(--heart); }
+.act.like.is-static[data-lv="3"] { color: var(--panel); background: var(--heart); }
+.like-cycle.is-static { display: inline-flex; align-items: center; padding: 0 4px; }
+.avatar.is-who { background: color-mix(in srgb, var(--who, var(--text-3)) 24%, var(--panel)); color: var(--text); }
+.tl-cell.is-shared { background: color-mix(in srgb, var(--who) 55%, transparent); box-shadow: inset 0 0 0 1px var(--who); }
+.tl-pin.is-shared { background: var(--who); }
+.tz-band.is-shared { background: var(--who); opacity: 0.75; }
+.tz-mark.is-shared .tz-knob { border-color: var(--who); background: color-mix(in srgb, var(--who) 45%, var(--panel)); cursor: pointer; }
+.mwho {
+  flex: none; max-width: 7em; padding: 0 5px; border-radius: 4px; font-size: 10.5px; line-height: 15px;
+  background: color-mix(in srgb, var(--who, var(--text-3)) 22%, transparent); color: var(--text-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.share-opts { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 12px; font-size: 13px; }
+.share-opts label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.share-opts input { margin: 0; accent-color: var(--accent); }
+.share-text { display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
+.share-text small { display: block; font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+.share-text textarea { height: auto; padding: 6px 10px; resize: vertical; line-height: 1.5; font-size: 13px; }
+.share-preview { font-size: 12.5px; line-height: 1.7; color: var(--text-2); }
+.share-warn { color: var(--danger); }
+#shareWhere:empty { display: none; }
+
 /* ---- ライブ配信 ---- */
 .live-edge { gap: 5px; font-variant-numeric: tabular-nums; }
 .live-edge .edge-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-3); flex: none; }

@@ -549,6 +549,65 @@ export const EN = {
   'チャンネルのページの URL では開けません。配信の画面を開いて、その URL（…/watch?v=… か …/live/…）を貼ってください':
     'A channel page URL cannot be opened. Open the stream itself and paste its URL (…/watch?v=… or …/live/…)',
 
+  // ---- 共有 ----
+  '共有': 'Share',
+  'セル・コメントを入れたリンクを作って、X などで共有する': 'Make a link with your cells and comments to share on X and elsewhere',
+  '共有リンクを作る': 'Make a share link',
+  'リンクを開いた人のところで、同じ動画が YouTube から再生され、あなたのセル・コメントが並びます。リンクには選んだメモが入ります（X などに投稿すると、誰でも見られます）。':
+    'People who open the link play the same video from YouTube with your cells and comments. The link contains the notes you choose (anyone can see them once you post it on X or elsewhere).',
+  '表示名': 'Display name',
+  '本名ではなく、好きな名前にしてください': 'Use any name you like rather than your real name',
+  '名前': 'Name',
+  '含めるもの': 'Include',
+  'セルとメモ': 'Cells and notes',
+  '目印（共有に含める）': 'Markers',
+  'コメント（共有に含める）': 'Comments',
+  '定型コメント': 'Quick comments',
+  'いいね・ブックマーク': 'Likes and bookmarks',
+  '範囲': 'Range',
+  '見る人が始める位置': 'Viewers start at',
+  '投稿の文': 'Post text',
+  'X に投稿するときの文。あとから投稿画面でも直せます': 'Text for the post on X. You can still edit it on the post screen',
+  'X に投稿': 'Post on X',
+  'リンクをコピー': 'Copy link',
+  '名前なし': 'No name',
+  '手元のファイルは共有できません（見る人が同じファイルを持っていないため）。YouTube や、ネット上の動画で使えます':
+    "Files on your computer can't be shared (viewers don't have the same file). Sharing works for YouTube and online videos",
+  '選んだセルだけ（{n} 個）': (v) => `Selected cells only (${v.n})`,
+  '動画の最初から': 'The beginning of the video',
+  'いまの位置（{time}）から': 'The current position ({time})',
+  '最初のセル・目印から': 'The first cell or marker',
+  '「{title}」をセルに分けてメモしました。区間セルプレイヤーで、セルやコメントと一緒に見られます':
+    'I split "{title}" into cells and took notes. Watch it with my cells and comments in Cells Player',
+  'リンクは公開しているサイト（pe-kun333.github.io）のアドレスで作ります': 'The link uses the address of the public site (pe-kun333.github.io)',
+  '入るもの: セル {c}・目印 {m}・コメント {k}': (v) => `Includes: ${pl(v.c, 'cell')} · ${pl(v.m, 'marker')} · ${pl(v.k, 'comment')}`,
+  'リンクの長さ: {n} 文字': 'Link length: {n} characters',
+  '表示名が空です（見る人には「名前なし」と出ます）': 'The display name is empty (viewers will see "No name")',
+  '入れるものがありません': 'Nothing to include',
+  'リンクが長いので、X などでは使えないことがあります。含めるものを減らすと短くなります':
+    'The link is long and may not work on X and elsewhere. Include less to make it shorter',
+  '入れるものがありません。含めるものを選んでください': 'Nothing to include. Choose what to include',
+  '共有リンクをコピーしました。開いた人は、この動画とあなたのメモを一緒に見られます':
+    'Share link copied. People who open it can watch this video with your notes',
+  'X の投稿画面を開きました。内容を確かめてから投稿してください': 'Opened the post screen on X. Check it before posting',
+  '{name} さんの共有 {n} 件を、自分のメモに取り込みました（Ctrl+Z で戻せます）': (v) =>
+    `Added ${pl(v.n, 'item')} shared by ${v.name} to your notes (Ctrl+Z to undo)`,
+  '{name} さんの共有を外しました（Ctrl+Z で戻せます）': "Removed {name}'s shared notes (Ctrl+Z to undo)",
+  '共有されたメモ（チェックで表示）': 'Shared notes (check to show)',
+  'チェックを外すと、画面に出さない': 'Uncheck to hide them',
+  '自分のメモとして編集できるようにする': 'Make them your own notes so you can edit them',
+  '取り込む': 'Add to mine',
+  'この人の共有を消す': "Remove this person's shared notes",
+  '{name} さんの共有': 'Shared by {name}',
+  '{name} さんのいいね': "{name}'s like",
+  'コメントはありません。': 'No comments.',
+  'コメントを読む': 'Read comments',
+  '共有されたセルは選べません（取り込むと選べます）': "Shared cells can't be selected (add them to yours first)",
+  '共有リンクを読み込めませんでした（リンクが途中で切れている可能性があります）': 'Could not open the share link (it may have been cut off)',
+  '{name} さんの共有（セル {c}・目印 {m}）を読み込みました。色付きで並びます': (v) =>
+    `Loaded notes shared by ${v.name} (${pl(v.c, 'cell')}, ${pl(v.m, 'marker')}). They are shown in color`,
+  '{name} さんのこの共有は、もう読み込んであります': 'This share from {name} is already loaded',
+
   // ---- ライブ配信 ----
   'ライブ': 'LIVE',
   'ライブ −{time}': 'LIVE −{time}',

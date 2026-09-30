@@ -60,6 +60,7 @@
   <button id="btnUndo" class="btn icon-btn" title="元に戻す (Ctrl+Z)" aria-label="元に戻す"><svg class="i" aria-hidden="true"><use href="#i-undo"/></svg></button>
   <button id="btnRedo" class="btn icon-btn" title="やり直す (Ctrl+Shift+Z)" aria-label="やり直す"><svg class="i" aria-hidden="true"><use href="#i-redo"/></svg></button>
   <button id="btnWords" class="btn" title="単語帳（W キーで、いまの字幕の言葉を追加）">単語帳</button>
+  <button id="btnShare" class="btn" title="セル・コメントを入れたリンクを作って、X などで共有する">共有</button>
   <button id="btnExport" class="btn">書き出し</button>
   <button id="btnImport" class="btn">読み込み</button>
   <button id="btnSettings" class="btn">設定</button>
@@ -191,6 +192,7 @@
       </div>
       <div class="digest-bar" id="digestBar" hidden></div>
       <div class="repeat-bar" id="repeatBar" hidden></div>
+      <div class="share-bar" id="shareBar" hidden></div>
     </div>
     <div class="side-list" id="sideList"></div>
     <section class="mlist" id="momentList" aria-label="瞬間のコメント">
@@ -412,6 +414,46 @@
       <button type="button" class="btn small" id="btnInstall" hidden title="この PC にアプリとして入れると、専用のウィンドウで開き、オフラインでも起動できます">アプリとしてインストール</button>
     </div>
     <div class="dialog-foot"><button class="btn primary" value="close">閉じる</button></div>
+  </form>
+</dialog>
+
+<dialog id="shareDialog">
+  <form method="dialog" id="shareForm" class="dialog-body">
+    <h2>共有リンクを作る</h2>
+    <p class="dialog-note">リンクを開いた人のところで、同じ動画が YouTube から再生され、あなたのセル・コメントが並びます。リンクには選んだメモが入ります（X などに投稿すると、誰でも見られます）。</p>
+    <label class="set-row">
+      <span>表示名<small>本名ではなく、好きな名前にしてください</small></span>
+      <input class="field" name="name" type="text" maxlength="30" autocomplete="off" placeholder="名前">
+    </label>
+    <div class="set-row wide">
+      <span>含めるもの</span>
+      <span class="share-opts">
+        <label><input type="checkbox" name="cells" checked> セルとメモ</label>
+        <label><input type="checkbox" name="markers" checked> <span data-i18n="目印（共有に含める）">目印</span></label>
+        <label><input type="checkbox" name="comments" checked> <span data-i18n="コメント（共有に含める）">コメント</span></label>
+        <label><input type="checkbox" name="tags" checked> 定型コメント</label>
+        <label><input type="checkbox" name="likes" checked> いいね・ブックマーク</label>
+      </span>
+    </div>
+    <label class="set-row">
+      <span>範囲</span>
+      <select name="scope"></select>
+    </label>
+    <label class="set-row">
+      <span>見る人が始める位置</span>
+      <select name="start"></select>
+    </label>
+    <label class="share-text">
+      <span>投稿の文<small>X に投稿するときの文。あとから投稿画面でも直せます</small></span>
+      <textarea class="field" name="text" rows="3"></textarea>
+    </label>
+    <div class="share-preview" id="sharePreview"></div>
+    <p class="dialog-note" id="shareWhere"></p>
+    <div class="dialog-foot">
+      <button type="button" class="btn primary" id="btnShareX">X に投稿</button>
+      <button type="button" class="btn" id="btnShareCopy">リンクをコピー</button>
+      <button class="btn" value="cancel">閉じる</button>
+    </div>
   </form>
 </dialog>
 
