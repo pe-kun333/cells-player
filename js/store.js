@@ -164,6 +164,7 @@ export class Store {
     this.kv = null;
     this.index = []; // 最近開いたメディア
     this.words = []; // 単語帳（すべてのメディア共通）
+    this.playlists = []; // プレイリスト（すべてのメディア共通。いまは最初の1つだけを使う）
     // ライブ配信を見ているか（main が差し込む）。ライブ中に作った目印・セル・字幕の行には fromLive を付け、
     // あとでアーカイブの時刻に合わせるときに、それだけをずらす
     this.liveNow = () => false;
@@ -181,6 +182,8 @@ export class Store {
     this.index = Array.isArray(idx) ? idx : [];
     const words = await this.kv.get('words');
     this.words = Array.isArray(words) ? words : [];
+    const pls = await this.kv.get('playlists');
+    this.playlists = Array.isArray(pls) ? pls.filter((p) => p && Array.isArray(p.items)) : [];
     return this.kv;
   }
 
@@ -397,7 +400,7 @@ export class Store {
       if (typeof c.memo !== 'string') c.memo = typeof c.title === 'string' ? c.title : '';
       delete c.title;
     }
-    if (meta.title) this.doc.title = meta.title;
+    if (meta.title && !(meta.keepTitle && saved?.title)) this.doc.title = meta.title;
     if (meta.url) this.doc.url = meta.url;
     this.doc.source = meta.source;
     this.undoStack = [];
@@ -511,6 +514,20 @@ export class Store {
   saveWords() {
     this.kv?.set('words', this.words).catch(() => this.emit('saveError'));
     this.emit('words');
+  }
+
+  // ---- プレイリスト ----
+
+  // いま使うプレイリスト（まだなければ作る）
+  get playlist() {
+    if (!this.playlists.length) this.playlists.push({ id: uid(), name: '', items: [], updatedAt: 0 });
+    return this.playlists[0];
+  }
+
+  savePlaylists() {
+    this.playlist.updatedAt = Date.now();
+    this.kv?.set('playlists', this.playlists).catch(() => this.emit('saveError'));
+    this.emit('playlist');
   }
 
   addWord(word) {

@@ -4,7 +4,8 @@ import { tr, isEn } from './i18n.js';
 // ライブラリ: 保存しているすべてのメディアの一覧と、まとめての検索。
 // 検索の対象は、セルのメモ・コメント・定型コメント・字幕（文字起こし）・単語帳。
 // 「いいね・ブックマークだけ」にすると、すべてのメディアのお気に入りの場面を並べられる。
-// 結果を押すと、そのメディアを開いてその場面へ移動する（手元のファイルは、開き直してもらう）
+// 結果を押すと、そのメディアを開いてその場面へ移動する（手元のファイルは、開き直してもらう）。
+// 結果の ＋ で、そのセル・目印を右側のプレイリスト（playlist.js）に入れる
 const PER_MEDIA = 5;   // 1つのメディアで最初に見せる件数
 const MAX_HITS = 3000; // これ以上は数えるだけにする
 
@@ -95,13 +96,17 @@ export class Library {
   }
 
   async open() {
-    this.dialog.showModal();
+    if (!this.dialog.open) this.dialog.showModal();
     this.searchEl.focus();
     this.listEl.innerHTML = `<div class="lib-empty">${tr('読み込み中…')}</div>`;
+    this.app.playlist.render();
     this.docs = (await this.app.store.allDocs()).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
     this.entries = this.buildEntries();
     this.expanded.clear();
     this.render();
+    // プレイリストの写し（範囲・メモ・題名）を、元のセル・目印の今の内容に合わせる
+    this.app.playlist.sync(this.docs);
+    this.app.playlist.render();
   }
 
   // 探すもの（1件ずつ）を作る
@@ -110,13 +115,13 @@ export class Library {
     for (const doc of this.docs) {
       const who = (x) => (x.src ? doc.shares?.find((s) => s.id === x.src) || { by: '?', color: 0 } : null);
       for (const c of doc.cells) {
-        const base = { doc, t: c.s, lv: c.lv, bm: c.bm, who: who(c), focus: { kind: 'cell', id: c.id } };
+        const base = { doc, t: c.s, lv: c.lv, bm: c.bm, who: who(c), focus: { kind: 'cell', id: c.id }, obj: c };
         // primary: 「いいね・ブックマークだけ」で、1つのセル・目印を1行で見せるときに使う行
         if (c.memo || c.lv || c.bm) out.push({ ...base, kind: 'cell', text: c.memo, range: [c.s, c.e], primary: true });
         for (const cm of c.comments || []) out.push({ ...base, kind: 'comment', t: Number.isFinite(cm.t) ? cm.t : c.s, text: cm.text });
       }
       for (const m of doc.markers) {
-        const base = { doc, t: m.t, lv: m.lv, bm: m.bm, who: who(m), focus: { kind: 'marker', id: m.id }, item: m };
+        const base = { doc, t: m.t, lv: m.lv, bm: m.bm, who: who(m), focus: { kind: 'marker', id: m.id }, item: m, obj: m };
         const first = out.length;
         if (m.tags?.length) out.push({ ...base, kind: 'tag', text: m.tags.join('、') });
         for (const cm of m.comments || []) out.push({ ...base, kind: 'comment', text: cm.text });
@@ -151,6 +156,7 @@ export class Library {
     for (const b of this.kindBtns) b.classList.toggle('on', b.dataset.kind === this.kind);
     const terms = this.terms();
     const fav = this.favEl.checked;
+    this.addable = [];
     if (!terms.length && !fav) {
       this.renderMedia();
       return;
@@ -183,9 +189,20 @@ export class Library {
       groups.set(e.doc.id, g);
     });
     const order = [...groups.values()].sort((a, b) => (b.doc.updatedAt || 0) - (a.doc.updatedAt || 0));
-    this.listEl.innerHTML = order
+    for (const g of order) g.rows.sort((a, b) => hits[a].t - hits[b].t);
+    // 結果のセル・目印を、見えている順（メディアごと・時間順）にまとめてプレイリストへ入れられるように
+    const seen = new Set();
+    for (const g of order) {
+      for (const i of g.rows) {
+        const e = hits[i];
+        const key = e.obj && `${e.doc.id}|${e.obj.id}`;
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        this.addable.push({ doc: e.doc, kind: e.focus.kind, o: e.obj });
+      }
+    }
+    this.listEl.innerHTML = `<div class="lib-addall" id="libAddAll">${this.addAllHtml()}</div>` + order
       .map((g) => {
-        g.rows.sort((a, b) => hits[a].t - hits[b].t);
         const open = this.expanded.has(g.doc.id);
         const shown = open ? g.rows : g.rows.slice(0, PER_MEDIA);
         const more = g.rows.length - shown.length;
@@ -196,6 +213,38 @@ export class Library {
         </section>`;
       })
       .join('');
+  }
+
+  // 「すべて入れる」のボタン（まだ入っていないものの数）
+  addAllHtml() {
+    const pl = this.app.playlist;
+    const n = (this.addable || []).filter((x) => !pl.has(x.doc.id, x.o.id)).length;
+    if (!this.addable?.length) return '';
+    return n
+      ? `<button type="button" class="btn small" data-addall>${icon('list-add')} ${tr('結果のセル・目印をすべてプレイリストに入れる（{n} 件）', { n })}</button>`
+      : `<span class="lib-addall-done">${icon('check')} ${tr('結果のセル・目印は、すべてプレイリストに入っています')}</span>`;
+  }
+
+  // プレイリストが変わったとき: ＋ の印と「すべて入れる」だけを直す（一覧の位置は動かさない）
+  syncAdds() {
+    if (!this.dialog.open) return;
+    const pl = this.app.playlist;
+    for (const b of this.listEl.querySelectorAll('[data-add]')) {
+      const e = this.hits[Number(b.dataset.add)];
+      if (!e) continue;
+      const on = pl.has(e.doc.id, e.obj.id);
+      if (on === b.classList.contains('on')) continue;
+      b.outerHTML = this.addBtn(e, Number(b.dataset.add));
+    }
+    const all = this.listEl.querySelector('#libAddAll');
+    if (all) all.innerHTML = this.addAllHtml();
+  }
+
+  addBtn(e, i) {
+    const on = this.app.playlist.has(e.doc.id, e.obj.id);
+    const what = e.focus.kind === 'cell' ? tr('このセル') : tr('この目印');
+    const title = on ? tr('{what}をプレイリストから外す', { what }) : tr('{what}をプレイリストに入れる', { what });
+    return `<button type="button" class="lib-add${on ? ' on' : ''}" data-add="${i}" title="${title}" aria-label="${title}" aria-pressed="${on}">${icon(on ? 'check' : 'list-add')}</button>`;
   }
 
   kindLabel(doc) {
@@ -226,11 +275,14 @@ export class Library {
     const text = e.text ? snippet(e.text, terms) : `<span class="muted">${tr('（メモなし）')}</span>`;
     const sub = e.sub ? `<span class="lib-sub">${snippet(e.sub, terms, 70)}</span>` : '';
     const fav = (e.lv ? `<span class="lib-like">${hearts(e.lv)}</span>` : '') + (e.bm ? `<span class="lib-bm">${icon('bookmark', 'fill')}</span>` : '');
-    return `<button type="button" class="lib-row" data-go="${i}">
-      <span class="lib-t">${time}</span>${kind}${who}
-      <span class="lib-text">${text}${sub}</span>
-      ${fav}
-    </button>`;
+    return `<div class="lib-line">
+      <button type="button" class="lib-row" data-go="${i}">
+        <span class="lib-t">${time}</span>${kind}${who}
+        <span class="lib-text">${text}${sub}</span>
+        ${fav}
+      </button>
+      ${e.obj ? this.addBtn(e, i) : ''}
+    </div>`;
   }
 
   // 何も探していないとき: メディアの一覧
@@ -263,6 +315,17 @@ export class Library {
   }
 
   onClick(e) {
+    const add = e.target.closest('[data-add]');
+    if (add) {
+      const hit = this.hits[Number(add.dataset.add)];
+      if (hit?.obj) this.app.playlist.toggle(hit.doc, hit.focus.kind, hit.obj);
+      return;
+    }
+    if (e.target.closest('[data-addall]')) {
+      const n = this.app.playlist.add(this.addable || []);
+      this.app.hint(tr('{n} 件をプレイリストに入れました', { n }));
+      return;
+    }
     const more = e.target.closest('[data-more]');
     if (more) {
       this.expanded.add(more.dataset.more);

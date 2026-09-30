@@ -53,6 +53,18 @@ For YouTube videos, captions are shown in a strip just below the player instead 
 - Narrow down to "Cells", "Comments", "Captions" or "Words". "Liked or bookmarked only" lists your favorite scenes across all videos
 - Click a result to open that video, jump to the scene and show its cell or marker card (for files on your computer, open the same file to jump there)
 
+## Playlist (play across videos)
+
+The right side of the Library is the playlist. Line up cells and markers from different videos in any order and play them one after another (a highlight reel, for example).
+
+- Add: press + on a search result in the Library, or "Add all cells and markers in the results to the playlist". You can also use the "Add to playlist" button on a cell card (for markers, inside the opened details)
+  - Turn on "Liked or bookmarked only" and press "Add all" to add your favorite scenes from every video at once
+- Reorder: drag (or Alt+↑↓). "Group by video" puts items from the same video next to each other (fewer video switches)
+- Play: "Play from the start", or click a row to start there. The sidebar bar shows "Playlist 3 / 12" with previous, next, repeat and stop
+- YouTube and URL videos are opened automatically. The browser can't open files on your computer by itself, so playback stops there; open the same file with "Open file" to continue
+- Videos that can't be opened (embedding not allowed, deleted, etc.) are skipped. If a video doesn't start, a hint appears: press ▶ to play it, or "Next" to skip it
+- YouTube may show an ad when the video switches
+
 ## Share links (share on X and elsewhere)
 
 For YouTube videos (and online videos), you can make a link that contains your cells and comments and share it.

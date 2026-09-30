@@ -6,7 +6,7 @@ import { tr } from './i18n.js';
 const NUDGES = [-1, -0.1, 0.1, 1];
 
 // 共有で読み込んだセル・目印でもできる操作（見る・移動する・リピートするだけ）
-const SHARED_ACTS = new Set(['seek', 'jump', 'lead', 'repeat', 'tx', 'txcopy', 'talk', 'toggle']);
+const SHARED_ACTS = new Set(['seek', 'jump', 'lead', 'repeat', 'tx', 'txcopy', 'talk', 'toggle', 'pl']);
 
 // 並び順（時間順以外は字下げせずに並べる）
 const SORTS = {
@@ -291,6 +291,7 @@ export class Sidebar {
         <button class="act mark${c.bm ? ' on' : ''}" data-act="bm" title="${tr('ブックマーク')}" aria-pressed="${c.bm}">${icon('bookmark', c.bm ? 'fill' : '')}</button>`}
         ${sh && !c.comments.length ? '' : `<button class="act talk${talk ? ' open' : ''}" data-act="talk" title="${tr('コメント')}" aria-expanded="${talk}">${icon('comment')}${c.comments.length ? `<span class="n">${c.comments.length}</span>` : ''}</button>`}
         <button class="act rep${rep ? ' on' : ''}" data-act="repeat" title="${tr('リピート再生（同時に1つだけ）')}">${icon('repeat')}<span>${tr('リピート')}</span></button>
+        ${this.plBtn(c)}
         ${this.app.store.cues.length ? `<button class="act tx${tx ? ' open' : ''}" data-act="tx" title="${tr('この区間の文字起こし')}" aria-expanded="${tx}">${icon('text')}<span>${tr('文字起こし')}</span></button>` : ''}
       </div>
       ${tx ? this.txHtml(c) : ''}
@@ -425,7 +426,7 @@ export class Sidebar {
         <div class="edge-row"><span class="edge-label">${tr('区切り')}</span><label class="check-inline"><input type="checkbox" data-act="markflag"${m.mark ? ' checked' : ''}> ${tr('区間の区切りにする')}</label></div>
         ${tagEdit}
         ${this.threadHtml(m)}
-        <div class="detail-foot"><button class="btn tiny danger" data-act="delete">${icon('trash')} ${tr('目印を削除')}</button></div>
+        <div class="detail-foot">${this.plBtn(m, true)}<span class="spacer"></span><button class="btn tiny danger" data-act="delete">${icon('trash')} ${tr('目印を削除')}</button></div>
       </div>` : ''}
     </div>`;
   }
@@ -451,6 +452,18 @@ export class Sidebar {
       </div>
       ${open ? `<div class="card-detail" data-act="noop">${this.threadHtml(m)}</div>` : ''}
     </div>`;
+  }
+
+  // 「プレイリストに入れる」ボタン（入っていれば「外す」）。目印は開いた詳細の中に出す
+  plBtn(o, asText = false) {
+    const on = this.app.playlist.has(this.app.store.doc?.id, o.id);
+    const title = on
+      ? tr('プレイリストから外す')
+      : tr('プレイリストに入れる（ライブラリの右側で並べ替えて、動画をまたいで続けて再生できます）');
+    if (asText) {
+      return `<button class="btn tiny${on ? ' on' : ''}" data-act="pl" title="${title}" aria-pressed="${on}">${icon(on ? 'check' : 'list-add')} ${on ? tr('プレイリストに入っています') : tr('プレイリストに入れる')}</button>`;
+    }
+    return `<button class="act pl${on ? ' on' : ''}" data-act="pl" title="${title}" aria-label="${title}" aria-pressed="${on}">${icon(on ? 'check' : 'list-add')}</button>`;
   }
 
   // ---- 操作 ----
@@ -529,6 +542,15 @@ export class Sidebar {
       case 'repeat':
         app.toggleRepeat(id);
         break;
+      case 'pl': {
+        const added = app.playlist.toggle(store.doc, kind, o);
+        app.hint(
+          added
+            ? tr('プレイリストに入れました（{n} 件目）。ライブラリ（L）の右側で並べ替え・再生できます', { n: app.playlist.items.length })
+            : tr('プレイリストから外しました'),
+        );
+        break;
+      }
       case 'tx':
         toggleIn(ui.txOpen);
         break;

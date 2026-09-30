@@ -551,8 +551,8 @@ export const EN = {
 
   // ---- ライブラリ ----
   'ライブラリ': 'Library',
-  '保存しているすべての動画の一覧と、メモ・コメント・字幕・単語のまとめての検索 (L)':
-    'All your saved videos, and search across their notes, comments, captions and words (L)',
+  '保存しているすべての動画の一覧と、メモ・コメント・字幕・単語のまとめての検索・プレイリスト (L)':
+    'All your saved videos, search across their notes, comments, captions and words, and the playlist (L)',
   'すべての動画のメモ・コメント・字幕・単語を検索（空白で区切ると、すべてを含むもの）':
     'Search notes, comments, captions and words in all videos (separate words with spaces to match all)',
   '単語': 'Words',
@@ -574,6 +574,59 @@ export const EN = {
   '{date} 更新': 'updated {date}',
   '「{title}」は手元のファイルです。同じファイルを開くと、メモが復元されます': '"{title}" is a file on your computer. Open the same file to bring back its notes',
   'すべて見る・検索（ライブラリ）': 'See all and search (Library)',
+
+  // ---- プレイリスト ----
+  'プレイリスト': 'Playlist',
+  '{n} 件・{len}': (v) => `${pl(v.n, 'item')} · ${v.len}`,
+  '最初から再生': 'Play from the start',
+  '同じ動画のものを続けて並べます（動画の切り替えが減ります）': 'Puts items from the same video next to each other (fewer video switches)',
+  '同じ動画をまとめる': 'Group by video',
+  'すべて外す': 'Remove all',
+  '左の検索結果の ＋ や、セルのカードの「プレイリストに入れる」で入れると、ここに並びます。動画をまたいで続けて再生できます。':
+    'Add items with + in the search results on the left, or with "Add to playlist" on a cell card, and they will be listed here. They play one after another, across videos.',
+  '「いいね・ブックマークだけ」にして「すべて入れる」を押すと、お気に入りの場面をまとめて入れられます。':
+    'Turn on "Liked or bookmarked only" and press "Add all" to add all your favorite scenes at once.',
+  '元のセル・目印は削除されています（入れたときの範囲で再生します）': 'The original cell or marker was deleted (plays the range it had when you added it)',
+  '手元のファイルです。再生がここに来たら、同じファイルを開くと続きを再生します':
+    'A file on your computer. When playback gets here, open the same file to continue',
+  'クリックでここから再生': 'Click to play from here',
+  'ドラッグで並べ替え（Alt+↑↓ でも）': 'Drag to reorder (or Alt+↑↓)',
+  'プレイリストから外す': 'Remove from the playlist',
+  '同じ動画のものをまとめました': 'Grouped the items by video',
+  'プレイリストの {n} 件をすべて外しますか？（セル・目印そのものは消えません）': (v) =>
+    `Remove all ${pl(v.n, 'item')} from the playlist? (The cells and markers themselves are kept.)`,
+  'プレイリストの再生をやめました': 'Stopped playing the playlist',
+  'プレイリストの {n} 件を続けて再生します': (v) => `Playing ${pl(v.n, 'playlist item')} one after another`,
+  'プレイリストの再生が終わりました': 'Finished playing the playlist',
+  '次は手元のファイル「{title}」です。「ファイルを開く」から同じファイルを開くと続きを再生します（飛ばすときは「次へ」）':
+    'Next is the file "{title}" on your computer. Open the same file with "Open file" to continue (or press "Next" to skip it)',
+  'プレイリスト {i} / {n}：{title}': 'Playlist {i} / {n}: {title}',
+  'プレイリストの動画を開けなかったので、再生をやめました': "Stopped the playlist because its videos couldn't be opened",
+  '「{title}」を開けなかったので、次へ進みます': 'Couldn\'t open "{title}", moving on to the next one',
+  '別のメディアを開いたので、プレイリストの再生をやめました': 'Stopped the playlist because another video was opened',
+  '「{title}」の再生が始まりません。▶（Space）で再生するか、「次へ」で飛ばせます':
+    '"{title}" is not starting. Press ▶ (Space) to play it, or "Next" to skip it',
+  '区切りの外へ移動したので、プレイリストの再生をやめました': 'Stopped the playlist because you moved outside its items',
+  '手元のファイル「{title}」を開くと続きを再生します': 'Open the file "{title}" to continue',
+  '「{title}」を開いています…': 'Opening "{title}"…',
+  'プレイリスト {i} / {n}': 'Playlist {i} / {n}',
+  '手元のファイルを開く': 'Open a file on your computer',
+  'プレイリストを見る（ライブラリ）': 'Show the playlist (Library)',
+  'プレイリストの再生をやめる': 'Stop playing the playlist',
+  '結果のセル・目印をすべてプレイリストに入れる（{n} 件）': (v) => `Add all cells and markers in the results to the playlist (${v.n})`,
+  '結果のセル・目印は、すべてプレイリストに入っています': 'All cells and markers in the results are in the playlist',
+  'このセル': 'this cell',
+  'この目印': 'this marker',
+  '{what}をプレイリストから外す': 'Remove {what} from the playlist',
+  '{what}をプレイリストに入れる': 'Add {what} to the playlist',
+  '{n} 件をプレイリストに入れました': (v) => `Added ${pl(v.n, 'item')} to the playlist`,
+  'プレイリストに入れる（ライブラリの右側で並べ替えて、動画をまたいで続けて再生できます）':
+    'Add to the playlist (reorder it on the right side of the Library, and play it across videos)',
+  'プレイリストに入っています': 'In the playlist',
+  'プレイリストに入れる': 'Add to playlist',
+  'プレイリストに入れました（{n} 件目）。ライブラリ（L）の右側で並べ替え・再生できます':
+    'Added to the playlist (item {n}). Reorder and play it on the right side of the Library (L)',
+  'プレイリストから外しました': 'Removed from the playlist',
 
   // ---- 共有 ----
   '共有': 'Share',
@@ -761,7 +814,7 @@ export const EN_HTML = {
       <tr><td><kbd>T</kbd></td><td>Show / hide captions (loads captions if none)</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>V</kbd></td><td>Paste a copied transcript to load it</td></tr>
       <tr><td><kbd>W</kbd></td><td>Add to vocabulary (uses the selected text and the current caption line)</td></tr>
-      <tr><td><kbd>L</kbd></td><td>Library (all your videos, and search across them)</td></tr>
+      <tr><td><kbd>L</kbd></td><td>Library (all your videos, search across them, and the playlist)</td></tr>
       <tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>Previous / next marker</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>←</kbd> <kbd>→</kbd></td><td>Move the target marker by 0.1 s</td></tr>
       <tr><td><kbd>Delete</kbd></td><td>Delete the target marker</td></tr>

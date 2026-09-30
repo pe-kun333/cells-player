@@ -16,6 +16,7 @@ import { Broadcast } from './broadcast.js';
 import { ShareDialog, ShareLayers, decodeShare, shareIdOf, shareFromText } from './share.js';
 import { XStrip } from './xstrip.js';
 import { Library } from './library.js';
+import { Playlist } from './playlist.js';
 import { $, clamp, fmt, round2, escapeHtml, icon, cellLabel } from './util.js';
 import { tr, trMaybe, lang, isEn, translatePage } from './i18n.js';
 
@@ -88,6 +89,8 @@ const broadcast = new Broadcast(app);
 const shareDialog = new ShareDialog(app);
 const shareLayers = new ShareLayers(app);
 const xstrip = new XStrip(app);
+const playlist = new Playlist(app);
+app.playlist = playlist;
 const library = new Library(app);
 // ライブ配信を見ている間に作った目印・セルには印を付ける（あとでアーカイブの時刻に合わせるため）
 store.liveNow = () => !!app.player?.isLive();
@@ -99,6 +102,7 @@ app.sidebarItems = () => (store.doc ? sidebar.items() : []);
 // 連続再生で次の区切りに進んだとき: サイドバーのカードを強調して見える位置へ
 app.onDigestClip = (id) => {
   sidebar.updateActive();
+  playlist.renderIfOpen();
   if (!id) return;
   document.querySelector(`#sideList .card[data-id="${id}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 };
@@ -140,6 +144,13 @@ store.subscribe((reason) => {
   }
   if (reason === 'words') {
     words.refresh();
+    return;
+  }
+  // プレイリストを変えたとき: カードの「プレイリストに入れる」と、ライブラリの表示だけ直す
+  if (reason === 'playlist') {
+    sidebar.render();
+    playlist.renderIfOpen();
+    library.syncAdds();
     return;
   }
   // 長さが分かった・伸びた（ライブ配信）ときは、タイムラインだけ描き直す
@@ -727,7 +738,7 @@ function closeMedia() {
   app.ui.commentsOpen.clear();
   app.ui.selectedCells.clear();
   app.ui.txOpen.clear();
-  if (digest.active) digest.stop();
+  if (digest.active && !digest.wait) digest.stop();
   if (live.active) live.stop();
   broadcast.reset();
   $('#commentInput').value = '';
@@ -764,12 +775,18 @@ async function openMedia(meta, makePlayer, src, cleanup) {
     toast(err.message);
     closeMedia();
     showEmpty();
+    digest.onMediaOpened(false);
     return;
   }
   if (seq !== openSeq) return;
   document.body.classList.remove('is-loading');
 
-  if (player.kind === 'youtube') meta.title = player.getTitle() || meta.title;
+  if (player.kind === 'youtube') {
+    const title = player.getTitle();
+    // 題名が取れないとき（再生できない動画など）は、保存してある題名を残す
+    if (title) meta.title = title;
+    else meta.keepTitle = true;
+  }
   await store.open(meta);
   if (seq !== openSeq) return;
   store.setDuration(player.getDuration());
@@ -777,7 +794,10 @@ async function openMedia(meta, makePlayer, src, cleanup) {
   player.on('play', updatePlayButton);
   player.on('pause', updatePlayButton);
   player.on('durationchange', () => store.setDuration(player.getDuration()));
-  player.on('error', (msg) => toast(msg));
+  player.on('error', (msg) => {
+    toast(msg);
+    digest.onPlayerError();
+  });
   player.on('ended', () => {
     if (digest.onEnded()) return;
     if (practice.onEnded()) return;
@@ -802,7 +822,7 @@ async function openMedia(meta, makePlayer, src, cleanup) {
   updatePlayButton();
   renderAll();
   const n = store.cells.length + store.markers.length;
-  if (n) app.hint(tr('保存されていたセル {c} 件・目印 {m} 件を読み込みました', { c: store.cells.length, m: store.markers.length }));
+  if (n && !digest.wait) app.hint(tr('保存されていたセル {c} 件・目印 {m} 件を読み込みました', { c: store.cells.length, m: store.markers.length }));
   applyPendingShare();
   // 単語帳・ライブラリから別のメディアの場面へ移動しようとしていたら、開いたところでその位置へ
   const jump = app.ui.pendingJump;
@@ -810,6 +830,8 @@ async function openMedia(meta, makePlayer, src, cleanup) {
     app.ui.pendingJump = null;
     showJump(jump.t, jump.focus);
   }
+  // プレイリストの再生で開いたメディアなら、その区切りから続ける
+  digest.onMediaOpened(true);
 }
 
 // ---- 共有リンクを開く ----
@@ -853,6 +875,12 @@ function openShareFromHash() {
   return true;
 }
 window.addEventListener('hashchange', openShareFromHash);
+
+// プレイリスト: 連続再生の仕組みで、メディアをまたいで再生する
+app.startPlaylist = (clips, i) => digest.startPlaylist(clips, i);
+app.playlistNow = () => (digest.active && digest.mode === 'playlist' ? digest.clips[digest.i]?.key || null : null);
+app.openMediaUrl = (url) => openFromText(url);
+app.openLibrary = () => library.open();
 
 // 単語帳・ライブラリなどから、別のメディアの場面へ移動する（URL で開けるものは開き、ファイルは開き直してもらう）。
 // t が null ならメディアを開くだけ。focus: { kind: 'cell' | 'marker', id } を渡すと、そのカードを一覧で見せる
