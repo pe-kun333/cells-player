@@ -161,12 +161,17 @@ def open_browser():
     webbrowser.open(URL)
 
 
-def already_running():
+def page_at_port():
+    """いまそのポートで動いているページの中身（Web サーバーでなければ None）"""
     try:
         with urllib.request.urlopen(URL, timeout=2) as res:
-            return MARKER in res.read().decode("utf-8", "ignore")
+            return res.read().decode("utf-8", "ignore")
     except Exception:
-        return False
+        return None
+
+
+def already_running(page):
+    return page is not None and MARKER in page
 
 
 def main():
@@ -174,12 +179,19 @@ def main():
     try:
         httpd = Server((HOST, PORT), functools.partial(Handler, directory=ROOT))
     except OSError:
-        if already_running():
+        page = page_at_port()
+        if already_running(page):
             print(f"すでに起動しています: {URL}")
             if want_browser:
                 open_browser()
             return
-        print(f"ポート {PORT} が別のアプリで使われているため起動できませんでした。")
+        # 別のアプリが同じポートを使っている。メモはこのアドレスに保存されているので、ほかのポートには逃げない
+        m = re.search(r"<title>([^<]{1,80})</title>", page or "", re.I)
+        who = f"「{m.group(1).strip()}」" if m else "別のアプリ"
+        print(f"ポート {PORT} を{who}が使っているため、起動できませんでした。")
+        print(f"区間セルプレイヤーのメモは {URL} に保存されているので、ほかのポートでは起動しません。")
+        print("そのアプリ（そのサーバーを動かしている黒いウィンドウなど）を閉じてから、もう一度 start.bat を起動してください。")
+        print(f"(Port {PORT} is used by another app. Close it and run start.bat again.)")
         sys.exit(1)
 
     print(f"区間セルプレイヤーを起動しました: {URL}")
