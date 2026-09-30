@@ -15,6 +15,7 @@ import { LiveCaption } from './live.js';
 import { Broadcast } from './broadcast.js';
 import { ShareDialog, ShareLayers, decodeShare, shareIdOf, shareFromText } from './share.js';
 import { XStrip } from './xstrip.js';
+import { Library } from './library.js';
 import { $, clamp, fmt, round2, escapeHtml, icon, cellLabel } from './util.js';
 import { tr, trMaybe, lang, isEn, translatePage } from './i18n.js';
 
@@ -41,7 +42,7 @@ const app = {
     editingMemo: null,      // メモを編集中のセル
     commentsOpen: new Set(), // コメント欄を開いているカード
     selectedCells: new Set(), // 連結のために選んだセル
-    pendingJump: null,        // 別のメディアを開いたら移動する場面 { mediaId, t }
+    pendingJump: null,        // 別のメディアを開いたら移動する場面 { mediaId, t, focus }
     pendingShare: null,       // 共有リンクの中身（動画を開いたら「〇〇さんの共有」として加える）
     txOpen: new Set(),        // 文字起こしを開いているセル
     digestId: null,           // 連続再生でいま再生しているセル・目印
@@ -87,6 +88,7 @@ const broadcast = new Broadcast(app);
 const shareDialog = new ShareDialog(app);
 const shareLayers = new ShareLayers(app);
 const xstrip = new XStrip(app);
+const library = new Library(app);
 // ライブ配信を見ている間に作った目印・セルには印を付ける（あとでアーカイブの時刻に合わせるため）
 store.liveNow = () => !!app.player?.isLive();
 let txIndex = -2; // いま表示・強調している字幕の行（変わったときだけ描き直す）
@@ -454,6 +456,25 @@ app.makeCellHere = () => {
   app.createCell(pts[i], pts[i + 1]);
 };
 
+// 目印のカードを一覧で見せる（目印が出るタブにして、絞り込みで隠れていれば解く）
+app.revealMarker = (id) => {
+  const m = store.getMarker(id);
+  if (!m) return;
+  if (app.ui.tab === 'cells') app.ui.tab = 'all';
+  if (!sidebar.passes(m, 'marker') || !sidebar.matchesQuery(m, 'marker')) {
+    app.ui.minLike = 0;
+    app.ui.bmOnly = false;
+    app.ui.tag = '';
+    app.ui.query = '';
+    $('#sideSearch').value = '';
+  }
+  // 共有の目印を表示していなければ、表示にする
+  const sh = store.shareOf(m);
+  if (sh && sh.shown === false) store.setShareShown(sh.id, true);
+  app.ui.flashId = id;
+  sidebar.render();
+};
+
 app.revealCell = (id) => {
   const c = store.getCell(id);
   if (!c) return;
@@ -465,6 +486,8 @@ app.revealCell = (id) => {
     app.ui.query = '';
     $('#sideSearch').value = '';
   }
+  const sh = store.shareOf(c);
+  if (sh && sh.shown === false) store.setShareShown(sh.id, true);
   app.ui.flashId = id;
   sidebar.render();
 };
@@ -781,11 +804,11 @@ async function openMedia(meta, makePlayer, src, cleanup) {
   const n = store.cells.length + store.markers.length;
   if (n) app.hint(tr('保存されていたセル {c} 件・目印 {m} 件を読み込みました', { c: store.cells.length, m: store.markers.length }));
   applyPendingShare();
-  // 単語帳から別のメディアの場面へ移動しようとしていたら、開いたところでその位置へ
+  // 単語帳・ライブラリから別のメディアの場面へ移動しようとしていたら、開いたところでその位置へ
   const jump = app.ui.pendingJump;
   if (jump && jump.mediaId === store.doc.id) {
     app.ui.pendingJump = null;
-    app.seek(jump.t);
+    showJump(jump.t, jump.focus);
   }
 }
 
@@ -831,16 +854,23 @@ function openShareFromHash() {
 }
 window.addEventListener('hashchange', openShareFromHash);
 
-// 単語帳などから、別のメディアの場面へ移動する（URL で開けるものは開き、ファイルは開き直してもらう）
-app.jumpToMedia = (mediaId, url, t, title) => {
+// 単語帳・ライブラリなどから、別のメディアの場面へ移動する（URL で開けるものは開き、ファイルは開き直してもらう）。
+// t が null ならメディアを開くだけ。focus: { kind: 'cell' | 'marker', id } を渡すと、そのカードを一覧で見せる
+app.jumpToMedia = (mediaId, url, t, title, focus) => {
   if (store.doc && store.doc.id === mediaId) {
-    app.seek(t);
+    showJump(t, focus);
     return;
   }
-  app.ui.pendingJump = { mediaId, t };
+  app.ui.pendingJump = { mediaId, t, focus };
   if (url) openFromText(url);
-  else toast(tr('「{title}」のファイルを開くと、その場面に移動します', { title }));
+  else toast(Number.isFinite(t) ? tr('「{title}」のファイルを開くと、その場面に移動します', { title }) : tr('「{title}」は手元のファイルです。同じファイルを開くと、メモが復元されます', { title }));
 };
+
+function showJump(t, focus) {
+  if (Number.isFinite(t)) app.seek(t);
+  if (focus?.kind === 'cell' && store.getCell(focus.id)) app.revealCell(focus.id);
+  else if (focus?.kind === 'marker' && store.getMarker(focus.id)) app.revealMarker(focus.id);
+}
 
 // ファイルの先頭 1MB とサイズから ID を作る（名前を変えても同じメモが開く）
 async function fileId(file) {
@@ -932,7 +962,7 @@ function renderRecent() {
   }
   const kindLabel = { youtube: 'YouTube', url: 'URL', local: tr('ファイル') };
   el.innerHTML =
-    `<div class="recent-head">${tr('最近のメディア')}</div>` +
+    `<div class="recent-head">${tr('最近のメディア')}<button type="button" class="recent-lib" data-lib>${tr('すべて見る・検索（ライブラリ）')}</button></div>` +
     list
       .map((r) => {
         const canOpen = r.source !== 'local' && r.url;
@@ -950,6 +980,10 @@ function renderRecent() {
 }
 
 $('#recentList').addEventListener('click', (e) => {
+  if (e.target.closest('[data-lib]')) {
+    library.open();
+    return;
+  }
   const b = e.target.closest('[data-url]');
   if (b) openFromText(b.dataset.url);
 });
@@ -1408,6 +1442,11 @@ document.addEventListener('keydown', (e) => {
   }
   if (k === '?') {
     $('#helpDialog').showModal();
+    return;
+  }
+  // ライブラリは、動画を開いていなくても使える
+  if ((k === 'l' || k === 'L') && !ctrl && !e.altKey) {
+    library.open();
     return;
   }
   if (!app.player || !store.doc) return;

@@ -549,6 +549,32 @@ export const EN = {
   'チャンネルのページの URL では開けません。配信の画面を開いて、その URL（…/watch?v=… か …/live/…）を貼ってください':
     'A channel page URL cannot be opened. Open the stream itself and paste its URL (…/watch?v=… or …/live/…)',
 
+  // ---- ライブラリ ----
+  'ライブラリ': 'Library',
+  '保存しているすべての動画の一覧と、メモ・コメント・字幕・単語のまとめての検索 (L)':
+    'All your saved videos, and search across their notes, comments, captions and words (L)',
+  'すべての動画のメモ・コメント・字幕・単語を検索（空白で区切ると、すべてを含むもの）':
+    'Search notes, comments, captions and words in all videos (separate words with spaces to match all)',
+  '単語': 'Words',
+  '探すもの': 'What to search',
+  'コメント（絞り込み）': 'Comments',
+  '字幕（絞り込み）': 'Captions',
+  'いいね・ブックマークだけ': 'Liked or bookmarked only',
+  '{n} 件（最初の {m} 件を表示）': 'Showing the first {m} of {n} results',
+  '{n} 件': (v) => pl(v.n, 'result'),
+  'いいね・ブックマークした場面はまだありません。': "You haven't liked or bookmarked any scenes yet.",
+  '見つかりませんでした。': 'Nothing found.',
+  'さらに {n} 件': (v) => `${pl(v.n, 'more result')}`,
+  'いま開いている': 'Open now',
+  '{n} 本のメディア': (v) => pl(v.n, 'video', 'videos'),
+  'まだメモのあるメディアがありません。動画や音声を開いて、目印やセルを付けるとここに並びます。':
+    'No videos with notes yet. Open a video or audio file and add markers or cells, and it will show up here.',
+  '単語 {n}': (v) => pl(v.n, 'word'),
+  '共有 {n}': (v) => pl(v.n, 'share'),
+  '{date} 更新': 'updated {date}',
+  '「{title}」は手元のファイルです。同じファイルを開くと、メモが復元されます': '"{title}" is a file on your computer. Open the same file to bring back its notes',
+  'すべて見る・検索（ライブラリ）': 'See all and search (Library)',
+
   // ---- 共有 ----
   '共有': 'Share',
   'セル・コメントを入れたリンクを作って、X などで共有する': 'Make a link with your cells and comments to share on X and elsewhere',
@@ -735,6 +761,7 @@ export const EN_HTML = {
       <tr><td><kbd>T</kbd></td><td>Show / hide captions (loads captions if none)</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>V</kbd></td><td>Paste a copied transcript to load it</td></tr>
       <tr><td><kbd>W</kbd></td><td>Add to vocabulary (uses the selected text and the current caption line)</td></tr>
+      <tr><td><kbd>L</kbd></td><td>Library (all your videos, and search across them)</td></tr>
       <tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>Previous / next marker</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>←</kbd> <kbd>→</kbd></td><td>Move the target marker by 0.1 s</td></tr>
       <tr><td><kbd>Delete</kbd></td><td>Delete the target marker</td></tr>

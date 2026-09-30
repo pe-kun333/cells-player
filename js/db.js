@@ -44,6 +44,11 @@ class IdbKV {
   del(key) {
     return this.run('readwrite', (st) => st.delete(key));
   }
+
+  // 保存しているキーの一覧（ライブラリで、すべてのメディアを読むため）
+  keys() {
+    return this.run('readonly', (st) => st.getAllKeys());
+  }
 }
 
 class LocalKV {
@@ -66,6 +71,15 @@ class LocalKV {
 
   async del(key) {
     localStorage.removeItem(LS_PREFIX + key);
+  }
+
+  async keys() {
+    const out = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(LS_PREFIX)) out.push(k.slice(LS_PREFIX.length));
+    }
+    return out;
   }
 }
 

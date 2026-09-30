@@ -693,6 +693,46 @@ html[lang="en"] .tl-label { width: 56px; }
 .medit:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 .medit-hint { padding: 0 8px 4px 56px; font-size: 11px; color: var(--text-3); background: var(--panel-2); box-shadow: inset 3px 0 0 var(--accent); }
 
+/* ---- ライブラリ ---- */
+.lib-body { gap: 10px; }
+.lib-top { display: flex; align-items: center; gap: 8px; }
+.lib-top h2 { margin: 0; }
+.lib-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; font-size: 13px; }
+.lib-list { max-height: min(62vh, 620px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin: 0 -4px; padding: 0 4px; }
+.lib-empty { padding: 16px 4px; font-size: 13px; line-height: 1.8; color: var(--text-3); }
+.lib-group { border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; }
+.lib-media { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 2px 0 4px; }
+.lib-kind { flex: none; font-size: 11px; color: var(--text-3); width: 52px; }
+.lib-title {
+  flex: 0 1 auto; min-width: 0; padding: 0; border: 0; background: none; cursor: pointer; text-align: left;
+  font-size: 13.5px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lib-title:hover { color: var(--accent-text); text-decoration: underline; }
+.lib-here { flex: none; font-size: 11px; color: var(--accent-text); }
+.lib-n { margin-left: auto; flex: none; font-size: 12px; color: var(--text-3); }
+.lib-meta { padding-left: 60px; font-size: 12px; color: var(--text-3); }
+.lib-row {
+  display: flex; align-items: baseline; gap: 8px; width: 100%; padding: 4px 6px; border: 0; border-radius: 6px;
+  background: none; cursor: pointer; text-align: left; font-size: 13px; color: var(--text);
+}
+.lib-row:hover { background: var(--panel-2); }
+.lib-t { flex: none; min-width: 52px; font-family: var(--mono); font-size: 11.5px; color: var(--text-3); }
+.lib-badge { flex: none; padding: 0 6px; border-radius: 999px; font-size: 11px; line-height: 17px; background: var(--panel-2); color: var(--text-2); }
+.lib-badge.k-cell { background: var(--accent-bg); color: var(--accent-text); }
+.lib-badge.k-word { background: color-mix(in srgb, var(--heart) 18%, transparent); }
+.lib-who { flex: none; max-width: 7em; padding: 0 5px; border-radius: 4px; font-size: 11px; background: color-mix(in srgb, var(--who) 22%, transparent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lib-text { flex: 1; min-width: 0; line-height: 1.55; overflow-wrap: anywhere; }
+.lib-text mark { background: color-mix(in srgb, var(--accent) 28%, transparent); color: inherit; border-radius: 2px; padding: 0 1px; }
+.lib-sub { display: block; font-size: 12px; color: var(--text-3); }
+.lib-like, .lib-bm { flex: none; display: inline-flex; align-items: center; color: var(--heart); }
+.lib-bm { color: var(--accent); }
+.lib-like .i, .lib-bm .i { width: 13px; height: 13px; }
+.lib-more { align-self: flex-start; margin: 2px 0 2px 60px; padding: 0; border: 0; background: none; cursor: pointer; font-size: 12px; color: var(--accent-text); }
+.lib-more:hover { text-decoration: underline; }
+.recent-head { display: flex; align-items: center; gap: 8px; }
+.recent-lib { margin-left: auto; padding: 0; border: 0; background: none; cursor: pointer; font-size: 12px; color: var(--accent-text); }
+.recent-lib:hover { text-decoration: underline; }
+
 /* ---- 共有 ---- */
 /* 共有で読み込んだものは、その人の色（--who）で見分ける */
 .share-bar {

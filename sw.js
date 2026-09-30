@@ -14,6 +14,7 @@ const APP_FILES = [
   './js/broadcast.js',
   './js/share.js',
   './js/xstrip.js',
+  './js/library.js',
   './js/commentlist.js',
   './js/db.js',
   './js/digest.js',

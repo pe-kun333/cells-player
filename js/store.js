@@ -188,6 +188,18 @@ export class Store {
     return [...this.index].sort((a, b) => b.updatedAt - a.updatedAt);
   }
 
+  // 保存しているすべてのメディアのメモ（ライブラリの一覧・検索に使う）。
+  // 開いているメディアは、保存を待っている分も含めていまの内容を使う
+  async allDocs() {
+    if (!this.kv) return [];
+    const keys = (await this.kv.keys()).filter((k) => String(k).startsWith('media:'));
+    const docs = await Promise.all(keys.map((k) => this.kv.get(k).catch(() => null)));
+    const ok = (d) => d && d.version === 1 && typeof d.id === 'string' && Array.isArray(d.markers) && Array.isArray(d.cells);
+    const list = docs.filter(ok).map((d) => (this.doc && d.id === this.doc.id ? this.doc : d));
+    if (this.doc && !list.some((d) => d.id === this.doc.id)) list.push(this.doc);
+    return list;
+  }
+
   subscribe(fn) {
     this.listeners.add(fn);
   }

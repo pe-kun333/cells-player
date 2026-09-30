@@ -45,6 +45,14 @@ Press "?" at the top right for the list of keyboard shortcuts.
 
 For YouTube videos, captions are shown in a strip just below the player instead of over it, following YouTube's terms.
 
+## Library (all your videos and search)
+
+"Library" at the top (or the L key) lists every video and audio file you have notes for.
+
+- Type in the search box to search the cell notes, comments, quick comments, captions (transcripts) and vocabulary of all videos at once (separate words with spaces to match all of them)
+- Narrow down to "Cells", "Comments", "Captions" or "Words". "Liked or bookmarked only" lists your favorite scenes across all videos
+- Click a result to open that video, jump to the scene and show its cell or marker card (for files on your computer, open the same file to jump there)
+
 ## Share links (share on X and elsewhere)
 
 For YouTube videos (and online videos), you can make a link that contains your cells and comments and share it.

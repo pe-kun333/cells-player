@@ -59,6 +59,7 @@
   <div class="spacer"></div>
   <button id="btnUndo" class="btn icon-btn" title="元に戻す (Ctrl+Z)" aria-label="元に戻す"><svg class="i" aria-hidden="true"><use href="#i-undo"/></svg></button>
   <button id="btnRedo" class="btn icon-btn" title="やり直す (Ctrl+Shift+Z)" aria-label="やり直す"><svg class="i" aria-hidden="true"><use href="#i-redo"/></svg></button>
+  <button id="btnLibrary" class="btn" title="保存しているすべての動画の一覧と、メモ・コメント・字幕・単語のまとめての検索 (L)">ライブラリ</button>
   <button id="btnWords" class="btn" title="単語帳（W キーで、いまの字幕の言葉を追加）">単語帳</button>
   <button id="btnShare" class="btn" title="セル・コメントを入れたリンクを作って、X などで共有する">共有</button>
   <button id="btnExport" class="btn">書き出し</button>
@@ -428,6 +429,7 @@
       <tr><td><kbd>T</kbd></td><td>字幕の表示 / 非表示（読み込んでいなければ読み込む）</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>V</kbd></td><td>コピーした文字起こしを貼り付けて読み込む</td></tr>
       <tr><td><kbd>W</kbd></td><td>単語帳に追加（選んでいる文字と、いまの字幕の行が入ります）</td></tr>
+      <tr><td><kbd>L</kbd></td><td>ライブラリ（すべての動画の一覧と、まとめての検索）</td></tr>
       <tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>前 / 次の目印へ</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>←</kbd> <kbd>→</kbd></td><td>対象の目印を 0.1 秒ずつ動かす</td></tr>
       <tr><td><kbd>Delete</kbd></td><td>対象の目印を削除</td></tr>
@@ -450,6 +452,30 @@
       <button type="button" class="btn small" id="btnInstall" hidden title="この PC にアプリとして入れると、専用のウィンドウで開き、オフラインでも起動できます">アプリとしてインストール</button>
     </div>
     <div class="dialog-foot"><button class="btn primary" value="close">閉じる</button></div>
+  </form>
+</dialog>
+
+<dialog id="libraryDialog" class="wide-dialog">
+  <form method="dialog" class="dialog-body lib-body">
+    <div class="lib-top">
+      <h2>ライブラリ</h2>
+      <span class="spacer"></span>
+      <button class="btn icon-btn" value="close" title="閉じる (Esc)" aria-label="閉じる"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <input id="libSearch" type="search" class="field" placeholder="すべての動画のメモ・コメント・字幕・単語を検索（空白で区切ると、すべてを含むもの）" autocomplete="off">
+    <div class="lib-filters">
+      <div class="seg" role="group" aria-label="探すもの">
+        <button type="button" data-kind="all">すべて</button>
+        <button type="button" data-kind="cell">セル</button>
+        <button type="button" data-kind="comment" data-i18n="コメント（絞り込み）">コメント</button>
+        <button type="button" data-kind="cue" data-i18n="字幕（絞り込み）">字幕</button>
+        <button type="button" data-kind="word">単語</button>
+      </div>
+      <label class="check-inline"><input type="checkbox" id="libFav"> いいね・ブックマークだけ</label>
+      <span class="spacer"></span>
+      <span class="count" id="libCount"></span>
+    </div>
+    <div class="lib-list" id="libList"></div>
   </form>
 </dialog>
 
