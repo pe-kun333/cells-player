@@ -70,6 +70,18 @@
 </header>
 
 <main class="layout">
+  <!-- ライブ配信のときだけ、YouTube のチャットをそのまま埋め込んで表示する -->
+  <aside class="chat-col" id="chatCol" hidden aria-label="ライブチャット">
+    <div class="chat-head">
+      <span class="chat-title"><i class="edge-dot" aria-hidden="true"></i>ライブチャット</span>
+      <span class="spacer"></span>
+      <button type="button" class="btn tiny" id="btnChatReload" title="チャットを読み込み直す（YouTube にログインしたあとなど）">再読み込み</button>
+      <button type="button" class="btn tiny" id="btnChatPopout" title="チャットを YouTube の別ウィンドウで開く（ここに出ないときや、投稿できないとき）">別ウィンドウ</button>
+      <button type="button" class="btn tiny" id="btnChatClose" title="チャットを閉じる" aria-label="閉じる"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="chat-frame" id="chatFrame"></div>
+    <p class="chat-note">書き込むには、このブラウザで YouTube にログインしてください。コメントは YouTube のチャット画面から、あなたのアカウントで投稿されます（このアプリはその内容を受け取りません）。</p>
+  </aside>
   <section class="left">
     <div class="stage" id="stage">
       <div class="stage-media" id="stageMedia"></div>
@@ -102,6 +114,7 @@
       <button id="btnFwd" class="btn small" title="5秒進む (→)">+5秒</button>
       <span class="time" id="timeText">0:00.0 / 0:00</span>
       <button id="btnLiveEdge" class="btn small live-edge" hidden><i class="edge-dot" aria-hidden="true"></i><span>ライブ</span></button>
+      <button id="btnLiveChat" class="btn small" hidden title="YouTube のライブチャットを表示する / 隠す">チャット</button>
       <span class="spacer"></span>
       <span class="badge" id="modeBadge" hidden>YouTube（軽量モード）</span>
       <button id="btnLiveSync" class="btn small" hidden title="ライブ中に付けた目印・セルの時刻を、アーカイブに合わせる">ライブの記録を合わせる</button>
@@ -272,6 +285,10 @@
         <button type="button" class="btn small danger" id="btnTxRemove">外す</button>
       </span>
     </div>
+    <label class="set-row check">
+      <input name="liveChat" type="checkbox">
+      <span>ライブ配信のときは、YouTube のチャットを左に表示する<small>チャットに書き込むには、このブラウザで YouTube にログインしておきます（再生ボタンの並びの「チャット」でも切り替えられます）</small></span>
+    </label>
     <label class="set-row check">
       <input name="captions" type="checkbox">
       <span>動画の上に字幕を表示する<small>外すと、字幕・文字起こし・音声認識の文字は右下の「文字起こし」やセルの中だけに出ます（T キーや「字幕」ボタンでも切り替えられます）</small></span>

@@ -1,4 +1,5 @@
 import { $, fmt, escapeHtml, icon, round2 } from './util.js';
+import { saveSettings } from './store.js';
 import { tr, locale } from './i18n.js';
 
 // ライブ配信（YouTube）。
@@ -6,6 +7,8 @@ import { tr, locale } from './i18n.js';
 //   付けた目印・セル・字幕の行には fromLive が付く（store）。
 // 配信が終わってアーカイブになったら: ライブ中の記録の時刻がアーカイブとずれていないかを確かめ、
 //   ずれていれば、ライブ中に付けた目印を1つ選んでアーカイブの同じ場面に合わせると、全体（またはそれより後ろ）がずれる
+// ライブチャット: YouTube が用意しているチャットの埋め込み（live_chat?v=…&embed_domain=…）を左の列に出す。
+//   書き込みは YouTube の画面の中で、その人の YouTube アカウントで行われ、このアプリは中身を受け取らない
 export class Broadcast {
   constructor(app) {
     this.app = app;
@@ -15,6 +18,13 @@ export class Broadcast {
     this.edgeBtn.addEventListener('click', () => this.goLive());
     this.syncBtn.addEventListener('click', () => this.toggleCard());
     this.card.addEventListener('click', (e) => this.onCardClick(e));
+    this.chatCol = $('#chatCol');
+    this.chatFrame = $('#chatFrame');
+    this.chatBtn = $('#btnLiveChat');
+    this.chatBtn.addEventListener('click', () => this.setChat(!this.chatOpen, true));
+    $('#btnChatClose').addEventListener('click', () => this.setChat(false, true));
+    $('#btnChatReload').addEventListener('click', () => this.loadChat());
+    $('#btnChatPopout').addEventListener('click', () => this.popoutChat());
     this.reset();
   }
 
@@ -35,6 +45,9 @@ export class Broadcast {
     this.statusKey = '';
     this.edgeBtn.hidden = true;
     this.syncBtn.hidden = true;
+    this.chatBtn.hidden = true;
+    this.chatAuto = false;    // この回に、設定に合わせてチャットを開いたか
+    this.setChat(false);
     this.render();
   }
 
@@ -60,6 +73,11 @@ export class Broadcast {
     if (live) {
       this.sawLive = true;
       if (p.liveBase !== null && (!doc.live || Math.abs(doc.live.base - p.liveBase) > 1)) this.store.markLive(p.liveBase);
+      // ライブと分かったら、設定に合わせてチャットを開く（その回に一度だけ）
+      if (!this.chatAuto) {
+        this.chatAuto = true;
+        if (this.app.settings.liveChat) this.setChat(true);
+      }
       if (!this.announced && p.liveBase !== null) {
         this.announced = true;
         this.app.hint(tr('ライブ配信です。付けた目印・セル・コメントは、配信が終わってアーカイブになったあとも、同じ URL で開けば使えます'), true);
@@ -88,6 +106,8 @@ export class Broadcast {
     this.syncBtn.hidden = live || !this.archiveSeen || !this.store.doc?.live || !this.records;
     this.syncBtn.classList.toggle('on', this.cardOpen);
     this.edgeBtn.hidden = !live;
+    // チャットのボタンは、この回にライブとして見ていたあいだ出す（配信が終わっても、閉じるまでは残す）
+    this.chatBtn.hidden = !this.sawLive;
     if (!live) return;
     const edge = p.liveEdge();
     const behind = edge ? Math.max(0, edge - now) : 0;
@@ -109,6 +129,57 @@ export class Broadcast {
     if (!this.cardOpen || id === this.pickId || !this.store.getMarker(id)?.fromLive) return;
     this.pickId = id;
     this.statusKey = '';
+  }
+
+  // ---- ライブチャット ----
+
+  videoId() {
+    const id = this.store.doc?.id || '';
+    return /^yt:[\w-]{11}$/.test(id) ? id.slice(3) : null;
+  }
+
+  // byUser: ボタンで切り替えたとき（次のライブ配信でも同じにするため、設定に覚える）
+  setChat(open, byUser = false) {
+    const id = open ? this.videoId() : null;
+    this.chatOpen = !!id;
+    if (byUser) {
+      this.app.settings.liveChat = this.chatOpen;
+      saveSettings(this.app.settings);
+    }
+    this.chatCol.hidden = !this.chatOpen;
+    document.body.classList.toggle('has-chat', this.chatOpen);
+    this.chatBtn.classList.toggle('on', this.chatOpen);
+    if (!this.chatOpen) {
+      this.chatFrame.innerHTML = '';
+      this.chatId = null;
+      return;
+    }
+    if (this.chatId !== id) this.loadChat();
+  }
+
+  // 設定を保存したとき（main から呼ぶ）
+  applyChatSetting() {
+    if (!this.sawLive) return;
+    if (this.app.settings.liveChat !== this.chatOpen) this.setChat(this.app.settings.liveChat);
+  }
+
+  loadChat() {
+    const id = this.videoId();
+    if (!id) return;
+    this.chatId = id;
+    const dark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+    const f = document.createElement('iframe');
+    f.src = `https://www.youtube.com/live_chat?v=${id}&embed_domain=${encodeURIComponent(location.hostname)}${dark ? '&dark_theme=1' : ''}`;
+    f.title = tr('YouTube のライブチャット');
+    this.chatFrame.replaceChildren(f);
+  }
+
+  // 埋め込みで出ないときや、書き込めないとき（ブラウザがログイン情報を渡さない設定など）は、YouTube の別ウィンドウで
+  popoutChat() {
+    const id = this.videoId();
+    if (!id) return;
+    const w = window.open(`https://www.youtube.com/live_chat?is_popout=1&v=${id}`, 'cellsplayer-chat', 'popup,width=420,height=720');
+    if (w) w.opener = null;
   }
 
   goLive() {

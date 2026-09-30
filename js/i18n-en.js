@@ -609,6 +609,21 @@ export const EN = {
   '{name} さんのこの共有は、もう読み込んであります': 'This share from {name} is already loaded',
 
   // ---- ライブ配信 ----
+  'ライブチャット': 'Live chat',
+  'YouTube のライブチャット': 'YouTube live chat',
+  '再読み込み': 'Reload',
+  'チャットを読み込み直す（YouTube にログインしたあとなど）': 'Reload the chat (after signing in to YouTube, for example)',
+  '別ウィンドウ': 'Pop out',
+  'チャットを YouTube の別ウィンドウで開く（ここに出ないときや、投稿できないとき）':
+    "Open the chat in a separate YouTube window (if it doesn't show here or you can't post)",
+  'チャットを閉じる': 'Close the chat',
+  '書き込むには、このブラウザで YouTube にログインしてください。コメントは YouTube のチャット画面から、あなたのアカウントで投稿されます（このアプリはその内容を受け取りません）。':
+    "To post, sign in to YouTube in this browser. Messages are posted from YouTube's chat with your account (this app doesn't receive them).",
+  'チャット': 'Chat',
+  'YouTube のライブチャットを表示する / 隠す': 'Show / hide the YouTube live chat',
+  'ライブ配信のときは、YouTube のチャットを左に表示する': 'Show the YouTube chat on the left during live streams',
+  'チャットに書き込むには、このブラウザで YouTube にログインしておきます（再生ボタンの並びの「チャット」でも切り替えられます）':
+    'To post in the chat, sign in to YouTube in this browser (you can also toggle it with "Chat" next to the playback buttons)',
   'ライブ': 'LIVE',
   'ライブ −{time}': 'LIVE −{time}',
   'ライブの最新の場面を再生しています': 'Playing the latest part of the live stream',

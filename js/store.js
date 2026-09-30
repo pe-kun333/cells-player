@@ -39,6 +39,7 @@ export const DEFAULT_SETTINGS = {
   momentListSync: true,      // 「瞬間のコメント」を再生位置に連動させる
   momentListMode: 'comments', // サイドバー下の一覧に出すもの（comments: 瞬間のコメント / transcript: 文字起こし）
   captions: true,            // 字幕を動画の上に表示する
+  liveChat: true,            // ライブ配信のときに、YouTube のチャットを左に表示する
   liveLang: isEn ? 'en-US' : 'ja-JP', // 音声認識の言語
   lang: null,                // 表示の言語（null ならブラウザの言語に合わせる）
   liveHelpSeen: false,       // 音声認識の準備の説明を見たか（初回だけ出す）

@@ -737,6 +737,19 @@ html[lang="en"] .tl-label { width: 56px; }
 #shareWhere:empty { display: none; }
 
 /* ---- ライブ配信 ---- */
+/* ライブチャット（左の列） */
+body.has-chat .layout { grid-template-columns: 340px minmax(0, 1fr) 380px; }
+.chat-col { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); background: var(--panel); }
+.chat-head { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.chat-title { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.chat-title .edge-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); flex: none; }
+.chat-head .btn .i { width: 12px; height: 12px; }
+.chat-frame { flex: 1; min-height: 0; }
+.chat-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
+.chat-note { margin: 0; padding: 6px 10px 8px; border-top: 1px solid var(--line); font-size: 11.5px; line-height: 1.5; color: var(--text-3); }
+@media (max-width: 1280px) {
+  body.has-chat .layout { grid-template-columns: 300px minmax(0, 1fr) 340px; }
+}
 .live-edge { gap: 5px; font-variant-numeric: tabular-nums; }
 .live-edge .edge-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-3); flex: none; }
 .live-edge.is-edge { border-color: var(--danger); color: var(--danger); cursor: default; }
@@ -896,6 +909,9 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
   .layout { grid-template-columns: 1fr; height: auto; }
   .left { overflow: visible; }
   .sidebar { border-left: 0; border-top: 1px solid var(--line); min-height: 400px; }
+  body.has-chat .layout { grid-template-columns: 1fr; }
+  .chat-col { order: 2; height: 480px; border-right: 0; border-top: 1px solid var(--line); }
+  .sidebar { order: 3; }
   .url-form input { width: 180px; }
   .media-title { display: none; }
 }

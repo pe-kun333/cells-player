@@ -1213,6 +1213,7 @@ function openSettings() {
   f.leadIn.value = s.leadIn;
   f.momentClip.value = s.momentClip;
   f.pauseOnMark.checked = s.pauseOnMark;
+  f.liveChat.checked = s.liveChat;
   f.resumeAfterComment.checked = s.resumeAfterComment;
   f.captions.checked = s.captions;
   f.lang.value = lang;
@@ -1251,11 +1252,13 @@ $('#settingsForm').addEventListener('submit', (e) => {
     leadIn: clamp(Math.round(num(f.leadIn.value, DEFAULT_SETTINGS.leadIn)), 1, 30),
     momentClip: clamp(Math.round(num(f.momentClip.value, DEFAULT_SETTINGS.momentClip)), 1, 60),
     pauseOnMark: f.pauseOnMark.checked,
+    liveChat: f.liveChat.checked,
     resumeAfterComment: f.resumeAfterComment.checked,
     captions: f.captions.checked,
   };
   saveSettings(app.settings);
   moment.renderOffsets();
+  broadcast.applyChatSetting();
   commentList.paint(); // 「○秒前から」の秒数を描き直す
   renderAll();
   app.hint(tr('設定を保存しました'));

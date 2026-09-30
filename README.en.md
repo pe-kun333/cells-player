@@ -61,6 +61,7 @@ For YouTube videos (and online videos), you can make a link that contains your c
 Open the URL of a live stream (`…/watch?v=…` or `…/live/…`) to add markers, cells and comments while you watch.
 
 - The "LIVE" button next to the time shows how far you are behind the latest part. Press it to jump back to the latest
+- During a live stream, the YouTube live chat is shown on the left (YouTube's own chat embed). If you are signed in to YouTube in this browser, you can post with your own account. Turn it off with "Chat" or in Settings. If it doesn't show or you can't post, "Pop out" opens the chat on YouTube
 - Everything you add during the stream is still there when you open the same URL after the stream has been archived
 - If the beginning or middle was cut from the archive, the times can be off. When you open the archive, use "Align live notes with the archive": click a marker you added during the stream, move the archive to that same scene, and press "Align all" (if the middle was cut, use a marker after the cut with "From here on")
 - To fix it later, use "Align live notes" next to the playback buttons (Ctrl+Z to undo)
