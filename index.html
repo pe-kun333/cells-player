@@ -232,6 +232,7 @@
       </div>
       <div class="side-digest">
         <button class="btn small" id="btnDigest" title="いま一覧に並んでいるセル・目印を、上から順に続けて再生します（絞り込み・検索・並び順がそのまま使われます）"><svg class="i" aria-hidden="true"><use href="#i-play"/></svg> 一覧を連続再生</button>
+        <button class="btn small" id="btnGridCells" title="動画の最初から最後まで、30秒ごと・60秒ごとなど同じ長さのセルに区切ります"><svg class="i" aria-hidden="true"><use href="#i-cell"/></svg> 等間隔でセル化</button>
         <span class="spacer"></span>
         <span class="count" id="sideCount"></span>
       </div>
@@ -387,6 +388,30 @@
 
 <!-- タイムラインをクリックしたときのメニュー（区間・目印・セル） -->
 <div class="tl-menu" id="tlMenu" role="dialog" aria-label="タイムラインのメニュー" hidden></div>
+
+<dialog id="gridDialog">
+  <form method="dialog" id="gridForm" class="dialog-body">
+    <h2>等間隔でセル化</h2>
+    <p class="dialog-note">動画の最初から最後まで、同じ長さのセルに区切ります。すでにある同じ範囲のセルは作りません。作ったあと Ctrl+Z で、まとめて元に戻せます。</p>
+    <div class="grid-row">
+      <span class="grid-label">長さ</span>
+      <div class="seg" role="group" aria-label="長さ">
+        <button type="button" data-sec="15">15秒</button>
+        <button type="button" data-sec="30">30秒</button>
+        <button type="button" data-sec="60">1分</button>
+        <button type="button" data-sec="120">2分</button>
+        <button type="button" data-sec="300">5分</button>
+      </div>
+      <label class="grid-custom"><input class="field num" name="sec" type="number" min="1" max="3600" step="1"> 秒</label>
+    </div>
+    <label class="check-inline" id="gridMergeRow"><input type="checkbox" name="merge"> <span id="gridMergeText"></span></label>
+    <p class="grid-msg" id="gridMsg"></p>
+    <div class="dialog-foot">
+      <button class="btn primary" value="make">セルを作る</button>
+      <button class="btn" value="cancel">キャンセル</button>
+    </div>
+  </form>
+</dialog>
 
 <dialog id="trackDialog">
   <form method="dialog" class="dialog-body">

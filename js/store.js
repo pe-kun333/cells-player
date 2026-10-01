@@ -35,6 +35,7 @@ export const DEFAULT_SETTINGS = {
   tlSegClick: 'menu',        // 区間: menu / cell（すぐセルにする）/ seek（区間の頭へ移動）
   tlMarkerClick: 'menu',     // 目印: menu / seek（その目印へ移動）
   tlCellClick: 'menu',       // セル: menu / seek（セルの頭へ移動）
+  gridSec: 30,               // 等間隔でセル化の長さ（秒。最後に使ったもの）
   resumeAfterComment: true,  // コメントマークで止めたとき、送信・取り消しのあと再生を戻す
   volume: 1,
   presetSets: DEFAULT_PRESET_SETS,
@@ -667,8 +668,6 @@ export class Store {
     });
   }
 
-  // 複数のセルを、最初の開始から最後の終了までの1つのセルにまとめる（元のセルは消える）。
-  // メモは時間順に改行でつなぎ、コメントはすべて移し、いいねは一番高いものを残す
   // セルを t で2つに分ける。前のセル（元の id のまま）にメモ・いいね・ブックマーク・コメントをすべて残し、
   // 後ろは新しい空のセルにする。端に近すぎる位置では分けない（null）
   splitCell(id, t) {
@@ -683,6 +682,8 @@ export class Store {
     });
   }
 
+  // 複数のセルを、最初の開始から最後の終了までの1つのセルにまとめる（元のセルは消える）。
+  // メモは時間順に改行でつなぎ、コメントはすべて移し、いいねは一番高いものを残す
   mergeCells(ids) {
     const parts = this.ownCells.filter((c) => ids.includes(c.id)).sort((a, b) => a.s - b.s || a.e - b.e);
     if (parts.length < 2) return null;

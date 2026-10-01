@@ -17,6 +17,7 @@ const APP_FILES = [
   './js/library.js',
   './js/playlist.js',
   './js/tlmenu.js',
+  './js/gridcells.js',
   './js/commentlist.js',
   './js/db.js',
   './js/digest.js',

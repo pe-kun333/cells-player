@@ -18,6 +18,7 @@ import { XStrip } from './xstrip.js';
 import { Library } from './library.js';
 import { Playlist, isPlaylistJson } from './playlist.js';
 import { TlMenu } from './tlmenu.js';
+import { GridCells } from './gridcells.js';
 import { $, clamp, fmt, round2, escapeHtml, icon, cellLabel } from './util.js';
 import { tr, trMaybe, lang, isEn, translatePage } from './i18n.js';
 
@@ -96,6 +97,7 @@ const xstrip = new XStrip(app);
 const playlist = new Playlist(app);
 app.playlist = playlist;
 const library = new Library(app);
+const gridCells = new GridCells(app);
 // タイムラインのクリックの動きを切り替えたとき: 説明（title）などを描き直す
 app.onTlClickMode = () => timeline.render();
 // ライブ配信を見ている間に作った目印・セルには印を付ける（あとでアーカイブの時刻に合わせるため）

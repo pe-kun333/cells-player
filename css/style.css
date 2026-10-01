@@ -855,6 +855,13 @@ dialog.wide-dialog.lib-dialog { width: min(1120px, 96vw); }
 }
 .act.pl.on { color: var(--accent); }
 .jump-btn { gap: 4px; font-variant-numeric: tabular-nums; }
+/* 等間隔でセル化 */
+.side-digest { flex-wrap: wrap; row-gap: 4px; }
+.grid-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.grid-label { font-size: 13px; color: var(--text-2); }
+.grid-custom { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; }
+.grid-custom .field { width: 5.5em; height: 28px; }
+.grid-msg { margin: 0; padding: 8px 10px; border-radius: 8px; background: var(--panel-2); font-size: 13px; line-height: 1.6; }
 .jump-btn .i { width: 14px; height: 14px; }
 /* 分割は、再生位置がそのセルの中にあるときだけ出す */
 .act.split { display: none; }
