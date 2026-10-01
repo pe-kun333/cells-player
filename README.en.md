@@ -33,6 +33,7 @@ It then opens in its own window and also starts offline. After installing, you c
    Choose what a click does for each kind with "On click" at the bottom of the menu (for example "Make a cell right away" for segments or "Go to that marker" for markers, as before). Right-click always opens the menu.
    "Make cell" (Enter) makes the current segment a cell, and "Make left cell" (Shift+Enter) makes the segment to the left of the marker you just added (previous marker to that marker) a cell.
    Turn on "When you add a marker, make the segment to its left a cell" in Settings to do this automatically each time you add a marker.
+   After a big jump from a card or the timeline, press "Back to 0:12" next to the play buttons or Backspace to return to where you were (Shift+Backspace to go forward again).
    Press S inside a cell (or "Split" on the card of the cell being played) to split it in two at the playhead. The note, likes, bookmark and comments stay with the earlier cell, and the later part becomes a new cell
 5. In the sidebar, rate, write notes, comment and repeat cells. "Play list" plays the listed cells and markers in order
 

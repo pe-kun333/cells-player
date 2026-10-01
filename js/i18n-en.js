@@ -110,6 +110,17 @@ export const EN = {
   'いまいる区間（前後の目印の間）をセルにする (Enter)': 'Make the current segment (between the surrounding markers) a cell (Enter)',
   '区間をセル化': 'Make cell',
   '左の区間をセル化': 'Make left cell',
+  '戻る位置がありません（大きく移動すると、移動する前の位置に戻れます）': 'Nowhere to go back to (after a big jump, you can return to where you were)',
+  '進む位置がありません': 'Nowhere to go forward to',
+  '{time} に戻りました（Shift+Backspace で進む）': 'Back at {time} (Shift+Backspace to go forward)',
+  '{time} へ進みました': 'Forward to {time}',
+  '戻る': 'Back',
+  '{time} に戻る': 'Back to {time}',
+  '大きく移動したときに、移動する前の位置に戻ります (Backspace)': 'After a big jump, go back to where you were (Backspace)',
+  '移動する前の位置（{time}）に戻る (Backspace)': 'Go back to where you were ({time}) (Backspace)',
+  '{time} へ進む': 'Forward to {time}',
+  '戻る前の位置（{time}）へ進む (Shift+Backspace)': 'Go forward to where you were before going back ({time}) (Shift+Backspace)',
+  '進む': 'Forward',
   'クリックでこの目印にコメントを書く': 'Click to write a comment on this marker',
   '再生位置を含むセルがありません（セルの中で S を押すと、そこで2つに分けます）':
     'No cell contains the playhead (press S inside a cell to split it there)',
@@ -914,6 +925,7 @@ export const EN_HTML = {
       <tr><td><kbd>Enter</kbd></td><td>Make the current segment a cell</td></tr>
       <tr><td><kbd>Shift</kbd>+<kbd>Enter</kbd></td><td>Make the segment to the left of the marker you just added (previous marker to that marker) a cell</td></tr>
       <tr><td><kbd>S</kbd></td><td>Split the cell in two at the playhead (the note, likes and comments stay with the earlier cell)</td></tr>
+      <tr><td><kbd>Backspace</kbd></td><td>After a big jump, go back to where you were (<kbd>Shift</kbd>+<kbd>Backspace</kbd> to go forward again)</td></tr>
       <tr><td><kbd>R</kbd></td><td>Repeat the cell at the playback position / stop</td></tr>
       <tr><td><kbd>T</kbd></td><td>Show / hide captions (loads captions if none)</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>V</kbd></td><td>Paste a copied transcript to load it</td></tr>

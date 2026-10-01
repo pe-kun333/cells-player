@@ -142,7 +142,7 @@ export class Digest {
       app.hint(''); // 手元のファイルを待っていたときの案内を消す
     }
     // 前の区切りの終わりと次の頭がつながっているときは、音が途切れないよう移動しない
-    if (force || Math.abs(app.now() - c.s) > 0.15) app.seek(c.s);
+    if (force || Math.abs(app.now() - c.s) > 0.15) app.seek(c.s, { auto: true });
     this.lastT = c.s;
     this.settleUntil = performance.now() + 500;
     this.render();
@@ -266,7 +266,7 @@ export class Digest {
       if (now >= c.s - 1 && now <= c.e + 1) this.arriveBy = 0;
       else if (performance.now() < this.arriveBy) {
         if (performance.now() > this.reseekAt) {
-          this.app.seek(c.s);
+          this.app.seek(c.s, { auto: true });
           this.reseekAt = performance.now() + 3000;
         }
         this.lastT = now;

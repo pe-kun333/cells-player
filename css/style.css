@@ -854,6 +854,8 @@ dialog.wide-dialog.lib-dialog { width: min(1120px, 96vw); }
   .lib-list, .pl-list { max-height: 45vh; }
 }
 .act.pl.on { color: var(--accent); }
+.jump-btn { gap: 4px; font-variant-numeric: tabular-nums; }
+.jump-btn .i { width: 14px; height: 14px; }
 /* 分割は、再生位置がそのセルの中にあるときだけ出す */
 .act.split { display: none; }
 .cell-card.is-active .act.split { display: inline-flex; }

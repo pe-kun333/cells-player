@@ -35,6 +35,8 @@
     <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 5v14l-12-7z"/><path d="M4 5v14"/></symbol>
     <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
     <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.828 2.828 0 1 0-4-4l-10.5 10.5v4"/><path d="M13.5 6.5l4 4"/></symbol>
+    <symbol id="i-jump-back" viewBox="0 0 24 24"><path d="M9 11l-4 4l4 4M5 15h11a4 4 0 0 0 0-8h-1"/></symbol>
+    <symbol id="i-jump-fwd" viewBox="0 0 24 24"><path d="M15 11l4 4l-4 4M19 15h-11a4 4 0 0 1 0-8h1"/></symbol>
     <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="7" r="3"/><circle cx="6" cy="17" r="3"/><path d="M8.6 8.6l10.4 10.4M8.6 15.4l10.4-10.4"/></symbol>
     <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></symbol>
     <symbol id="i-list-add" viewBox="0 0 24 24"><path d="M4 6h12M4 12h9M4 18h7M18 13v8M14 17h8"/></symbol>
@@ -138,6 +140,8 @@
       <button id="btnPlay" class="btn icon-btn" title="再生 / 一時停止 (Space)" aria-label="再生"><svg class="i" aria-hidden="true"><use href="#i-play"/></svg></button>
       <button id="btnBack" class="btn small" title="5秒戻る (←)">−5秒</button>
       <button id="btnFwd" class="btn small" title="5秒進む (→)">+5秒</button>
+      <button id="btnJumpBack" class="btn small jump-btn" disabled title="大きく移動したときに、移動する前の位置に戻ります (Backspace)"><svg class="i" aria-hidden="true"><use href="#i-jump-back"/></svg><span>戻る</span></button>
+      <button id="btnJumpFwd" class="btn small jump-btn" hidden><span>進む</span><svg class="i" aria-hidden="true"><use href="#i-jump-fwd"/></svg></button>
       <span class="time" id="timeText">0:00.0 / 0:00</span>
       <button id="btnLiveEdge" class="btn small live-edge" hidden><i class="edge-dot" aria-hidden="true"></i><span>ライブ</span></button>
       <button id="btnLiveChat" class="btn small" hidden title="YouTube のライブチャットを表示する / 隠す">チャット</button>
@@ -463,6 +467,7 @@
       <tr><td><kbd>Enter</kbd></td><td>いまいる区間をセルにする</td></tr>
       <tr><td><kbd>Shift</kbd>+<kbd>Enter</kbd></td><td>いま付けた目印の左の区間（ひとつ前の目印〜その目印）をセルにする</td></tr>
       <tr><td><kbd>S</kbd></td><td>再生位置でセルを2つに分ける（メモ・いいね・コメントは前のセルに残ります）</td></tr>
+      <tr><td><kbd>Backspace</kbd></td><td>大きく移動したときに、移動する前の位置に戻る（<kbd>Shift</kbd>+<kbd>Backspace</kbd> で進む）</td></tr>
       <tr><td><kbd>R</kbd></td><td>再生位置のセルをリピート / 停止</td></tr>
       <tr><td><kbd>T</kbd></td><td>字幕の表示 / 非表示（読み込んでいなければ読み込む）</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>V</kbd></td><td>コピーした文字起こしを貼り付けて読み込む</td></tr>

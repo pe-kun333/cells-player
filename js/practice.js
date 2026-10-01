@@ -80,7 +80,7 @@ export class Practice {
     this.phase = 'play';
     this.result = null;
     this.settleUntil = performance.now() + 400; // 移動した直後は「行の終わり」の判定をしない
-    this.app.seek(c.s);
+    this.app.seek(c.s, { auto: true });
     this.app.player.play();
     this.render();
     this.app.refreshCaption();

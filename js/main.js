@@ -175,10 +175,12 @@ store.subscribe((reason) => {
 
 let lastSeekAt = 0;
 let seekTimer = null;
-app.seek = (t) => {
+// auto: リピート・連続再生・練習が自動で動かすとき（「移動する前の位置に戻る」の対象にしない）
+app.seek = (t, { auto = false } = {}) => {
   const p = app.player;
   if (!p) return;
   t = clamp(t, 0, app.duration() || Infinity);
+  if (!auto) noteSeek(t);
   if (p.kind !== 'youtube') {
     p.seek(t);
     return;
@@ -211,6 +213,70 @@ app.noteJump = (key) => {
   lastJump = double ? { key: '', at: 0 } : { key, at: now };
   if (double) app.playNow();
 };
+
+// ---- 移動する前の位置に戻る・進む（ブラウザの「戻る」「進む」と同じ） ----
+// 大きく移動したら、移動する前の位置を覚えておく。続けて動かした分（ドラッグ・← の連打など）は1回の移動にまとめる
+const JUMP_MIN = 3;       // これより小さい移動は覚えない（秒）
+const JUMP_GROUP = 1500;  // この時間（ミリ秒）のうちに続けて動かした分は、1回の移動とみなす
+const jumps = { back: [], fwd: [], from: 0, at: 0, pushed: false };
+
+function noteSeek(t) {
+  const now = performance.now();
+  if (now - jumps.at > JUMP_GROUP) {
+    jumps.from = app.now();
+    jumps.pushed = false;
+  }
+  jumps.at = now;
+  if (jumps.pushed || Math.abs(t - jumps.from) < JUMP_MIN) return;
+  jumps.back.push(jumps.from);
+  if (jumps.back.length > 50) jumps.back.shift();
+  jumps.fwd = [];
+  jumps.pushed = true;
+  renderJumpButtons();
+}
+
+function resetJumps() {
+  jumps.back = [];
+  jumps.fwd = [];
+  jumps.at = 0;
+  renderJumpButtons();
+}
+
+// dir: -1 で戻る（Backspace）、1 で進む（Shift+Backspace）
+function jump(dir) {
+  if (!requireMedia()) return;
+  const from = dir < 0 ? jumps.back : jumps.fwd;
+  const to = dir < 0 ? jumps.fwd : jumps.back;
+  const t = from.pop();
+  if (t === undefined) {
+    app.hint(dir < 0 ? tr('戻る位置がありません（大きく移動すると、移動する前の位置に戻れます）') : tr('進む位置がありません'));
+    return;
+  }
+  to.push(app.now());
+  jumps.at = 0; // このあと手で動かしたら、新しい移動として覚える
+  app.seek(t, { auto: true });
+  renderJumpButtons();
+  app.hint(dir < 0 ? tr('{time} に戻りました（Shift+Backspace で進む）', { time: fmt(t, true) }) : tr('{time} へ進みました', { time: fmt(t, true) }));
+}
+app.jumpBack = () => jump(-1);
+app.jumpForward = () => jump(1);
+
+function renderJumpButtons() {
+  const b = $('#btnJumpBack');
+  const f = $('#btnJumpFwd');
+  const bt = jumps.back[jumps.back.length - 1];
+  const ft = jumps.fwd[jumps.fwd.length - 1];
+  b.disabled = bt === undefined;
+  b.querySelector('span').textContent = bt === undefined ? tr('戻る') : tr('{time} に戻る', { time: fmt(bt) });
+  b.title = bt === undefined
+    ? tr('大きく移動したときに、移動する前の位置に戻ります (Backspace)')
+    : tr('移動する前の位置（{time}）に戻る (Backspace)', { time: fmt(bt, true) });
+  f.hidden = ft === undefined;
+  if (ft !== undefined) {
+    f.querySelector('span').textContent = tr('{time} へ進む', { time: fmt(ft) });
+    f.title = tr('戻る前の位置（{time}）へ進む (Shift+Backspace)', { time: fmt(ft, true) });
+  }
+}
 
 function togglePlay() {
   const p = app.player;
@@ -453,7 +519,7 @@ function frameStep(dir) {
     return;
   }
   p.pause();
-  app.seek(app.now() + dir / 30);
+  app.seek(app.now() + dir / 30, { auto: true });
 }
 
 // ---- セル ----
@@ -701,7 +767,7 @@ function onRepeatLoop(c) {
     return;
   }
   if (s.repeatRamp) app.setRate(Math.min(repeatState.baseRate, RAMP_FROM + repeatState.loops * RAMP_STEP));
-  app.seek(c.s);
+  app.seek(c.s, { auto: true });
   if (s.repeatGap > 0) {
     // 頭に戻ってから少し待つ（聞いたことを口に出す時間）
     p.pause();
@@ -809,6 +875,7 @@ function closeMedia() {
   }
   if (store.doc) store.close();
   tlMenu.close();
+  resetJumps();
   app.ui.target = null;
   app.ui.repeatId = null;
   clearTimeout(repeatState.timer);
@@ -1589,6 +1656,8 @@ $('#presetSetSelect').addEventListener('change', (e) => {
 $('#btnHelp').addEventListener('click', () => $('#helpDialog').showModal());
 $('#btnPlay').addEventListener('click', togglePlay);
 $('#btnBack').addEventListener('click', () => app.seek(app.now() - 5));
+$('#btnJumpBack').addEventListener('click', () => app.jumpBack());
+$('#btnJumpFwd').addEventListener('click', () => app.jumpForward());
 $('#btnFwd').addEventListener('click', () => app.seek(app.now() + 5));
 $('#rateSelect').addEventListener('change', (e) => {
   app.player?.setRate(Number(e.target.value));
@@ -1777,6 +1846,11 @@ document.addEventListener('keydown', (e) => {
       break;
     case 'Delete':
       deleteTargetMarker();
+      break;
+    case 'Backspace':
+      e.preventDefault();
+      if (e.shiftKey) app.jumpForward();
+      else app.jumpBack();
       break;
   }
 });
