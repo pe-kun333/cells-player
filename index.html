@@ -234,10 +234,11 @@
             <button type="button" class="nc-btn nc-like" data-nc="mlike" data-lv="3" title="いいね 3 (3)" aria-label="いいね 3"><span class="hearts"><svg class="i h on" aria-hidden="true"><use href="#i-heart"/></svg><svg class="i h on" aria-hidden="true"><use href="#i-heart"/></svg><svg class="i h on" aria-hidden="true"><use href="#i-heart"/></svg></span></button>
             <button type="button" class="nc-btn" id="ncBm" data-nc="mbm" title="ブックマーク (B)" aria-label="ブックマーク"><svg class="i" aria-hidden="true"><use href="#i-bookmark"/></svg></button>
           </div>
-          <div class="nc-row nc-tag-row">
+          <!-- よく使うコメント: 左に 3つ×2段、右の上でセットの切り替え、下で登録 -->
+          <div class="nc-tag-grid">
+            <span class="nc-tags" id="ncTags"></span>
             <select id="ncSet" title="よく使うコメントのセットを切り替え" aria-label="よく使うコメントのセット"></select>
-            <span class="nc-group" id="ncTags"></span>
-            <button type="button" class="nc-btn" data-nc="editTags" title="よく使うコメントを編集" aria-label="よく使うコメントを編集"><svg class="i" aria-hidden="true"><use href="#i-pencil"/></svg></button>
+            <button type="button" class="nc-btn nc-reg" data-nc="editTags" title="よく使うコメントを登録・編集"><svg class="i" aria-hidden="true"><use href="#i-pencil"/></svg><span data-i18n="登録（よく使うコメント）">登録</span></button>
           </div>
         </div>
         <div class="nc-comment">

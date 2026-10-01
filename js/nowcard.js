@@ -89,11 +89,12 @@ export class NowCard {
     const sel = $('#ncSet');
     sel.innerHTML = app.settings.presetSets.map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('');
     sel.value = set.id;
+    // 6つとも出す（3つ×2段）。空いているところは「空き」
     $('#ncTags').innerHTML = set.items
       .map((name, i) =>
         name
           ? `<button type="button" class="nc-tag" data-nc="tag" data-qi="${i}" title="${escapeHtml(tr('{name}（{key} キー）', { name, key: i + 4 }))}"><span>${escapeHtml(name)}</span><kbd>${i + 4}</kbd></button>`
-          : '',
+          : `<button type="button" class="nc-tag empty" data-nc="tag" data-qi="${i}" title="${tr('空き（「登録」から登録できます）')}"><span>${tr('空き')}</span><kbd>${i + 4}</kbd></button>`,
       )
       .join('');
   }

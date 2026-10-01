@@ -490,11 +490,13 @@ html[lang="en"] .tl-label { width: 56px; }
 .nc-like.on { border-color: var(--heart); background: var(--accent-bg); }
 #ncBm.on { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-text); }
 #ncBm.on .i { fill: currentColor; }
-.nc-tag-row { flex-wrap: nowrap; }
-.nc-tag-row select { flex: none; max-width: 84px; height: 28px; font-size: 12px; }
-/* よく使うコメントは1行に並べ、はみ出す分は横にスクロール */
-#ncTags { flex: 1; min-width: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; padding-bottom: 2px; }
-.nc-tag { flex: none; }
+/* よく使うコメント: 左に 3つ×2段（スクロールなし）、右の上にセットの切り替え、下に登録 */
+.nc-tag-grid { display: grid; grid-template-columns: minmax(0, 1fr) 80px; grid-template-rows: auto auto; gap: 4px; }
+.nc-tags { grid-column: 1; grid-row: 1 / span 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+#ncSet { grid-column: 2; grid-row: 1; width: 100%; height: 26px; font-size: 12px; }
+.nc-reg { grid-column: 2; grid-row: 2; height: 26px; justify-content: center; }
+.nc-tags .nc-tag { min-width: 0; max-width: none; justify-content: space-between; padding: 0 7px; }
+.nc-tag.empty { border-style: dashed; color: var(--text-3); }
 .nc-off { padding: 0 5px; }
 .nc-like { padding: 0 5px; }
 /* セルの操作の行: 分割はいつも右端（折り返しても右に寄せる） */
@@ -515,6 +517,14 @@ html[lang="en"] .tl-label { width: 56px; }
 .nc-pause:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 1px; }
 .nc-pause .i { width: 15px; height: 15px; }
 .nc-cm-more { flex: none; margin-left: 6px; color: var(--text-3); font-size: 11px; }
+/* いまのカードを使うときは、セルの一覧をカードのすぐ下に、検索・絞り込みはその下へ。
+   検索・絞り込みは上下を逆にして、セル／目印／すべての切り替えを一番下に置く */
+body.ops-card .sidebar > #nowCard { order: 1; }
+body.ops-card .sidebar > .side-list { order: 2; }
+body.ops-card .sidebar > .side-head {
+  order: 3; flex-direction: column-reverse; padding: 8px 12px 10px;
+  border-bottom: 0; border-top: 1px solid var(--line);
+}
 /* いまのカードを使うときは、瞬間のコメント・文字起こしの一覧を左の列へ（読むものは左、押すものは右） */
 body.ops-card .left > .mlist { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
 body.ops-card .left > .mlist .mlist-body { height: 200px; }

@@ -630,6 +630,9 @@ export const EN = {
 
   // ---- いまのカード ----
   'いまのカード': 'Now card',
+  '空き（「登録」から登録できます）': 'Empty (add one with "Edit")',
+  '登録（よく使うコメント）': 'Edit',
+  'よく使うコメントを登録・編集': 'Add or edit quick comments',
   '{time} に固定': 'Pinned at {time}',
   'いま {time}': 'Now {time}',
   '⇤ 始まり': '⇤ Start',
