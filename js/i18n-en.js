@@ -634,6 +634,24 @@ export const EN = {
   '{n} 個のセル': (v) => pl(v.n, 'cell'),
   '連結する': 'Merge',
   '全画面をやめる (F・Esc)': 'Exit full screen (F / Esc)',
+
+  // ---- タイムラインのメニューの位置・一覧の連動・前後の目印の操作 ----
+  'タイムラインのメニューの出る位置': 'Where timeline menus appear',
+  'セルや目印をクリックしたときのメニューです。「いつも下」にすると動画にかぶらず、入りきらない分はメニューの中でスクロールします（メニューの一番下でも切り替えられます）':
+    'The menu that opens when you click a cell or marker. "Always below" keeps it off the video; if it doesn\'t fit, you scroll inside the menu (you can also switch this at the bottom of the menu)',
+  '自動（下に入らないときは上）': "Auto (above if it doesn't fit below)",
+  'いつも下（動画にかぶらない）': 'Always below (never over the video)',
+  '出る位置': 'Position',
+  'このメニューを出す位置（タイムラインのメニューすべてに効きます）': 'Where this menu appears (applies to all timeline menus)',
+  'タイムラインのメニューを、いつも下に出します（入りきらない分はメニューの中でスクロール）': "Timeline menus now always open below (scroll inside the menu if it doesn't fit)",
+  'タイムラインのメニューは、下に入らないときは上に出します': "Timeline menus now open above when they don't fit below",
+  'セルの一覧と再生の連動': 'Cell list follows playback',
+  '再生位置のセルを、一覧の一番上（いまのカードのすぐ下）へ自動で送る': 'Automatically bring the cell at the playhead to the top of the list (just below the now card)',
+  '一覧を自由にスクロールする（自動では動かさない）': "Scroll the list freely (it won't move by itself)",
+  '目印の一覧と再生の連動': 'Marker list follows playback',
+  'クリックで「移動」「{s}秒前に移動」「コメントする」を出す': (v) => `Click for “Go”, “Go back ${v.s}s” and “Comment”`,
+  '{s}秒前に移動': (v) => `Go back ${v.s}s`,
+  'コメントする': 'Comment',
   'メモ・コメントはまとめて1つのセルに入ります。Ctrl+Z で元に戻せます': 'Notes and comments are combined into the one cell. Ctrl+Z undoes it',
 
   // ---- 全画面・たたむ・すぐに等間隔でセル化 ----

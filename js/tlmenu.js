@@ -12,6 +12,10 @@ const CLICK_OPTS = {
   cell: [['menu', 'メニューを出す（再生位置は動かさない）'], ['seek', 'セルの頭へ移動']],
 };
 const SETTING = { seg: 'tlSegClick', marker: 'tlMarkerClick', cell: 'tlCellClick' };
+// メニューの出る位置（どの種類のメニューにも効く）
+const POS_OPTS = [['auto', '自動（下に入らないときは上）'], ['below', 'いつも下（動画にかぶらない）']];
+// 「いつも下」で、下にこれだけの高さが空いていなければ、左の列を少し上へ送って場所を空ける
+const MIN_BELOW = 220;
 const NUDGES = [-1, -0.1, 0.1, 1];
 
 // n 個の塗りつぶしのハート（いいねのボタン）
@@ -36,11 +40,14 @@ export class TlMenu {
       this.close();
     }, true);
     window.addEventListener('resize', () => this.close());
-    // タイムラインごと動くスクロールのときだけ閉じる（再生に合わせて一覧が自動でスクロールしても閉じない）
+    // タイムラインごと動くスクロールのときだけ閉じる（再生に合わせて一覧が自動でスクロールしても閉じない。
+    // 「いつも下」で場所を空けるために、メニューが自分でスクロールしたときも閉じない）
     document.addEventListener('scroll', (e) => {
       const t = e.target;
+      if (performance.now() < this.quietUntil) return;
       if (this.cur && (t === document || t.contains?.($('#timeline')))) this.close();
     }, true);
+    this.quietUntil = 0;
   }
 
   // クリックしたときの動き（'menu' か、すぐ動く 'cell' / 'seek'）
@@ -82,20 +89,58 @@ export class TlMenu {
     if (next && focused) next.focus();
   }
 
-  // クリックした位置の近くに出す（画面からはみ出さないように）
+  get below() {
+    return this.app.settings.tlMenuPos === 'below';
+  }
+
+  // クリックした位置の近くに出す（画面からはみ出さないように）。
+  // 自動: 下に入らなければ上に出す。いつも下: 上には出さず、入りきらない分はメニューの中でスクロールする
+  // （下がとても狭いときは、タイムラインのある左の列を少し上へ送って場所を空ける）
   place() {
     const el = this.el;
     el.style.left = '-9999px';
     el.style.top = '0px';
+    el.style.maxHeight = '';
     el.hidden = false;
     const w = el.offsetWidth;
     const h = el.offsetHeight;
-    const { x, y } = this.cur;
-    const left = clamp(x - w / 2, 8, window.innerWidth - w - 8);
+    const vh = window.innerHeight;
+    const { x } = this.cur;
+    el.style.left = clamp(x - w / 2, 8, window.innerWidth - w - 8) + 'px';
+    if (this.below) {
+      let room = vh - 8 - (this.cur.y + 14);
+      if (room < Math.min(h, MIN_BELOW)) {
+        const d = this.makeRoom(Math.min(h, MIN_BELOW) - room);
+        this.cur.y -= d;
+        room += d;
+      }
+      // それでも狭すぎるとき（画面の一番下を押したときなど）は、自動と同じく上に出す
+      if (room >= Math.min(h, 120)) {
+        el.style.top = this.cur.y + 14 + 'px';
+        el.style.maxHeight = room + 'px';
+        return;
+      }
+    }
+    const { y } = this.cur;
     let top = y + 14;
-    if (top + h > window.innerHeight - 8) top = y - h - 14;
-    el.style.left = left + 'px';
-    el.style.top = clamp(top, 8, Math.max(8, window.innerHeight - h - 8)) + 'px';
+    if (top + h > vh - 8) top = y - h - 14;
+    el.style.top = clamp(top, 8, Math.max(8, vh - h - 8)) + 'px';
+  }
+
+  // タイムラインを含む、スクロールできる入れ物（左の列）を d px 上へ送る。実際に送った量を返す
+  makeRoom(d) {
+    let sc = $('#timeline')?.parentElement;
+    while (sc && sc !== document.body) {
+      const oy = getComputedStyle(sc).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && sc.scrollHeight > sc.clientHeight + 1) break;
+      sc = sc.parentElement;
+    }
+    if (!sc || sc === document.body) return 0;
+    const before = sc.scrollTop;
+    // このスクロールでメニューが閉じないようにする（スクロールの知らせはあとから届く）
+    this.quietUntil = performance.now() + 300;
+    sc.scrollTo({ top: before + Math.ceil(d), behavior: 'instant' });
+    return sc.scrollTop - before;
   }
 
   render() {
@@ -134,7 +179,12 @@ export class TlMenu {
   footHtml(kind) {
     const cur = this.mode(kind);
     const opts = CLICK_OPTS[kind].map(([v, label]) => `<option value="${v}"${v === cur ? ' selected' : ''}>${tr(label)}</option>`).join('');
-    return `<label class="tlm-foot" title="${tr('右クリックなら、いつでもこのメニューを出せます')}">${tr('クリックしたとき')}<select data-tlm-mode="${kind}">${opts}</select></label>`;
+    const pos = this.below ? 'below' : 'auto';
+    const posOpts = POS_OPTS.map(([v, label]) => `<option value="${v}"${v === pos ? ' selected' : ''}>${tr(label)}</option>`).join('');
+    return `<div class="tlm-foot">
+      <label class="tlm-foot-row" title="${tr('右クリックなら、いつでもこのメニューを出せます')}"><span>${tr('クリックしたとき')}</span><select data-tlm-mode="${kind}">${opts}</select></label>
+      <label class="tlm-foot-row" title="${tr('このメニューを出す位置（タイムラインのメニューすべてに効きます）')}"><span>${tr('出る位置')}</span><select data-tlm-pos="1">${posOpts}</select></label>
+    </div>`;
   }
 
   likeRow(o, act) {
@@ -492,6 +542,17 @@ export class TlMenu {
       saveSettings(this.app.settings);
       this.app.onTlClickMode();
       this.app.hint(tr('次から、クリックしたときは「{what}」にします（右クリックならいつでもメニュー）', { what: tr(CLICK_OPTS[kind].find(([v]) => v === t.value)[1]) }));
+      return;
+    }
+    if (t.dataset.tlmPos) {
+      // メニューの出る位置を切り替える（いま開いているメニューもすぐ置き直す）
+      this.app.settings.tlMenuPos = t.value === 'below' ? 'below' : 'auto';
+      saveSettings(this.app.settings);
+      if (this.cur) {
+        this.place();
+        this.el.scrollTop = this.el.scrollHeight;
+      }
+      this.app.hint(this.below ? tr('タイムラインのメニューを、いつも下に出します（入りきらない分はメニューの中でスクロール）') : tr('タイムラインのメニューは、下に入らないときは上に出します'));
       return;
     }
     if (t.dataset.tlmChk === 'mark' && this.cur?.kind === 'marker') {

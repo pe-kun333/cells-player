@@ -40,7 +40,7 @@ export class NowCard {
     this.bindStrip();
     // 一覧をスクロールしたら、設定に合わせて自動でたたむ（先頭に戻ると開く）
     $('#sideList').addEventListener('scroll', (e) => {
-      if (!app.settings.cardAutoFold) return;
+      if (!app.settings.cardAutoFold || app.sidebar?.autoScrolling()) return;
       const top = e.target.scrollTop;
       if (top > 60 && !this.folded) {
         this.autoFolded = true;
@@ -230,7 +230,7 @@ export class NowCard {
 
   // ---- コメント ----
 
-  // 書き始め（C キー・入力欄に書き始めたとき・前後の目印の 💬）。その時刻と、そのときのセルに固定する
+  // 書き始め（C キー・入力欄に書き始めたとき）。その時刻と、そのときのセルに固定する（markerId を渡すと、その目印に）
   startComment({ markerId = null, focus = true } = {}) {
     const { app } = this;
     if (!app.player) {

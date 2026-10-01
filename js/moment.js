@@ -1,4 +1,5 @@
 import { $, $$, fmt, escapeHtml, hearts, icon, commentSummary, tagChips } from './util.js';
+import { saveSettings } from './store.js';
 import { tr } from './i18n.js';
 
 // 動画の下の「この瞬間」パネル。いいね・コメントは常に目印（瞬間）に付く
@@ -24,6 +25,19 @@ export class Moment {
     this.feedKey = '';
     this.pinKey = '';
     this.hintTimer = null;
+    // 前後の目印の一覧
+    this.feedSyncBtns = $$('#feedSync [data-sync]');
+    this.feedList = [];
+    this.feedSel = null;      // 選んだ目印（行の下に「移動」「{s}秒前に移動」「コメントする」を出す）
+    this.feedAdding = false;  // 選んだ目印にコメントを書いているか
+    this.feedResume = false;  // コメントを書くために一時停止したか
+    this.feedNowKey = '';     // いまの目印の強調（描き直したら付け直す）
+    this.feedCur = undefined; // 連動で最後に合わせた目印
+    this.feedPause = 0;       // 手でスクロールしたり押したりしたら、しばらく追いかけない
+    this.feedPointerAt = 0;   // 一覧の上でマウスを動かした時刻（動かしている間はスクロールしない）
+    this.feedMarks = '';      // 対象・固定の目印の印（変わったら作り直さずに付け直す）
+    this.feedComposing = false; // コメント欄で日本語を変換している途中か（その間は作り直さない）
+    this.feedDirty = false;   // 変換の途中に作り直しを待たせたか
 
     this.renderOffsets();
     this.renderQuick();
@@ -95,22 +109,6 @@ export class Moment {
       return;
     }
     if (!this.app.ui.commentPin || !this.input.value.trim()) this.setPin(true);
-    this.input.focus();
-  }
-
-  // 「前後の目印」から: その目印にコメントを書く（再生位置は動かさない。止めるかどうかは C と同じ設定）
-  startMarkOn(id) {
-    const app = this.app;
-    const m = app.store.getMarker(id);
-    if (!m || !app.player) return;
-    const p = app.player;
-    let resume = !!app.ui.commentPin?.resume;
-    if (app.settings.pauseOnComment && !p.paused) {
-      p.pause();
-      resume = true;
-    }
-    app.ui.commentPin = { markerId: m.id, t: m.t, fromTarget: false, resume };
-    app.onPinChange();
     this.input.focus();
   }
 
@@ -215,32 +213,195 @@ export class Moment {
     this.pinEl.innerHTML = `${icon('pin')}<span class="pin-label">${label}</span>${nudges}<button data-pin="cancel" title="${tr('取り消す (Esc)')}" aria-label="${tr('取り消す')}">${icon('x')}</button>`;
   }
 
+  // ---- 前後の目印（この瞬間の下の一覧） ----
+  // 自分の目印を時間順にすべて並べる。連動: 再生位置に合わせてスクロールし、いまの目印を強調する。
+  // 連動しない: 自由にスクロールできる。行をクリックすると選ばれ、その下に「移動」「{s}秒前に移動」
+  // 「コメントする」が出る（行を押しただけでは再生位置は動かさない）
+
   bindFeed() {
-    this.feedEl.addEventListener('click', (e) => {
-      const row = e.target.closest('[data-id]');
-      if (!row) return;
-      const { store } = this.app;
-      const m = store.getMarker(row.dataset.id);
-      if (!m) return;
-      const act = e.target.closest('[data-act]')?.dataset.act;
-      if (act === 'cycle') store.updateMarker(m.id, { lv: (m.lv + 1) % 4 });
-      else if (act === 'bm') store.updateMarker(m.id, { bm: !m.bm });
-      else if (act === 'talk') this.app.startCommentOn(m.id);
-      else if (act === 'del') {
-        store.deleteMarker(m.id);
-        this.hint(tr('目印を削除しました（Ctrl+Z で元に戻せます）'));
-      } else {
-        // 行（その瞬間へ）と −3秒（少し前へ）。すばやく2回押すと再生も始める
-        this.app.focusMarker(m.id, act === 'lead');
-        this.app.noteJump(`feed:${m.id}:${act || 'row'}`);
+    const app = this.app;
+    for (const b of this.feedSyncBtns) {
+      b.addEventListener('click', () => {
+        app.settings.feedSync = b.dataset.sync === '1';
+        saveSettings(app.settings);
+        this.feedPause = 0;
+        this.applyFeedSync();
+        this.feedCur = undefined; // 連動に戻したら、すぐにいまの目印へスクロールする
+        this.tickFeed(app.now());
+      });
+    }
+    // 手でスクロールしたり、行やボタンを押したりしたら、しばらく追いかけない
+    // （押した行が動いて、ダブルクリックの2回目が別の行に当たらないように）
+    const pause = () => {
+      if (app.settings.feedSync) this.feedPause = performance.now() + 4000;
+    };
+    this.feedEl.addEventListener('wheel', pause, { passive: true });
+    this.feedEl.addEventListener('touchstart', pause, { passive: true });
+    this.feedEl.addEventListener('pointerdown', pause);
+    this.feedEl.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'mouse') this.feedPointerAt = performance.now();
+    }, { passive: true });
+    this.feedEl.addEventListener('click', (e) => this.onFeedClick(e));
+    this.feedEl.addEventListener('keydown', (e) => this.onFeedKeydown(e));
+    this.feedEl.addEventListener('compositionstart', () => {
+      this.feedComposing = true;
+    });
+    this.feedEl.addEventListener('compositionend', () => {
+      this.feedComposing = false;
+      if (this.feedDirty) {
+        this.feedDirty = false;
+        this.renderFeed();
       }
     });
+    this.applyFeedSync();
+  }
+
+  applyFeedSync() {
+    const on = !!this.app.settings.feedSync;
+    for (const b of this.feedSyncBtns) {
+      const me = (b.dataset.sync === '1') === on;
+      b.classList.toggle('on', me);
+      b.setAttribute('aria-pressed', String(me));
+    }
+  }
+
+  onFeedClick(e) {
+    const { app } = this;
+    const { store } = app;
+    // 選んだ行の下の操作
+    const fa = e.target.closest('[data-fact]')?.dataset.fact;
+    if (fa) {
+      const m = this.feedSel && store.getMarker(this.feedSel);
+      if (!m) return;
+      if (fa === 'go' || fa === 'lead') {
+        app.focusMarker(m.id, fa === 'lead');
+        app.noteJump(`feed:${m.id}:${fa}`); // すばやく2回押すと再生も始める
+      } else if (fa === 'add') this.setFeedAdding(!this.feedAdding);
+      else if (fa === 'close') this.selectFeed(null);
+      return;
+    }
+    if (e.target.closest('.feed-add')) return;
+    const row = e.target.closest('.feed-item[data-id]');
+    if (!row) return;
+    const m = store.getMarker(row.dataset.id);
+    if (!m) return;
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (act === 'cycle') store.updateMarker(m.id, { lv: (m.lv + 1) % 4 });
+    else if (act === 'bm') store.updateMarker(m.id, { bm: !m.bm });
+    else if (act === 'talk') {
+      // コメントの印・コメントの文: その目印を選んで、すぐ書けるようにする
+      if (this.feedAdding) {
+        // 書いている途中なら、欄をそのまま別の目印へ移す（止めたまま。書きかけは前の目印のものなので持ち越さない）
+        this.feedSel = m.id;
+        this.paintFeed();
+        this.focusFeedInput();
+      } else {
+        this.selectFeed(m.id, false);
+        this.setFeedAdding(true);
+      }
+    } else if (act === 'del') {
+      if (this.feedSel === m.id) this.selectFeed(null, false);
+      store.deleteMarker(m.id);
+      this.hint(tr('目印を削除しました（Ctrl+Z で元に戻せます）'));
+    } else if (act === 'lead') {
+      // −3秒（少し前へ）。すばやく2回押すと再生も始める
+      app.focusMarker(m.id, true);
+      app.noteJump(`feed:${m.id}:lead`);
+    } else {
+      // 行: 選ぶ（もう一度押すと外す）。再生位置は動かさない
+      this.selectFeed(this.feedSel === m.id ? null : m.id);
+    }
+  }
+
+  // 目印を選ぶ（null で外す）。別の目印に移ったら、書きかけのコメント欄は閉じる
+  selectFeed(id, repaint = true) {
+    if (id !== this.feedSel) this.endFeedAdding();
+    this.feedSel = id;
+    if (!repaint) return;
+    this.paintFeed();
+    if (id) this.revealFeedActs();
+  }
+
+  // 選んだ行の下の操作（とコメント欄）が、一覧の枠の中に見えるようにする（左の列はスクロールさせない）
+  revealFeedActs() {
+    const el = this.feedEl;
+    const last = el.querySelector('.feed-add') || el.querySelector('.feed-acts');
+    if (!last) return;
+    const bottom = last.offsetTop + last.offsetHeight + 4;
+    if (bottom > el.scrollTop + el.clientHeight) el.scrollTop = bottom - el.clientHeight;
+  }
+
+  focusFeedInput() {
+    this.feedEl.querySelector('.feed-add-input')?.focus({ preventScroll: true });
+    this.revealFeedActs();
+  }
+
+  // メディアを閉じるとき: 選んだ行・書きかけの欄を片付ける（次のメディアで勝手に再生しないよう、再生は戻さない）
+  resetFeed() {
+    this.feedSel = null;
+    this.feedAdding = false;
+    this.feedResume = false;
+    this.feedCur = undefined;
+    this.feedPause = 0;
+    this.feedKey = '';
+    this.feedMarks = '';
+    this.feedList = [];
+    this.feedComposing = false;
+    this.feedDirty = false;
+  }
+
+  // 選んだ目印にコメントを書く欄を開く・閉じる。書いている間の一時停止は、C と同じ設定に従う
+  setFeedAdding(on) {
+    if (on === this.feedAdding) {
+      if (on) this.focusFeedInput();
+      return;
+    }
+    if (on) {
+      const p = this.app.player;
+      if (!this.feedAdding && this.app.settings.pauseOnComment && p && !p.paused) {
+        p.pause();
+        this.feedResume = true;
+      }
+      this.feedAdding = true;
+    } else {
+      this.endFeedAdding();
+    }
+    this.paintFeed();
+    if (on) this.focusFeedInput();
+  }
+
+  // コメント欄を閉じる（書くために止めていたなら、設定に合わせて再生を戻す）。描き直しはしない
+  endFeedAdding() {
+    if (!this.feedAdding) return;
+    this.feedAdding = false;
+    if (this.feedResume && this.app.settings.resumeAfterComment) this.app.player?.play();
+    this.feedResume = false;
+  }
+
+  onFeedKeydown(e) {
+    if (!e.target.classList.contains('feed-add-input') || e.isComposing || e.keyCode === 229) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      this.setFeedAdding(false);
+      return;
+    }
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const { store } = this.app;
+    const m = this.feedSel && store.getMarker(this.feedSel);
+    const text = e.target.value.trim();
+    if (!m || !text) return;
+    e.target.value = '';
+    this.setFeedAdding(false);
+    store.addComment('marker', m.id, text, m.t);
+    this.hint(tr('{time} の目印にコメントしました', { time: fmt(m.t, true) }));
   }
 
   render() {
     this.effKey = '';
-    this.feedKey = '';
     this.renderPin();
+    this.renderFeed();
     this.tick(this.app.now());
   }
 
@@ -285,43 +446,86 @@ export class Moment {
       for (const b of this.quickEl.children) b.classList.toggle('on', tagOn[Number(b.dataset.qi)]);
     }
 
-    this.renderFeed(now);
+    this.tickFeed(now);
   }
 
-  renderFeed(now) {
-    const { store, settings, ui } = this.app;
-    const win = settings.mergeWindow;
-    const near = [...store.ownMarkers]
-      .sort((a, b) => Math.abs(a.t - now) - Math.abs(b.t - now))
-      .slice(0, 6)
-      .sort((a, b) => a.t - b.t);
+  // 一覧の中身の印（目印・秒数・選んだ行）。対象・固定の目印は feedMarkKey で別に見る
+  feedDataKey(list) {
+    return (
+      list.map((m) => `${m.id}:${m.t}:${m.lv}:${m.bm}:${m.tags.join('\u0001')}:${m.comments.length}:${commentSummary(m.comments)}`).join('\u0002') +
+      `|${!!this.app.player}|${this.app.settings.leadIn}|${this.feedSel}|${this.feedAdding}`
+    );
+  }
+
+  feedMarkKey() {
+    const { ui } = this.app;
+    return `${ui.target?.id || ''}|${ui.commentPin?.markerId || ''}`;
+  }
+
+  // 目印の一覧を作り直す（中身が変わったときだけ。対象・固定が変わっただけなら印を付け直す。
+  // いまの目印の強調とスクロールは tickFeed）
+  renderFeed() {
+    const { store } = this.app;
+    const list = this.app.player ? [...store.ownMarkers].sort((a, b) => a.t - b.t) : [];
+    if (this.feedSel && !list.some((m) => m.id === this.feedSel)) this.selectFeed(null, false);
+    // コメント欄で日本語を変換している途中は作り直さない（変換が切れないように）。変換が終わったら作り直す
+    if (this.feedComposing) {
+      this.feedDirty = true;
+      return;
+    }
+    if (this.feedDataKey(list) !== this.feedKey) {
+      this.feedList = list;
+      this.paintFeed();
+    } else if (this.feedMarkKey() !== this.feedMarks) {
+      this.applyFeedMarks();
+    }
+  }
+
+  // 対象・固定の目印の印だけを付け直す（書いているコメント欄はそのまま）
+  applyFeedMarks() {
+    const { ui } = this.app;
+    this.feedMarks = this.feedMarkKey();
+    const tid = ui.target?.id;
+    const pinId = ui.commentPin?.markerId || '';
+    for (const r of this.feedEl.querySelectorAll('.feed-item')) {
+      r.classList.toggle('is-target', r.dataset.id === tid);
+      r.classList.toggle('is-pinned', r.dataset.id === pinId);
+    }
+  }
+
+  paintFeed() {
+    const el = this.feedEl;
+    const { ui, settings } = this.app;
+    const list = this.feedList;
+    this.feedKey = this.feedDataKey(list);
+    this.feedMarks = this.feedMarkKey();
+    // 書きかけのコメント（同じ目印の欄のときだけ）とスクロール位置は、描き直しても残す
+    const inp = el.querySelector('.feed-add-input');
+    const draft = inp ? { id: inp.dataset.for, value: inp.value, focused: document.activeElement === inp } : null;
+    const scroll = el.scrollTop;
+    this.feedNowKey = '';
+    if (!this.app.player) {
+      el.innerHTML = '';
+      return;
+    }
+    if (!list.length) {
+      el.innerHTML = `<div class="feed-empty">${tr('目印はまだありません。M キーか「目印」ボタンで、再生を止めずに付けられます')}</div>`;
+      return;
+    }
     const tid = ui.target?.id;
     const pinId = ui.commentPin?.markerId || '';
     const lead = settings.leadIn;
-    const key =
-      near.map((m) => `${m.id}:${m.t}:${m.lv}:${m.bm}:${m.tags.join('\u0001')}:${m.comments.length}:${Math.abs(m.t - now) <= win ? 1 : 0}`).join('|') +
-      '|' + tid + '|' + pinId + '|' + !!this.app.player + '|' + lead;
-    if (key === this.feedKey) return;
-    this.feedKey = key;
-
-    if (!this.app.player) {
-      this.feedEl.innerHTML = '';
-      return;
-    }
-    if (!near.length) {
-      this.feedEl.innerHTML = `<div class="feed-empty">${tr('目印はまだありません。M キーか「目印」ボタンで、再生を止めずに付けられます')}</div>`;
-      return;
-    }
-    this.feedEl.innerHTML = near
+    const talkTip = tr('クリックでこの目印にコメントを書く');
+    el.innerHTML = list
       .map((m) => {
-        const cls = (Math.abs(m.t - now) <= win ? ' is-now' : '') + (m.id === tid ? ' is-target' : '') + (m.id === pinId ? ' is-pinned' : '');
+        const sel = m.id === this.feedSel;
+        const cls = (m.id === tid ? ' is-target' : '') + (m.id === pinId ? ' is-pinned' : '') + (sel ? ' is-selected' : '');
         // コメントの文を押しても、その目印にコメントを書ける
-        const talkTip = tr('クリックでこの目印にコメントを書く');
         let text = `<span class="fi-text muted" data-act="talk" title="${talkTip}">${tr('コメントなし')}</span>`;
         if (m.comments.length) text = `<span class="fi-text" data-act="talk" title="${talkTip}">${escapeHtml(commentSummary(m.comments))}</span>`;
         else if (m.tags.length) text = '<span class="fi-text"></span>';
         const n = m.comments.length;
-        return `<div class="feed-item${cls}" data-id="${m.id}" title="${tr('クリックでこの目印へ移動・ダブルクリックでそこから再生')}">
+        let html = `<div class="feed-item${cls}" data-id="${m.id}" title="${escapeHtml(tr('クリックで「移動」「{s}秒前に移動」「コメントする」を出す', { s: lead }))}">
           <span class="fi-time">${fmt(m.t, true)}</span>
           <button class="lead-btn" data-act="lead" title="${tr('{s}秒前へ移動（ダブルクリックでそこから再生）', { s: lead })}">${tr('−{s}秒', { s: lead })}</button>
           <button class="fi-like" data-act="cycle" title="${tr('いいね（クリックで 0→1→2→3→0）')}">${hearts(m.lv)}</button>
@@ -331,7 +535,73 @@ export class Moment {
           ${text}
           <button class="fi-del" data-act="del" title="${tr('目印を削除')}">${icon('x')}</button>
         </div>`;
+        if (!sel) return html;
+        // 選んだ行の下に、移動・少し前に移動・コメントするを出す
+        html += `<div class="feed-acts">
+          <button type="button" data-fact="go" title="${tr('クリックで移動・ダブルクリックでそこから再生')}">${icon('play')}${tr('移動')}</button>
+          <button type="button" data-fact="lead" title="${tr('{s}秒前へ移動・ダブルクリックでそこから再生', { s: lead })}">${icon('back')}${tr('{s}秒前に移動', { s: lead })}</button>
+          <button type="button" data-fact="add"${this.feedAdding ? ' class="on"' : ''} title="${tr('この目印にコメントを追加する')}">${icon('comment')}${tr('コメントする')}</button>
+          <span class="spacer"></span>
+          <button type="button" data-fact="close" title="${tr('閉じる')}" aria-label="${tr('閉じる')}">${icon('x')}</button>
+        </div>`;
+        if (this.feedAdding) {
+          html += `<div class="feed-add"><input class="field feed-add-input" type="text" data-for="${m.id}" placeholder="${tr('{time} の目印にコメント', { time: fmt(m.t, true) })}${tr('（Enter で追加・Esc でやめる）')}" autocomplete="off" aria-label="${tr('コメント')}"></div>`;
+        }
+        return html;
       })
       .join('');
+    el.scrollTop = scroll;
+    if (draft) {
+      const next = el.querySelector('.feed-add-input');
+      if (next && draft.id === next.dataset.for) {
+        next.value = draft.value;
+        if (draft.focused) next.focus({ preventScroll: true });
+      }
+    }
+    this.tickFeed(this.app.now());
+  }
+
+  // 毎フレーム: いまの目印（近くの目印）を強調し、連動ならスクロールする
+  tickFeed(now) {
+    const list = this.feedList;
+    if (!list || !list.length) return;
+    // t 以下の一番後ろの目印の番号（なければ -1）
+    const idx = (t) => {
+      let lo = 0;
+      let hi = list.length - 1;
+      let r = -1;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        if (list[mid].t <= t) {
+          r = mid;
+          lo = mid + 1;
+        } else {
+          hi = mid - 1;
+        }
+      }
+      return r;
+    };
+    const win = this.app.settings.mergeWindow;
+    const cur = idx(now + 0.05);
+    const a = idx(now - win - 1e-6) + 1; // 近くの目印（前後 win 秒）の範囲
+    const b = idx(now + win);
+    const rows = this.feedEl.querySelectorAll('.feed-item');
+    const nowKey = `${a}:${b}:${rows.length}`;
+    if (nowKey !== this.feedNowKey) {
+      this.feedNowKey = nowKey;
+      rows.forEach((r, i) => r.classList.toggle('is-now', i >= a && i <= b));
+    }
+    const id = list[Math.max(cur, 0)].id;
+    if (id === this.feedCur) return;
+    const t = performance.now();
+    const follow = this.app.settings.feedSync && !this.feedSel;
+    // 一覧の上でマウスを動かしている間は待つ（押し間違えないように。止まったら合わせる）
+    if (follow && t - this.feedPointerAt < 1200) return;
+    this.feedCur = id;
+    // 行を選んでいる間や、手でスクロール・操作した直後は追いかけない
+    if (!follow || t < this.feedPause) return;
+    // いまの目印の前に2行見えるようにする（前後の目印）
+    const top = cur < 0 ? null : rows[Math.max(cur - 2, 0)];
+    this.feedEl.scrollTop = top ? Math.max(0, top.offsetTop - 2) : 0;
   }
 }

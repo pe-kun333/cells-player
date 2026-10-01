@@ -211,7 +211,14 @@
         <input id="commentInput" class="field comment-input" type="text" placeholder="コメント（Enter で保存、Esc で取り消し）" autocomplete="off">
       </div>
       <div class="hint" id="momentHint"></div>
-      <div class="feed-head">前後の目印</div>
+      <div class="feed-head">
+        <span>前後の目印</span>
+        <span class="spacer"></span>
+        <div class="mlist-sync" id="feedSync" role="group" aria-label="目印の一覧と再生の連動">
+          <button type="button" data-sync="1" title="再生位置に合わせてスクロールする">連動</button>
+          <button type="button" data-sync="0" title="自由にスクロールする">連動しない</button>
+        </div>
+      </div>
       <div class="feed" id="feed"></div>
     </div>
     </div>
@@ -270,6 +277,10 @@
         <button class="tab" data-tab="cells" role="tab">セル</button>
         <button class="tab" data-tab="markers" role="tab" data-i18n="目印（タブ）">目印</button>
         <button class="tab" data-tab="all" role="tab">すべて</button>
+      </div>
+      <div class="mlist-sync side-sync" id="sideSync" role="group" aria-label="セルの一覧と再生の連動">
+        <button type="button" data-sync="1" title="再生位置のセルを、一覧の一番上（いまのカードのすぐ下）へ自動で送る">連動</button>
+        <button type="button" data-sync="0" title="一覧を自由にスクロールする（自動では動かさない）">連動しない</button>
       </div>
       <button type="button" class="btn icon-btn side-fold" id="btnSideFold" title="検索・絞り込み・連続再生をたたむ（セルの一覧を広く）" aria-label="検索・絞り込み・連続再生をたたむ" aria-expanded="true"><svg class="i" aria-hidden="true"><use href="#i-chevron"/></svg></button>
       </div>
@@ -408,6 +419,13 @@
     <label class="set-row">
       <span>等間隔でセル化の長さ（秒）<small>「30秒ごとに全部セル化」のボタンで、動画の最初から最後までをこの長さのセルに区切ります</small></span>
       <input class="field" name="gridSec" type="number" min="1" max="3600" step="1">
+    </label>
+    <label class="set-row">
+      <span>タイムラインのメニューの出る位置<small>セルや目印をクリックしたときのメニューです。「いつも下」にすると動画にかぶらず、入りきらない分はメニューの中でスクロールします（メニューの一番下でも切り替えられます）</small></span>
+      <select name="tlMenuPos">
+        <option value="auto">自動（下に入らないときは上）</option>
+        <option value="below">いつも下（動画にかぶらない）</option>
+      </select>
     </label>
     <label class="set-row check">
       <input name="autoCellLeft" type="checkbox">

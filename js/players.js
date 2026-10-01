@@ -200,8 +200,11 @@ export class YouTubePlayer extends Emitter {
             settled = true;
             resolve();
           },
+          // 字幕の機能が読み込まれたとき（再生を始めたときや広告のあとに来る。このとき YouTube が字幕を選んでいることがある）
+          onApiChange: () => this.ccOff(),
           onStateChange: (e) => {
             const S = YT.PlayerState;
+            if (e.data === S.PLAYING || e.data === S.BUFFERING) this.ccOff();
             if (e.data === S.PLAYING) {
               this._paused = false;
               this.liveCheckedAt = 0; // ライブかどうかは再生が始まってから分かるので、すぐに確かめ直す
@@ -232,6 +235,16 @@ export class YouTubePlayer extends Emitter {
         },
       });
     });
+  }
+
+  // YouTube 自身の字幕（動画の中に出る字幕）を消す。動画によっては、YouTube が見ている人の言語の字幕を
+  // 自動で出し、オン・オフをサイトごとに覚えている。操作ボタンを隠しているので利用者は消せず、
+  // アプリの字幕は動画の下の帯に出すので、YouTube の字幕は使わない（何度呼んでも同じ）。
+  // unloadModule('captions') は、移動や広告のあとに読み込み直されて、また出てしまうので使わない
+  ccOff() {
+    try {
+      if (this.p?.getOptions?.()?.includes('captions')) this.p.setOption('captions', 'track', {});
+    } catch {}
   }
 
   play() {

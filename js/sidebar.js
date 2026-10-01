@@ -1,4 +1,4 @@
-import { $, fmt, fmtLen, fmtDate, escapeHtml, hearts, icon, commentSummary, tagChips, whoColor, viaBadges } from './util.js';
+import { $, fmt, fmtLen, fmtDate, escapeHtml, hearts, icon, commentSummary, tagChips, whoColor, viaBadges, clamp } from './util.js';
 import { saveSettings } from './store.js';
 import { cuesIn, subTextAt } from './transcript.js';
 import { tr } from './i18n.js';
@@ -28,43 +28,82 @@ export class Sidebar {
     this.searchEl = $('#sideSearch');
     this.sortSel = $('#sideSort');
     this.focusMemo = false; // メモの編集を始めた直後に、カーソルを末尾へ置く
+    // 連動: 再生位置のセルが変わったら、そのカードを一覧の一番上へ送る
+    this.syncBtns = [...document.querySelectorAll('#sideSync [data-sync]')];
+    this.followId = null;   // 最後に一番上へ送った（または送らないと決めた）セル
+    this.followPause = 0;   // 手でスクロールしたり一覧を押したりしたら、しばらく追いかけない
+    this.pointerAt = 0;     // 一覧の上でマウスを動かした時刻（動かしている間は、押し間違えないよう一覧を動かさない）
+    this.autoUntil = 0;     // 連動でスクロールしている間（いまのカードの「自動でたたむ」には数えない）
+
+    for (const b of this.syncBtns) {
+      b.addEventListener('click', () => {
+        app.settings.sideListSync = b.dataset.sync === '1';
+        saveSettings(app.settings);
+        this.applySync();
+        // 連動に戻したら、すぐにいまのセルを一番上へ
+        this.refollow();
+        this.follow();
+      });
+    }
+    const pause = () => {
+      this.followPause = performance.now() + 6000;
+    };
+    this.listEl.addEventListener('wheel', pause, { passive: true });
+    this.listEl.addEventListener('touchstart', pause, { passive: true });
+    // カードのボタンやスクロールバーを押したときも止める（押したカードが動いてしまわないように）
+    this.listEl.addEventListener('pointerdown', pause);
+    this.listEl.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'mouse') this.pointerAt = performance.now();
+    }, { passive: true });
+    this.listEl.addEventListener('keydown', (e) => {
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) pause();
+    });
+    this.applySync();
 
     this.tabsEl.addEventListener('click', (e) => {
       const b = e.target.closest('[data-tab]');
       if (!b) return;
       app.ui.tab = b.dataset.tab;
       this.render();
+      this.refollow();
+      this.follow();
     });
+    // 絞り込み・並び順・検索を変えたら、連動ならいまのセルをもう一度一番上へ
+    const relist = () => {
+      this.render();
+      this.refollow();
+      this.follow();
+    };
     this.likeSel.addEventListener('change', () => {
       app.ui.minLike = Number(this.likeSel.value);
       this.likeSel.blur();
-      this.render();
+      relist();
     });
     this.tagSel.addEventListener('change', () => {
       app.ui.tag = this.tagSel.value;
       this.tagSel.blur();
-      this.render();
+      relist();
     });
     this.bmBtn.addEventListener('click', () => {
       app.ui.bmOnly = !app.ui.bmOnly;
-      this.render();
+      relist();
     });
     this.sortSel.addEventListener('change', () => {
       app.settings.sidebarSort = this.sortSel.value;
       saveSettings(app.settings);
       this.sortSel.blur();
-      this.render();
+      relist();
     });
     this.searchEl.addEventListener('input', () => {
       app.ui.query = this.searchEl.value;
-      this.render();
+      relist();
     });
     this.searchEl.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
       this.searchEl.value = '';
       app.ui.query = '';
       this.searchEl.blur();
-      this.render();
+      relist();
     });
     this.listEl.addEventListener('click', (e) => this.onClick(e));
     this.listEl.addEventListener('keydown', (e) => this.onKeydown(e));
@@ -161,6 +200,11 @@ export class Sidebar {
         ? { key: active.dataset.key, value: active.value, start: active.selectionStart, end: active.selectionEnd }
         : null;
     const scroll = this.listEl.scrollTop;
+    // 連動でなめらかにスクロールしている途中に描き直すと、そこで止まってしまうので、次の監視でもう一度送る
+    if (this.autoScrolling()) {
+      this.followId = null;
+      this.autoUntil = 0;
+    }
 
     const items = store.doc ? this.items() : [];
     this.listEl.innerHTML =
@@ -201,6 +245,77 @@ export class Sidebar {
         setTimeout(() => el.classList.remove('is-flash'), 1200);
       }
     }
+  }
+
+  applySync() {
+    const on = !!this.app.settings.sideListSync;
+    for (const b of this.syncBtns) {
+      b.classList.toggle('on', (b.dataset.sync === '1') === on);
+      b.setAttribute('aria-pressed', String((b.dataset.sync === '1') === on));
+    }
+  }
+
+  // 次の follow で、いまのセルをもう一度一番上へ送る（タブを替えたとき・連動に戻したとき）
+  refollow() {
+    this.followId = null;
+    this.followPause = 0;
+  }
+
+  // 連動でスクロールしている途中か（いまのカードの「自動でたたむ」から見る）
+  autoScrolling() {
+    return performance.now() < this.autoUntil;
+  }
+
+  // 連動: 再生位置のセル（いまのセル）が変わったら、そのカードを一覧の一番上（いまのカードのすぐ下）へ送る。
+  // main の監視から毎回呼ぶ（同じセルのあいだは何もしない）
+  follow() {
+    const { app } = this;
+    if (!app.settings.sideListSync) return;
+    const id = this.followTarget();
+    // セルの外に出たら忘れる（同じセルにまた入ったときも送る）
+    if (!id) {
+      this.followId = null;
+      return;
+    }
+    if (id === this.followId) return;
+    const el = this.listEl.querySelector(`.card[data-kind="cell"][data-id="${id}"]`);
+    // 絞り込みや「目印」のタブで一覧にないときは、そのセルは送らない
+    if (!el) {
+      this.followId = id;
+      return;
+    }
+    const t = performance.now();
+    // 一覧の上でマウスを動かしている間は待つ（止まったら送る）
+    if (t - this.pointerAt < 1200) return;
+    this.followId = id;
+    // 手でスクロールした直後・一覧の中で書いている間は、このセルは送らない（次のセルから、また追いかける）
+    const a = document.activeElement;
+    const typing = a && this.listEl.contains(a) && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT' || a.tagName === 'SELECT');
+    if (t < this.followPause || app.ui.editingMemo || typing) return;
+    this.scrollToCard(el);
+  }
+
+  // 連動で一番上へ送るセル: いまのセル（自分のセル）。自分のセルがなければ、共有のセルのうち一番短いもの
+  followTarget() {
+    const { app } = this;
+    if (app.curCellId) return app.curCellId;
+    let best = null;
+    for (const id of app.activeCells || []) {
+      const c = app.store.getCell(id);
+      if (c && (!best || c.e - c.s < best.e - best.s)) best = c;
+    }
+    return best?.id || null;
+  }
+
+  // カードの上の端を、一覧の一番上に合わせる（選んでいるセルの帯が出ているときは、その下）
+  scrollToCard(el) {
+    const list = this.listEl;
+    const bar = list.querySelector('.selbar');
+    const top = el.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop - (bar ? bar.offsetHeight + 4 : 4);
+    const target = clamp(Math.round(top), 0, Math.max(0, list.scrollHeight - list.clientHeight));
+    if (Math.abs(target - list.scrollTop) < 2) return;
+    this.autoUntil = performance.now() + 1200;
+    list.scrollTo({ top: target, behavior: 'smooth' });
   }
 
   updateActive() {

@@ -38,6 +38,7 @@ export const DEFAULT_SETTINGS = {
   tlSegClick: 'menu',        // 区間: menu / cell（すぐセルにする）/ seek（区間の頭へ移動）
   tlMarkerClick: 'menu',     // 目印: menu / seek（その目印へ移動）
   tlCellClick: 'menu',       // セル: menu / seek（セルの頭へ移動）
+  tlMenuPos: 'auto',         // タイムラインのメニューの出る位置（auto: 下に入らなければ上 / below: いつも下。入りきらない分は中でスクロール）
   gridSec: 30,               // 等間隔でセル化の長さ（秒。最後に使ったもの）
   splitSnap: true,           // セルを分けるとき、字幕があれば近くの行の切れ目（1秒以内）に合わせる
   resumeAfterComment: true,  // コメントを書いている間に止めたとき、送信・取り消しのあと再生を戻す
@@ -47,6 +48,8 @@ export const DEFAULT_SETTINGS = {
   sidebarSort: 'time',       // サイドバーの並び順（time / like / new / comments）
   momentListOpen: true,      // サイドバー下の「瞬間のコメント」を開いておく
   momentListSync: true,      // 「瞬間のコメント」を再生位置に連動させる
+  sideListSync: true,        // 右のセルの一覧を再生位置に連動させる（いまのセルを一覧の一番上へ送る）
+  feedSync: true,            // 「この瞬間」の目印の一覧を再生位置に連動させる
   momentListMode: 'comments', // サイドバー下の一覧に出すもの（comments: 瞬間のコメント / transcript: 文字起こし）
   captions: true,            // 字幕を動画の上に表示する
   capMode: 'both',           // 字幕が2つあるときの出し方（both: 両方・1つめが上 / swap: 両方・2つめが上 / main: 1つめだけ / sub: 2つめだけ）

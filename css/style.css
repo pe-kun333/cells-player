@@ -229,6 +229,8 @@ body.caption-below .stage { border-radius: 10px 10px 0 0; }
   border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--text); box-shadow: var(--shadow);
   font-size: 13px;
 }
+/* 高さを抑えたとき（いつも下）は、中身を縮めずにメニューごとスクロールする（コメントの欄がつぶれないように） */
+.tl-menu > * { flex-shrink: 0; }
 .tlm-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .tlm-head > .i { color: var(--accent); }
 .tlm-head b { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
@@ -260,7 +262,9 @@ body.caption-below .stage { border-radius: 10px 10px 0 0; }
 .tlm-memo { font-size: 12.5px; line-height: 1.5; color: var(--text-2); overflow-wrap: anywhere; }
 .tlm-note { font-size: 11.5px; line-height: 1.6; color: var(--text-3); }
 .tlm-ask { font-size: 13px; font-weight: 600; }
-.tlm-foot { display: flex; align-items: center; gap: 6px; padding-top: 7px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--text-3); white-space: nowrap; }
+.tlm-foot { display: flex; flex-direction: column; gap: 4px; padding-top: 7px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--text-3); white-space: nowrap; }
+.tlm-foot-row { display: flex; align-items: center; gap: 6px; }
+.tlm-foot-row > span { flex: none; min-width: 7.5em; }
 .tlm-foot select { flex: 1; min-width: 0; height: 24px; font-size: 12px; }
 
 /* ---- 再生コントロール ---- */
@@ -546,6 +550,7 @@ body.ops-card .lower-row > .mlist .mlist-body { flex: 1; height: auto; min-heigh
 .side-tabs-row { display: flex; align-items: center; gap: 6px; }
 .side-tabs-row .tabs { flex: 1; min-width: 0; }
 .side-fold { position: relative; flex: none; }
+.side-sync { flex: none; }
 .side-fold .i { transition: transform 0.15s; }
 body.side-folded .side-fold .i { transform: rotate(180deg); }
 body.side-folded .side-search, body.side-folded .side-filters, body.side-folded .side-digest { display: none; }
@@ -669,8 +674,9 @@ dialog.palette-dialog { width: min(560px, 94vw); margin-top: 12vh; }
 .tz-mark.is-ghost::before { background: transparent; border-left: 2px dashed var(--accent); width: 0; }
 .tz-mark.is-ghost .tz-knob { background: var(--accent-bg); border: 2px dashed var(--accent); }
 .hint { min-height: 18px; font-size: 12.5px; color: var(--accent-text); }
-.feed-head { font-size: 12px; color: var(--text-3); }
-.feed { display: flex; flex-direction: column; gap: 2px; }
+.feed-head { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-3); }
+/* 目印をすべて並べて、6行ほどの高さでスクロールする（連動ならいまの目印へ） */
+.feed { position: relative; display: flex; flex-direction: column; gap: 2px; max-height: 214px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
 .feed-empty { font-size: 13px; color: var(--text-3); padding: 4px 0; }
 .feed-item {
   display: flex; align-items: center; gap: 8px; padding: 4px 8px;
@@ -702,6 +708,20 @@ dialog.palette-dialog { width: min(560px, 94vw); margin-top: 12vh; }
 .feed-item .fi-text[data-act="talk"] { cursor: text; border-radius: 4px; }
 .feed-item .fi-text[data-act="talk"]:hover { text-decoration: underline; text-decoration-color: var(--text-3); }
 .feed-item.is-pinned { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.feed-item { flex: none; }
+.feed-item.is-selected { border-color: var(--accent); background: var(--accent-bg); }
+/* 選んだ目印の下の操作（移動・少し前に移動・コメントする） */
+.feed-acts { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 2px 8px 4px clamp(8px, 12%, 60px); }
+.feed-acts button {
+  display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 9px;
+  border: 1px solid var(--line-strong); border-radius: 7px; background: var(--panel); color: var(--text); cursor: pointer; font-size: 12.5px; white-space: nowrap;
+}
+.feed-acts button:hover { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-text); }
+.feed-acts button.on { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-text); }
+.feed-acts button .i { width: 14px; height: 14px; }
+.feed-acts button[data-fact="close"] { width: 26px; padding: 0; justify-content: center; border-color: transparent; background: transparent; color: var(--text-3); }
+.feed-add { flex: none; padding: 0 8px 6px clamp(8px, 12%, 60px); }
+.feed-add-input { width: 100%; height: 30px; font-size: 13px; }
 
 /* ---- サイドバー ---- */
 .sidebar {

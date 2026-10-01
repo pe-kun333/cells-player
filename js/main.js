@@ -87,6 +87,7 @@ app.tlMenu = tlMenu;
 const timeline = new Timeline(app);
 const moment = new Moment(app);
 const sidebar = new Sidebar(app);
+app.sidebar = sidebar;
 const commentList = new CommentList(app);
 const digest = new Digest(app);
 const live = new LiveCaption(app);
@@ -115,9 +116,8 @@ function applyOpsLayout() {
   if (ml.parentElement !== home) home.appendChild(ml);
   nowCard.render();
 }
-// コメントを書き始める（C キー）・前後の目印の 💬 から、その目印に書く
+// コメントを書き始める（C キー）
 app.startComment = () => (nowCard.on ? nowCard.startComment() : moment.startMark());
-app.startCommentOn = (markerId) => (nowCard.on ? nowCard.startComment({ markerId }) : moment.startMarkOn(markerId));
 app.openPresets = () => presetDialog.open();
 app.gridQuick = () => gridCells.quick();
 
@@ -1056,6 +1056,7 @@ function closeMedia() {
   renderRepeatBar();
   if (practice.active) practice.stop();
   app.ui.commentPin = null;
+  moment.resetFeed();
   app.ui.editingMemo = null;
   app.ui.commentsOpen.clear();
   app.ui.selectedCells.clear();
@@ -1072,6 +1073,8 @@ function closeMedia() {
   nowCard.render();
   $('#audioCover').hidden = true;
   $('#caption').hidden = true;
+  $('#captionBar').hidden = true;
+  document.body.classList.remove('caption-below');
   $('#modeBadge').hidden = true;
   $('#mediaTitle').textContent = '';
   updatePlayButton();
@@ -1734,6 +1737,7 @@ function openSettings() {
   f.opsLayout.value = s.opsLayout === 'classic' ? 'classic' : 'card';
   f.cardAutoFold.checked = s.cardAutoFold;
   f.autoCellLeft.checked = s.autoCellLeft;
+  f.tlMenuPos.value = s.tlMenuPos === 'below' ? 'below' : 'auto';
   f.splitSnap.checked = s.splitSnap;
   f.gridSec.value = s.gridSec;
   f.liveChat.checked = s.liveChat;
@@ -1778,6 +1782,7 @@ $('#settingsForm').addEventListener('submit', (e) => {
     opsLayout: f.opsLayout.value,
     cardAutoFold: f.cardAutoFold.checked,
     autoCellLeft: f.autoCellLeft.checked,
+    tlMenuPos: f.tlMenuPos.value === 'below' ? 'below' : 'auto',
     splitSnap: f.splitSnap.checked,
     gridSec: clamp(Math.round(num(f.gridSec.value, DEFAULT_SETTINGS.gridSec)), 1, 3600),
     liveChat: f.liveChat.checked,
@@ -2165,6 +2170,7 @@ function watch() {
     timeline.updateActive();
     sidebar.updateActive();
   }
+  sidebar.follow();
   cellBar.tick(now);
   nowCard.tick(now);
 

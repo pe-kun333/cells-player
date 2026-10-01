@@ -26,11 +26,15 @@ It then opens in its own window and also starts offline. After installing, you c
 2. Right after that, press `1` `2` `3` to like the moment, or `C` to write a comment.
    `C` (comment pin) fixes the position when you press it, so it does not drift while you type.
    Later, press 💬 or "No comment" on a row in "Nearby markers" (under "This moment") to write a comment on a liked or bookmarked marker (the playhead does not move)
+   Click a row in "Nearby markers" to show "Go", "Go back 3s" and "Comment" under it (clicking the row alone doesn't move the playhead; the seconds can be changed in Settings).
+   "Nearby markers" lists all your markers: "Follow" scrolls along with playback, and "Free" lets you scroll freely
 3. Quick comments (tags such as "Review" or "Great scene") are added with one key press: `4` to `9`.
    Edit them with the pencil button and switch between sets (e.g. for study and for watching)
 4. Click a segment in the "Segments" row of the timeline to open a menu: "Make a cell", "Play from here", "Make a cell and repeat" and more (drag to select several segments).
    Clicking a marker on the timeline ("Full" and "Zoom" rows) or a cell ("Cells" row) also opens a menu. The playhead doesn't move, so while watching you can like, bookmark, comment on, nudge (±1 s, ±0.1 s) or delete other markers, make the segment to their left or right a cell, and like or repeat cells.
    Choose what a click does for each kind with "On click" at the bottom of the menu (for example "Make a cell right away" for segments or "Go to that marker" for markers, as before). Right-click always opens the menu.
+   Set "Position" at the bottom of the menu to "Always below" so the menu always opens below where you clicked and never covers the video (scroll inside the menu if it doesn't fit; also in Settings).
+   With "Follow" (next to the Cells / Markers / All tabs), the cell list moves the cell at the playhead to the top of the list (just below the now card) each time it changes; "Free" lets you scroll freely. It waits while you move the mouse over the list or right after you scroll it yourself.
    "Make cell" (Enter) makes the current segment a cell, and "Make left cell" (Shift+Enter) makes the segment to the left of the marker you just added (previous marker to that marker) a cell.
    Turn on "When you add a marker, make the segment to its left a cell" in Settings to do this automatically each time you add a marker.
    The "Cells every 30 s" button (next to continuous play at the bottom right, and on the now card) splits the whole video into cells of the length set in Settings right away; "…" next to it lets you choose another length (the short leftover at the end can join the previous cell; Ctrl+Z undoes them all at once).
@@ -59,6 +63,7 @@ Press "?" at the top right for the list of keyboard shortcuts.
 - Repeat options: number of loops, a pause between loops, and "Speed up" (starts at 0.7× and speeds up each loop)
 
 For YouTube videos, captions are shown in a strip just below the player instead of over it, following YouTube's terms.
+YouTube's own captions (which YouTube turns on by itself in your language for some videos) are kept off the video. Text burned into ads or into the video itself can't be removed.
 
 ## Now card (top of the right sidebar)
 
