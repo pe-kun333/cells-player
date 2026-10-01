@@ -18,6 +18,8 @@ const APP_FILES = [
   './js/playlist.js',
   './js/tlmenu.js',
   './js/gridcells.js',
+  './js/cellbar.js',
+  './js/palette.js',
   './js/commentlist.js',
   './js/db.js',
   './js/digest.js',
