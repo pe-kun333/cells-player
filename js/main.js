@@ -17,6 +17,7 @@ import { ShareDialog, ShareLayers, decodeShare, shareIdOf, shareFromText } from 
 import { XStrip } from './xstrip.js';
 import { Library } from './library.js';
 import { Playlist, isPlaylistJson } from './playlist.js';
+import { TlMenu } from './tlmenu.js';
 import { $, clamp, fmt, round2, escapeHtml, icon, cellLabel } from './util.js';
 import { tr, trMaybe, lang, isEn, translatePage } from './i18n.js';
 
@@ -76,6 +77,9 @@ app.tagNumbers = (tags) => {
   return [...nums].sort((a, b) => a - b);
 };
 
+// タイムラインをクリックしたときのメニュー（タイムラインより先に作る）
+const tlMenu = new TlMenu(app);
+app.tlMenu = tlMenu;
 const timeline = new Timeline(app);
 const moment = new Moment(app);
 const sidebar = new Sidebar(app);
@@ -92,6 +96,8 @@ const xstrip = new XStrip(app);
 const playlist = new Playlist(app);
 app.playlist = playlist;
 const library = new Library(app);
+// タイムラインのクリックの動きを切り替えたとき: 説明（title）などを描き直す
+app.onTlClickMode = () => timeline.render();
 // ライブ配信を見ている間に作った目印・セルには印を付ける（あとでアーカイブの時刻に合わせるため）
 store.liveNow = () => !!app.player?.isLive();
 let txIndex = -2; // いま表示・強調している字幕の行（変わったときだけ描き直す）
@@ -131,6 +137,7 @@ function renderAll() {
   commentList.render();
   shareLayers.render();
   xstrip.render();
+  tlMenu.refresh();
   updateCaptionButton();
   txIndex = -2; // 字幕の表示を次の監視で描き直す
   $('#btnUndo').disabled = !store.canUndo;
@@ -460,6 +467,20 @@ app.createCell = (s, e) => {
   const { cell, created } = store.addCell(s, e);
   app.revealCell(cell.id);
   app.hint(created ? tr('{range} をセルにしました', { range: `${fmt(s)} – ${fmt(e)}` }) : tr('このセルはもうあります'));
+  return cell;
+};
+
+// 時刻 t（目印の位置）の左・右の区間をセルにする（その目印が区切りでなくても、t で区切って考える）
+app.cellBeside = (t, side) => {
+  const pts = [...new Set([...timeline.boundaries(), t])].sort((a, b) => a - b);
+  const k = pts.indexOf(t);
+  const s = side === 'left' ? pts[k - 1] : t;
+  const e = side === 'left' ? t : pts[k + 1];
+  if (s === undefined || e === undefined) {
+    app.hint(side === 'left' ? tr('左に区間がありません') : tr('右に区間がありません'));
+    return null;
+  }
+  return app.createCell(s, e);
 };
 
 // 再生位置を挟む前後の目印の間をセルにする
@@ -787,6 +808,7 @@ function closeMedia() {
     cleanupMedia = null;
   }
   if (store.doc) store.close();
+  tlMenu.close();
   app.ui.target = null;
   app.ui.repeatId = null;
   clearTimeout(repeatState.timer);

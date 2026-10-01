@@ -28,7 +28,9 @@ It then opens in its own window and also starts offline. After installing, you c
    Later, press 💬 or "No comment" on a row in "Nearby markers" (under "This moment") to write a comment on a liked or bookmarked marker (the playhead does not move)
 3. Quick comments (tags such as "Review" or "Great scene") are added with one key press: `4` to `9`.
    Edit them with the pencil button and switch between sets (e.g. for study and for watching)
-4. Click a segment in the "Segments" row of the timeline to make the part between markers a cell (drag to include several segments)
+4. Click a segment in the "Segments" row of the timeline to open a menu: "Make a cell", "Play from here", "Make a cell and repeat" and more (drag to select several segments).
+   Clicking a marker on the timeline ("Full" and "Zoom" rows) or a cell ("Cells" row) also opens a menu. The playhead doesn't move, so while watching you can like, bookmark, comment on, nudge (±1 s, ±0.1 s) or delete other markers, make the segment to their left or right a cell, and like or repeat cells.
+   Choose what a click does for each kind with "On click" at the bottom of the menu (for example "Make a cell right away" for segments or "Go to that marker" for markers, as before). Right-click always opens the menu.
    "Make cell" (Enter) makes the current segment a cell, and "Make left cell" (Shift+Enter) makes the segment to the left of the marker you just added (previous marker to that marker) a cell.
    Turn on "When you add a marker, make the segment to its left a cell" in Settings to do this automatically each time you add a marker.
    Press S inside a cell (or "Split" on the card of the cell being played) to split it in two at the playhead. The note, likes, bookmark and comments stay with the earlier cell, and the later part becomes a new cell

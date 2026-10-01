@@ -597,6 +597,40 @@ export const EN = {
   '「{title}」は手元のファイルです。同じファイルを開くと、メモが復元されます': '"{title}" is a file on your computer. Open the same file to bring back its notes',
   'すべて見る・検索（ライブラリ）': 'See all and search (Library)',
 
+  // ---- タイムラインのメニュー ----
+  'タイムラインのメニュー': 'Timeline menu',
+  '{range} を選んでいます（離すとメニュー）': 'Selecting {range} (release for the menu)',
+  '← 左の区間をセルに': '← Make left segment a cell',
+  '右の区間をセルに →': 'Make right segment a cell →',
+  'いいね {n}（もう一度押すと外す）': 'Like {n} (press again to remove)',
+  'いいね・コメントの目印': 'Like/comment marker',
+  '区切りの目印': 'Boundary marker',
+  'ここから再生': 'Play from here',
+  '頭から再生': 'Play from the start',
+  '頭へ移動': 'Go to the start',
+  'すぐセルにする': 'Make a cell right away',
+  'その区間の頭へ移動': 'Go to the start of that segment',
+  'その目印へ移動': 'Go to that marker',
+  'セルの頭へ移動': 'Go to the start of the cell',
+  'メニューを出す': 'Show the menu',
+  'メニューを出す（再生位置は動かさない）': "Show the menu (the playhead doesn't move)",
+  'まだセルはありません。下の「区間」をクリック（ドラッグで複数区間）して「セルにする」を選ぶとセルになります':
+    'No cells yet. Click the "Segments" row below (drag for several segments) and choose "Make a cell"',
+  'カードを開く（メモ・コメント）': 'Open the card (note and comments)',
+  'クリックしたとき': 'On click',
+  'クリックでその区間の頭へ（右クリックでメニュー）': 'Click to go to the start of the segment (right-click for the menu)',
+  'クリックでセルに（ドラッグで複数区間・右クリックでメニュー）': 'Click to make a cell (drag for several segments, right-click for the menu)',
+  'クリックでメニュー（セルにする・再生など。ドラッグで複数区間）': 'Click for the menu (make a cell, play and more; drag for several segments)',
+  'コメントを書く（Enter で追加）': 'Write a comment (Enter to add)',
+  'セルにしてリピート': 'Make a cell and repeat',
+  'セルを見る': 'Show the cell',
+  '共有で読み込んだ目印は編集できません（いいね・コメントは、移動してから自分の目印に付けられます）':
+    "Shared markers can't be edited (go there to add likes or comments to your own marker)",
+  '右に区間がありません': 'There is no segment to the right',
+  '左に区間がありません': 'There is no segment to the left',
+  '右クリックなら、いつでもこのメニューを出せます': 'Right-click to open this menu at any time',
+  '次から、クリックしたときは「{what}」にします（右クリックならいつでもメニュー）': 'From now on, a click will "{what}" (right-click always opens the menu)',
+
   // ---- 2つの字幕 ----
   '2つめの字幕「{name}」を読み込みました（{n} 行）。「字幕」ボタンの横で、両方か片方だけかを選べます': (v) =>
     `Loaded the second subtitles "${v.name}" (${pl(v.n, 'line')}). Next to the "Captions" button, choose to show both or just one`,

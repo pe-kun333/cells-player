@@ -16,6 +16,7 @@ const APP_FILES = [
   './js/xstrip.js',
   './js/library.js',
   './js/playlist.js',
+  './js/tlmenu.js',
   './js/commentlist.js',
   './js/db.js',
   './js/digest.js',

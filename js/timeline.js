@@ -106,7 +106,11 @@ export class Timeline {
     el.classList.toggle('is-empty', !count);
     if (!count) {
       el.style.height = '';
-      el.textContent = d ? tr('まだセルはありません。下の「区間」をクリック（ドラッグで複数区間）するとセルになります') : '';
+      el.textContent = !d
+        ? ''
+        : this.app.tlMenu.mode('seg') === 'menu'
+          ? tr('まだセルはありません。下の「区間」をクリック（ドラッグで複数区間）して「セルにする」を選ぶとセルになります')
+          : tr('まだセルはありません。下の「区間」をクリック（ドラッグで複数区間）するとセルになります');
       return;
     }
     el.style.height = count * (LANE_H + LANE_GAP) - LANE_GAP + 'px';
@@ -138,8 +142,19 @@ export class Timeline {
         this.app.toggleCellSelect(c.id);
         return;
       }
+      if (this.app.tlMenu.mode('cell') === 'menu') {
+        this.app.tlMenu.open({ kind: 'cell', id: c.id, x: e.clientX, y: e.clientY });
+        return;
+      }
       this.app.seek(c.s);
       this.app.revealCell(c.id);
+    });
+    // 右クリックなら、設定にかかわらずメニュー
+    this.lanesEl.addEventListener('contextmenu', (e) => {
+      const b = e.target.closest('.tl-cell');
+      if (!b || !this.store.getCell(b.dataset.id)) return;
+      e.preventDefault();
+      this.app.tlMenu.open({ kind: 'cell', id: b.dataset.id, x: e.clientX, y: e.clientY });
     });
   }
 
@@ -193,7 +208,10 @@ export class Timeline {
       if (!this.dur || e.button !== 0) return;
       const pin = e.target.closest('.tl-pin');
       if (pin) {
-        this.app.focusMarker(pin.dataset.id);
+        if (!pin.dataset.id) return; // コメントを書いている位置（点線）
+        // 目印: メニュー（再生位置は動かさない）か、その目印へ移動
+        if (this.app.tlMenu.mode('marker') === 'menu') this.app.tlMenu.open({ kind: 'marker', id: pin.dataset.id, x: e.clientX, y: e.clientY });
+        else this.app.focusMarker(pin.dataset.id);
         return;
       }
       this.app.seek(timeAt(e.clientX));
@@ -219,6 +237,12 @@ export class Timeline {
     el.addEventListener('pointerleave', () => {
       this.hoverEl.hidden = true;
     });
+    el.addEventListener('contextmenu', (e) => {
+      const pin = e.target.closest('.tl-pin');
+      if (!pin?.dataset.id) return;
+      e.preventDefault();
+      this.app.tlMenu.open({ kind: 'marker', id: pin.dataset.id, x: e.clientX, y: e.clientY });
+    });
   }
 
   // ---- 区間（目印と目印の間） ----
@@ -232,6 +256,12 @@ export class Timeline {
       return;
     }
     const pts = (this.segPts = this.boundaries());
+    const mode = this.app.tlMenu.mode('seg');
+    const segTip = mode === 'cell'
+      ? tr('クリックでセルに（ドラッグで複数区間・右クリックでメニュー）')
+      : mode === 'seek'
+        ? tr('クリックでその区間の頭へ（右クリックでメニュー）')
+        : tr('クリックでメニュー（セルにする・再生など。ドラッグで複数区間）');
     const frag = document.createDocumentFragment();
     for (let i = 0; i < pts.length - 1; i++) {
       const a = pts[i];
@@ -241,7 +271,7 @@ export class Timeline {
       s.style.left = (a / d) * 100 + '%';
       s.style.width = ((b - a) / d) * 100 + '%';
       s.dataset.i = i;
-      s.title = `${fmt(a)} – ${fmt(b)}　${tr('クリックでセルに（ドラッグで複数区間）')}`;
+      s.title = `${fmt(a)} – ${fmt(b)}　${segTip}`;
       frag.appendChild(s);
     }
     el.appendChild(frag);
@@ -283,7 +313,12 @@ export class Timeline {
         if (i === i1) return;
         i1 = i;
         this.highlightSegs(i0, i1);
-        this.app.hint(tr('{range} をセルにします（離すと作成）', { range: rangeText() }), true);
+        this.app.hint(
+          this.app.tlMenu.mode('seg') === 'cell'
+            ? tr('{range} をセルにします（離すと作成）', { range: rangeText() })
+            : tr('{range} を選んでいます（離すとメニュー）', { range: rangeText() }),
+          true,
+        );
       };
       const end = (ev) => {
         el.removeEventListener('pointermove', move);
@@ -293,11 +328,24 @@ export class Timeline {
         if (ev.type === 'pointercancel') return;
         const lo = Math.min(i0, i1);
         const hi = Math.max(i0, i1);
-        this.app.createCell(this.segPts[lo], this.segPts[hi + 1]);
+        const s = this.segPts[lo];
+        const end2 = this.segPts[hi + 1];
+        const mode = this.app.tlMenu.mode('seg');
+        if (i1 !== i0) this.app.hint('');
+        // 区間: メニュー・すぐセルにする・頭へ移動（複数の区間を選んだときは、移動の設定でもメニュー）
+        if (mode === 'cell') this.app.createCell(s, end2);
+        else if (mode === 'seek' && i1 === i0) this.app.seek(s);
+        else this.app.tlMenu.open({ kind: 'seg', s, e: end2, x: ev.clientX, y: ev.clientY });
       };
       el.addEventListener('pointermove', move);
       el.addEventListener('pointerup', end);
       el.addEventListener('pointercancel', end);
+    });
+    el.addEventListener('contextmenu', (e) => {
+      if (!this.dur || this.segPts.length < 2) return;
+      e.preventDefault();
+      const i = indexAt(e.clientX);
+      this.app.tlMenu.open({ kind: 'seg', s: this.segPts[i], e: this.segPts[i + 1], x: e.clientX, y: e.clientY });
     });
   }
 
@@ -422,13 +470,15 @@ export class Timeline {
           markEl.style.left = m.t * this.pps + 'px';
           this.showDragLabel(m.t);
         };
-        finish = () => {
+        finish = (ev) => {
           this.dragEl.hidden = true;
           if (moved) {
             this.store.touch();
             this.app.hint(tr('目印を {time} に動かしました', { time: fmt(m.t, true) }));
-          } else {
-            this.app.focusMarker(m.id);
+          } else if (ev.type !== 'pointercancel') {
+            // クリックだけ: メニュー（再生位置は動かさない）か、その目印へ移動
+            if (this.app.tlMenu.mode('marker') === 'menu') this.app.tlMenu.open({ kind: 'marker', id: m.id, x: ev.clientX, y: ev.clientY });
+            else this.app.focusMarker(m.id);
           }
         };
       } else {
@@ -459,6 +509,12 @@ export class Timeline {
       el.addEventListener('pointermove', move);
       el.addEventListener('pointerup', end);
       el.addEventListener('pointercancel', end);
+    });
+    el.addEventListener('contextmenu', (e) => {
+      const markEl = e.target.closest('.tz-mark');
+      if (!markEl?.dataset.id) return;
+      e.preventDefault();
+      this.app.tlMenu.open({ kind: 'marker', id: markEl.dataset.id, x: e.clientX, y: e.clientY });
     });
   }
 

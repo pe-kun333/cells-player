@@ -31,6 +31,10 @@ export const DEFAULT_SETTINGS = {
   digestLoop: false,       // 連続再生が最後まで行ったら最初から繰り返す
   pauseOnMark: true,         // コメントマーク（C）を使ったら再生を止める
   autoCellLeft: false,       // 目印（M・−N秒）を付けたら、その左の区間（ひとつ前の区切り〜その目印）をセルにする
+  // タイムラインをクリックしたときの動き（menu: メニューを出す。右クリックはいつでもメニュー）
+  tlSegClick: 'menu',        // 区間: menu / cell（すぐセルにする）/ seek（区間の頭へ移動）
+  tlMarkerClick: 'menu',     // 目印: menu / seek（その目印へ移動）
+  tlCellClick: 'menu',       // セル: menu / seek（セルの頭へ移動）
   resumeAfterComment: true,  // コメントマークで止めたとき、送信・取り消しのあと再生を戻す
   volume: 1,
   presetSets: DEFAULT_PRESET_SETS,
