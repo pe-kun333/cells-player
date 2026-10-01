@@ -28,6 +28,8 @@ It then opens in its own window and also starts offline. After installing, you c
 3. Quick comments (tags such as "Review" or "Great scene") are added with one key press: `4` to `9`.
    Edit them with the pencil button and switch between sets (e.g. for study and for watching)
 4. Click a segment in the "Segments" row of the timeline to make the part between markers a cell (drag to include several segments)
+   "Make cell" (Enter) makes the current segment a cell, and "Make left cell" (Shift+Enter) makes the segment to the left of the marker you just added (previous marker to that marker) a cell.
+   Turn on "When you add a marker, make the segment to its left a cell" in Settings to do this automatically each time you add a marker
 5. In the sidebar, rate, write notes, comment and repeat cells. "Play list" plays the listed cells and markers in order
 
 Press "?" at the top right for the list of keyboard shortcuts.

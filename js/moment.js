@@ -40,6 +40,7 @@ export class Moment {
     for (const b of this.likeBtns) b.addEventListener('click', () => app.rateMoment(Number(b.dataset.lv)));
     this.bmBtn.addEventListener('click', () => app.toggleMomentBookmark());
     $('#btnMakeCell').addEventListener('click', () => app.makeCellHere());
+    $('#btnMakeCellLeft').addEventListener('click', () => app.makeCellLeft());
     this.chipEl.addEventListener('click', (e) => {
       if (e.target.closest('[data-act="release"]')) app.releaseTarget();
     });

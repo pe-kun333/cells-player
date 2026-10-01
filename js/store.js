@@ -30,6 +30,7 @@ export const DEFAULT_SETTINGS = {
   momentClip: 5,           // 連続再生で、目印のあと何秒まで再生するか（前は leadIn 秒）
   digestLoop: false,       // 連続再生が最後まで行ったら最初から繰り返す
   pauseOnMark: true,         // コメントマーク（C）を使ったら再生を止める
+  autoCellLeft: false,       // 目印（M・−N秒）を付けたら、その左の区間（ひとつ前の区切り〜その目印）をセルにする
   resumeAfterComment: true,  // コメントマークで止めたとき、送信・取り消しのあと再生を戻す
   volume: 1,
   presetSets: DEFAULT_PRESET_SETS,

@@ -109,6 +109,16 @@ export const EN = {
   'ブックマーク': 'Bookmark',
   'いまいる区間（前後の目印の間）をセルにする (Enter)': 'Make the current segment (between the surrounding markers) a cell (Enter)',
   '区間をセル化': 'Make cell',
+  '左の区間をセル化': 'Make left cell',
+  'いま付けた目印（目印を選んでいなければ、再生位置の直前の目印）の左の区間を、セルにする (Shift+Enter)':
+    'Make the segment to the left of the marker you just added (or, with no marker selected, the marker just before the playhead) a cell (Shift+Enter)',
+  '。左の区間（{range}）をセルにしました': '. Made the segment to its left ({range}) a cell',
+  '左に区間がありません（目印を付けると、ひとつ前の目印からその目印までをセルにできます）':
+    'There is no segment to the left (add a marker to make a cell from the previous marker to that one)',
+  '左の区間（{range}）をセルにしました': 'Made the segment to the left ({range}) a cell',
+  '目印を付けたら、その左の区間をセルにする': 'When you add a marker, make the segment to its left a cell',
+  'M や −N秒 で目印を付けるたびに、ひとつ前の目印（なければ先頭）から付けた目印までがセルになります。オフでも Shift+Enter や「左の区間をセル化」でできます':
+    'Each time you add a marker with M or −N s, the part from the previous marker (or the start) to the new marker becomes a cell. When this is off, use Shift+Enter or "Make left cell"',
   'よく使うコメントのセットを切り替え': 'Switch quick comment set',
   'よく使うコメントを編集': 'Edit quick comments',
   '{name}（{key} キー）': '{name} (key {key})',
@@ -857,6 +867,7 @@ export const EN_HTML = {
       <tr><td><kbd>B</kbd></td><td>Bookmark this moment</td></tr>
       <tr><td><kbd>C</kbd></td><td>Comment pin (pin this moment and write a comment; Enter to save, Esc to cancel)</td></tr>
       <tr><td><kbd>Enter</kbd></td><td>Make the current segment a cell</td></tr>
+      <tr><td><kbd>Shift</kbd>+<kbd>Enter</kbd></td><td>Make the segment to the left of the marker you just added (previous marker to that marker) a cell</td></tr>
       <tr><td><kbd>R</kbd></td><td>Repeat the cell at the playback position / stop</td></tr>
       <tr><td><kbd>T</kbd></td><td>Show / hide captions (loads captions if none)</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>V</kbd></td><td>Paste a copied transcript to load it</td></tr>

@@ -180,6 +180,7 @@
         </div>
         <button class="btn icon-btn" id="btnMomentBm" title="ブックマーク (B)" aria-label="ブックマーク"><svg class="i" aria-hidden="true"><use href="#i-bookmark"/></svg></button>
         <span class="spacer"></span>
+        <button class="btn" id="btnMakeCellLeft" title="いま付けた目印（目印を選んでいなければ、再生位置の直前の目印）の左の区間を、セルにする (Shift+Enter)"><svg class="i" aria-hidden="true"><use href="#i-cell"/></svg> 左の区間をセル化 <kbd>Shift+Enter</kbd></button>
         <button class="btn" id="btnMakeCell" title="いまいる区間（前後の目印の間）をセルにする (Enter)"><svg class="i" aria-hidden="true"><use href="#i-cell"/></svg> 区間をセル化 <kbd>Enter</kbd></button>
       </div>
       <div class="quick-row">
@@ -332,6 +333,10 @@
       <span>保存場所<small id="storageInfo"></small></span>
     </div>
     <label class="set-row check">
+      <input name="autoCellLeft" type="checkbox">
+      <span>目印を付けたら、その左の区間をセルにする<small>M や −N秒 で目印を付けるたびに、ひとつ前の目印（なければ先頭）から付けた目印までがセルになります。オフでも Shift+Enter や「左の区間をセル化」でできます</small></span>
+    </label>
+    <label class="set-row check">
       <input name="pauseOnMark" type="checkbox">
       <span>コメントマーク（C）を使ったら再生を止める</span>
     </label>
@@ -452,6 +457,7 @@
       <tr><td><kbd>B</kbd></td><td>この瞬間をブックマーク</td></tr>
       <tr><td><kbd>C</kbd></td><td>コメントマーク（いまの瞬間を固定してコメントを書く。Enter で保存、Esc で取り消し）</td></tr>
       <tr><td><kbd>Enter</kbd></td><td>いまいる区間をセルにする</td></tr>
+      <tr><td><kbd>Shift</kbd>+<kbd>Enter</kbd></td><td>いま付けた目印の左の区間（ひとつ前の目印〜その目印）をセルにする</td></tr>
       <tr><td><kbd>R</kbd></td><td>再生位置のセルをリピート / 停止</td></tr>
       <tr><td><kbd>T</kbd></td><td>字幕の表示 / 非表示（読み込んでいなければ読み込む）</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>V</kbd></td><td>コピーした文字起こしを貼り付けて読み込む</td></tr>

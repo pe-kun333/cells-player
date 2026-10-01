@@ -321,19 +321,24 @@ app.markAt = (t, { offset = 0 } = {}) => {
   t = clamp(t, 0, app.duration());
   const near = store.nearestMarker(t, app.settings.mergeWindow);
   let m;
+  let msg;
   if (near) {
     // いいね・コメントだけの目印でも、M を押したら区間の区切りにする
     m = near;
     if (!m.mark) store.updateMarker(m.id, { mark: true });
-    app.hint(tr('近くの目印（{time}）を対象にしました', { time: fmt(m.t, true) }));
+    msg = tr('近くの目印（{time}）を対象にしました', { time: fmt(m.t, true) });
   } else {
     m = store.addMarker(t, { mark: true });
-    app.hint(
-      offset
-        ? tr('{s}秒前（{time}）に目印を付けました', { s: offset, time: fmt(m.t, true) })
-        : tr('{time} に目印を付けました', { time: fmt(m.t, true) }),
-    );
+    msg = offset
+      ? tr('{s}秒前（{time}）に目印を付けました', { s: offset, time: fmt(m.t, true) })
+      : tr('{time} に目印を付けました', { time: fmt(m.t, true) });
   }
+  // 設定がオンなら、付けた目印の左の区間もセルにする
+  if (app.settings.autoCellLeft) {
+    const r = cellLeftOf(m.t);
+    if (r?.created) msg += tr('。左の区間（{range}）をセルにしました', { range: `${fmt(r.s)} – ${fmt(r.e)}` });
+  }
+  app.hint(msg);
   app.setTarget(m.id, app.now(), FRESH);
   return m;
 };
@@ -465,6 +470,33 @@ app.makeCellHere = () => {
   let i = 0;
   while (i < pts.length - 2 && pts[i + 1] <= now) i++;
   app.createCell(pts[i], pts[i + 1]);
+};
+
+// 時刻 t の区切り（目印）の左の区間（ひとつ前の区切り、なければ先頭〜その区切り）をセルにする。
+// t に区切りがなければ、t より前の一番近い区切りを使う。左に区間がなければ null
+function cellLeftOf(t) {
+  const pts = timeline.boundaries();
+  let k = 0;
+  for (let i = 1; i < pts.length - 1; i++) if (pts[i] <= t + 0.05) k = i;
+  if (k < 1) return null;
+  const s = pts[k - 1];
+  const e = pts[k];
+  const { cell, created } = store.addCell(s, e);
+  return { cell, created, s, e };
+}
+
+// Shift+Enter: いま付けた・選んだ目印の左の区間をセルにする（目印を選んでいなければ、再生位置の直前の目印の左）
+app.makeCellLeft = () => {
+  if (!requireMedia()) return;
+  const tg = app.ui.target && store.getMarker(app.ui.target.id);
+  const r = cellLeftOf(tg?.mark ? tg.t : app.now());
+  if (!r) {
+    app.hint(tr('左に区間がありません（目印を付けると、ひとつ前の目印からその目印までをセルにできます）'));
+    return;
+  }
+  app.revealCell(r.cell.id);
+  const range = `${fmt(r.s)} – ${fmt(r.e)}`;
+  app.hint(r.created ? tr('左の区間（{range}）をセルにしました', { range }) : tr('このセルはもうあります'));
 };
 
 // 目印のカードを一覧で見せる（目印が出るタブにして、絞り込みで隠れていれば解く）
@@ -1407,6 +1439,7 @@ function openSettings() {
   f.leadIn.value = s.leadIn;
   f.momentClip.value = s.momentClip;
   f.pauseOnMark.checked = s.pauseOnMark;
+  f.autoCellLeft.checked = s.autoCellLeft;
   f.liveChat.checked = s.liveChat;
   f.resumeAfterComment.checked = s.resumeAfterComment;
   f.captions.checked = s.captions;
@@ -1446,6 +1479,7 @@ $('#settingsForm').addEventListener('submit', (e) => {
     leadIn: clamp(Math.round(num(f.leadIn.value, DEFAULT_SETTINGS.leadIn)), 1, 30),
     momentClip: clamp(Math.round(num(f.momentClip.value, DEFAULT_SETTINGS.momentClip)), 1, 60),
     pauseOnMark: f.pauseOnMark.checked,
+    autoCellLeft: f.autoCellLeft.checked,
     liveChat: f.liveChat.checked,
     resumeAfterComment: f.resumeAfterComment.checked,
     captions: f.captions.checked,
@@ -1652,7 +1686,8 @@ document.addEventListener('keydown', (e) => {
       break;
     case 'Enter':
       e.preventDefault();
-      app.makeCellHere();
+      if (e.shiftKey) app.makeCellLeft();
+      else app.makeCellHere();
       break;
     case 'r':
     case 'R':
