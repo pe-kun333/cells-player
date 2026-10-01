@@ -425,6 +425,120 @@ html[lang="en"] .tl-label { width: 56px; }
 .cell-bar .cb-like .pips i.on { background: var(--heart); }
 .cell-bar .n { font-size: 11px; font-variant-numeric: tabular-nums; }
 
+/* ---- いまのカード（右のサイドバーの先頭） ---- */
+.now-card {
+  flex: none; margin: 10px 10px 0; padding: 8px 10px 10px; max-height: 58vh; overflow-y: auto;
+  border: 1.5px solid var(--accent); border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--panel));
+  display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;
+}
+.nc-head { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.nc-body { display: flex; flex-direction: column; gap: 8px; }
+.now-card.is-folded .nc-body { display: none; }
+.nc-time { flex: none; font: 600 12.5px var(--mono); }
+.nc-summary { min-width: 0; margin-left: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--text-2); }
+.nc-fold .i { transition: transform 0.15s; }
+.now-card.is-folded .nc-fold .i { transform: rotate(-90deg); }
+.nc-btn {
+  display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 8px; flex: none;
+  border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--text);
+  cursor: pointer; font-size: 12px; white-space: nowrap;
+}
+.nc-btn:hover { background: var(--panel-2); }
+.nc-btn:disabled { opacity: 0.45; cursor: default; }
+.nc-btn.on { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-text); }
+.nc-btn.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+.nc-btn.primary:hover { filter: brightness(1.08); }
+.nc-btn .i { width: 14px; height: 14px; }
+.nc-btn kbd { font-size: 10px; padding: 0 3px; }
+.nc-btn.primary kbd { background: rgba(255, 255, 255, 0.2); color: #fff; border-color: transparent; }
+.nc-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.nc-group { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.nc-cell { display: flex; flex-direction: column; gap: 6px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.nc-cell-head > .i { width: 15px; height: 15px; color: var(--accent); }
+.nc-range { font: 600 12px var(--mono); }
+.nc-len { font-size: 11px; color: var(--text-3); }
+.nc-cycle { border-style: dashed; font-variant-numeric: tabular-nums; }
+.nc-memo {
+  width: 100%; max-height: 4.6em; overflow: hidden; padding: 3px 6px; border: 1px dashed transparent; border-radius: 6px;
+  background: transparent; color: var(--text); cursor: text; text-align: left; font-size: 13px; line-height: 1.5;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.nc-memo:hover { border-color: var(--line-strong); }
+.nc-memo.is-empty { color: var(--text-3); }
+.nc-memo-edit { width: 100%; font-size: 13px; resize: vertical; }
+.nc-cm { display: flex; align-items: center; gap: 5px; min-width: 0; font-size: 12px; color: var(--text-2); }
+.nc-cm .i { width: 12px; height: 12px; flex: none; }
+.nc-cm span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nc-cm-more { font-size: 11px; color: var(--text-3); }
+.nc-strip { position: relative; height: 14px; border-radius: 5px; background: var(--track); cursor: pointer; }
+.nc-played { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 5px 0 0 5px; background: var(--accent-bg-2); }
+.nc-playhead { position: absolute; top: -2px; bottom: -2px; width: 2px; margin-left: -1px; background: var(--playhead); pointer-events: none; }
+.nc-guide { position: absolute; top: -2px; bottom: -2px; width: 0; border-left: 1px dashed var(--text-3); pointer-events: none; }
+.nc-guide::after {
+  content: attr(data-t); position: absolute; bottom: 100%; left: 0; transform: translateX(-50%); margin-bottom: 2px;
+  font: 11px var(--mono); padding: 0 4px; border-radius: 4px; background: var(--text); color: var(--bg); white-space: nowrap;
+}
+.nc-guide.is-cut { border-left: 2px solid var(--accent); }
+.nc-guide.is-cut::after { background: var(--accent); color: #fff; }
+.nc-like-cycle:not([data-lv="0"]) { color: var(--heart); }
+.nc-like-cycle .pips { display: inline-flex; gap: 2px; }
+.nc-like-cycle .pips i { width: 4px; height: 4px; border-radius: 50%; background: var(--line-strong); }
+.nc-like-cycle .pips i.on { background: var(--heart); }
+.nc-empty { font-size: 12px; color: var(--text-3); }
+.nc-moment { display: flex; flex-direction: column; gap: 6px; }
+.nc-like.on { border-color: var(--heart); background: var(--accent-bg); }
+#ncBm.on { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-text); }
+#ncBm.on .i { fill: currentColor; }
+.nc-tag-row { flex-wrap: nowrap; }
+.nc-tag-row select { flex: none; max-width: 84px; height: 28px; font-size: 12px; }
+/* よく使うコメントは1行に並べ、はみ出す分は横にスクロール */
+#ncTags { flex: 1; min-width: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; padding-bottom: 2px; }
+.nc-tag { flex: none; }
+.nc-off { padding: 0 5px; }
+.nc-like { padding: 0 5px; }
+/* セルの操作の行: 分割はいつも右端（折り返しても右に寄せる） */
+.nc-cell .nc-row .nc-btn { padding: 0 6px; }
+.nc-cell [data-nc="split"] { margin-left: auto; }
+.nc-cell .nc-row { gap: 3px; }
+.nc-like .i.h { width: 13px; height: 13px; }
+.nc-moment .nc-row { gap: 3px; }
+.nc-target:empty { display: none; }
+.nc-input-row { display: flex; align-items: center; gap: 4px; }
+.nc-input-row .nc-input { flex: 1; min-width: 0; }
+.nc-pause {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px;
+  border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--text-3); cursor: pointer;
+}
+.nc-pause input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.nc-pause:has(input:checked) { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-text); }
+.nc-pause:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 1px; }
+.nc-pause .i { width: 15px; height: 15px; }
+.nc-cm-more { flex: none; margin-left: 6px; color: var(--text-3); font-size: 11px; }
+/* いまのカードを使うときは、瞬間のコメント・文字起こしの一覧を左の列へ（読むものは左、押すものは右） */
+body.ops-card .left > .mlist { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+body.ops-card .left > .mlist .mlist-body { height: 200px; }
+.nc-tag {
+  display: inline-flex; align-items: center; gap: 4px; max-width: 10em; height: 26px; padding: 0 8px;
+  border: 1px solid var(--line-strong); border-radius: 999px; background: var(--panel); color: var(--text); cursor: pointer; font-size: 12px;
+}
+.nc-tag:hover { background: var(--panel-2); }
+.nc-tag span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nc-tag kbd { border: 0; padding: 0; background: transparent; font-size: 10px; }
+.nc-tag.on { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-text); }
+.nc-comment { display: flex; flex-direction: column; gap: 6px; }
+.nc-input { width: 100%; height: 34px; }
+.nc-pin { display: inline-flex; align-items: center; gap: 4px; min-width: 0; font-size: 11.5px; color: var(--text-3); }
+.nc-pin .i { width: 12px; height: 12px; flex: none; }
+.nc-pin.is-pinned { color: var(--accent-text); }
+.nc-pin button { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; }
+.nc-pin button:hover { background: var(--accent-bg-2); }
+.nc-check { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-2); cursor: pointer; }
+.nc-check input { margin: 0; accent-color: var(--accent); }
+.nc-hint:empty { display: none; }
+/* 右のいまのカードを使うときは、左の「この瞬間」の操作と、タイムラインの下のいまのセルのバーを隠す（時刻・お知らせ・前後の目印は残す） */
+body.ops-card .moment-actions, body.ops-card .quick-row, body.ops-card .comment-row, body.ops-card #cellBar { display: none !important; }
+
 /* ---- 操作の一覧（Ctrl+K） ---- */
 dialog.palette-dialog { width: min(560px, 94vw); margin-top: 12vh; }
 .palette-body { display: flex; flex-direction: column; gap: 6px; padding: 12px; }

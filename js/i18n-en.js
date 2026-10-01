@@ -628,6 +628,40 @@ export const EN = {
   '「{title}」は手元のファイルです。同じファイルを開くと、メモが復元されます': '"{title}" is a file on your computer. Open the same file to bring back its notes',
   'すべて見る・検索（ライブラリ）': 'See all and search (Library)',
 
+  // ---- いまのカード ----
+  'いまのカード': 'Now card',
+  '{time} に固定': 'Pinned at {time}',
+  'いま {time}': 'Now {time}',
+  '⇤ 始まり': '⇤ Start',
+  '終わり ⇥': 'End ⇥',
+  'このセルに': 'To this cell',
+  'このセルに（{range}）': 'To this cell ({range})',
+  'この瞬間に': 'To this moment',
+  'この時刻にセルがないので、この瞬間（目印）にコメントしました': 'There is no cell at this time, so the comment went to this moment (a marker)',
+  'たたむ': 'Fold',
+  'ひらく': 'Unfold',
+  'たたむ / ひらく': 'Fold / unfold',
+  'ほか {n} 件のコメント': (v) => `${pl(v.n, 'more comment')}`,
+  'クリックでその位置へ・Shift+クリックでそこで分割': 'Click to go there · Shift+click to split there',
+  'セル（{range}）にコメントしました': 'Commented on the cell ({range})',
+  '「右のいまのカード」は、いま見ている場面の操作を右のサイドバーの先頭にまとめます':
+    '"Now card on the right" gathers the actions for the scene you are watching at the top of the right sidebar',
+  'このセルにコメントする (Enter)': 'Comment on this cell (Enter)',
+  'この瞬間（目印）にコメントする (Shift+Enter)': 'Comment on this moment (a marker) (Shift+Enter)',
+  'よく使うコメントのセット': 'Quick comment set',
+  'オフなら、書いている間も再生は止まりません（いまのカードの入力欄の横の ⏸ ボタンでも切り替えられます）':
+    "When off, playback keeps going while you type (you can also switch it with the ⏸ button next to the comment box on the now card)",
+  'コメントを書いている間は一時停止する': 'Pause while writing a comment',
+  'コメントを書く（Enter で このセルに・C で書き始め）': 'Write a comment (Enter: to this cell · C to start)',
+  '一覧の先頭に戻ると開きます。たたむ・ひらくは、カードの右上のボタンでもできます':
+    'It unfolds when you scroll back to the top. You can also fold or unfold it with the button at the top right of the card',
+  '一覧をスクロールしたら、いまのカードを自動でたたむ': 'Fold the now card automatically when you scroll the list',
+  '右のいまのカード': 'Now card on the right',
+  '左の「この瞬間」（前の配置）': '"This moment" on the left (previous layout)',
+  '操作の置き場所': 'Where the actions go',
+  '書いている間に一時停止したときだけ': 'Only when playback was paused while writing',
+  '書いている間は一時停止する': 'Pause while writing',
+
   // ---- 分割・境目・いまのセル・操作の一覧 ----
   '2つのセルをつなげました（Ctrl+Z で元に戻せます）': 'Joined the two cells (Ctrl+Z to undo)',
   '{time} の境目（ドラッグで両方のセルが一緒に動きます・クリックでメニュー）': 'Boundary at {time} (drag to move both cells together, click for the menu)',

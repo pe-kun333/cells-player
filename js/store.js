@@ -29,7 +29,9 @@ export const DEFAULT_SETTINGS = {
   leadIn: 3,               // 「少し前から」で移動するときに戻る秒数
   momentClip: 5,           // 連続再生で、目印のあと何秒まで再生するか（前は leadIn 秒）
   digestLoop: false,       // 連続再生が最後まで行ったら最初から繰り返す
-  pauseOnMark: true,         // コメントマーク（C）を使ったら再生を止める
+  pauseOnComment: false,     // コメントを書いている間は一時停止する（選んだときだけ）
+  opsLayout: 'card',         // 操作の置き場所（card: 右のいまのカード / classic: 左の「この瞬間」）
+  cardAutoFold: false,       // 一覧をスクロールしたら、いまのカードを自動でたたむ
   autoCellLeft: false,       // 目印（M・−N秒）を付けたら、その左の区間（ひとつ前の区切り〜その目印）をセルにする
   // タイムラインをクリックしたときの動き（menu: メニューを出す。右クリックはいつでもメニュー）
   tlSegClick: 'menu',        // 区間: menu / cell（すぐセルにする）/ seek（区間の頭へ移動）
@@ -37,7 +39,7 @@ export const DEFAULT_SETTINGS = {
   tlCellClick: 'menu',       // セル: menu / seek（セルの頭へ移動）
   gridSec: 30,               // 等間隔でセル化の長さ（秒。最後に使ったもの）
   splitSnap: true,           // セルを分けるとき、字幕があれば近くの行の切れ目（1秒以内）に合わせる
-  resumeAfterComment: true,  // コメントマークで止めたとき、送信・取り消しのあと再生を戻す
+  resumeAfterComment: true,  // コメントを書いている間に止めたとき、送信・取り消しのあと再生を戻す
   volume: 1,
   presetSets: DEFAULT_PRESET_SETS,
   activePresetSet: 'study',

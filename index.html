@@ -210,6 +210,51 @@
   </section>
 
   <aside class="sidebar">
+    <!-- いまのカード: いま見ている場面の操作をまとめる（設定で前の配置にも戻せる） -->
+    <section class="now-card" id="nowCard" aria-label="いまのカード" hidden>
+      <div class="nc-head">
+        <button type="button" class="nc-btn" id="ncPlay" data-nc="play" title="再生 / 一時停止 (Space)" aria-label="再生"><svg class="i" aria-hidden="true"><use href="#i-play"/></svg></button>
+        <button type="button" class="nc-btn" data-nc="back5" title="5秒戻る (←)">−5秒</button>
+        <button type="button" class="nc-btn" data-nc="fwd5" title="5秒進む (→)">+5秒</button>
+        <button type="button" class="nc-btn" id="ncJump" data-nc="jump" title="大きく移動したときに、移動する前の位置に戻ります (Backspace)" disabled><svg class="i" aria-hidden="true"><use href="#i-jump-back"/></svg><span>戻る</span></button>
+        <span class="nc-summary" id="ncSummary"></span>
+        <span class="spacer"></span>
+        <span class="nc-time" id="ncTime">0:00.0</span>
+        <button type="button" class="nc-btn nc-fold" id="ncFold" data-nc="fold" title="たたむ" aria-label="たたむ / ひらく" aria-expanded="true"><svg class="i" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+      </div>
+      <div class="nc-body">
+        <div class="nc-cell" id="ncCell"></div>
+        <div class="nc-moment">
+          <div class="nc-target" id="ncTarget"></div>
+          <div class="nc-row">
+            <button type="button" class="nc-btn" data-nc="mark" title="いまの位置に目印 (M)"><svg class="i" aria-hidden="true"><use href="#i-pin"/></svg>目印<kbd>M</kbd></button>
+            <span class="nc-group" id="ncOffsets"></span>
+            <button type="button" class="nc-btn nc-like" data-nc="mlike" data-lv="1" title="いいね 1 (1)" aria-label="いいね 1"><span class="hearts"><svg class="i h on" aria-hidden="true"><use href="#i-heart"/></svg></span></button>
+            <button type="button" class="nc-btn nc-like" data-nc="mlike" data-lv="2" title="いいね 2 (2)" aria-label="いいね 2"><span class="hearts"><svg class="i h on" aria-hidden="true"><use href="#i-heart"/></svg><svg class="i h on" aria-hidden="true"><use href="#i-heart"/></svg></span></button>
+            <button type="button" class="nc-btn nc-like" data-nc="mlike" data-lv="3" title="いいね 3 (3)" aria-label="いいね 3"><span class="hearts"><svg class="i h on" aria-hidden="true"><use href="#i-heart"/></svg><svg class="i h on" aria-hidden="true"><use href="#i-heart"/></svg><svg class="i h on" aria-hidden="true"><use href="#i-heart"/></svg></span></button>
+            <button type="button" class="nc-btn" id="ncBm" data-nc="mbm" title="ブックマーク (B)" aria-label="ブックマーク"><svg class="i" aria-hidden="true"><use href="#i-bookmark"/></svg></button>
+          </div>
+          <div class="nc-row nc-tag-row">
+            <select id="ncSet" title="よく使うコメントのセットを切り替え" aria-label="よく使うコメントのセット"></select>
+            <span class="nc-group" id="ncTags"></span>
+            <button type="button" class="nc-btn" data-nc="editTags" title="よく使うコメントを編集" aria-label="よく使うコメントを編集"><svg class="i" aria-hidden="true"><use href="#i-pencil"/></svg></button>
+          </div>
+        </div>
+        <div class="nc-comment">
+          <div class="nc-input-row">
+            <input id="ncInput" class="field nc-input" type="text" placeholder="コメントを書く（Enter で このセルに・C で書き始め）" autocomplete="off" aria-label="コメント">
+            <label class="nc-pause" title="書いている間は一時停止する"><input type="checkbox" id="ncPause" aria-label="書いている間は一時停止する"><svg class="i" aria-hidden="true"><use href="#i-pause"/></svg></label>
+          </div>
+          <div class="nc-row">
+            <span class="nc-pin" id="ncPin"></span>
+            <span class="spacer"></span>
+            <button type="button" class="nc-btn" id="ncToMoment" title="この瞬間（目印）にコメントする (Shift+Enter)">この瞬間に</button>
+            <button type="button" class="nc-btn primary" id="ncToCell" title="このセルにコメントする (Enter)"><span>このセルに</span><kbd>Enter</kbd></button>
+          </div>
+        </div>
+        <div class="hint nc-hint" id="ncHint"></div>
+      </div>
+    </section>
     <div class="side-head">
       <div class="tabs" id="sideTabs" role="tablist">
         <button class="tab" data-tab="cells" role="tab">セル</button>
@@ -351,13 +396,24 @@
       <input name="autoCellLeft" type="checkbox">
       <span>目印を付けたら、その左の区間をセルにする<small>M や −N秒 で目印を付けるたびに、ひとつ前の目印（なければ先頭）から付けた目印までがセルになります。オフでも Shift+Enter や「左の区間をセル化」でできます</small></span>
     </label>
+    <label class="set-row">
+      <span>操作の置き場所<small>「右のいまのカード」は、いま見ている場面の操作を右のサイドバーの先頭にまとめます</small></span>
+      <select name="opsLayout">
+        <option value="card">右のいまのカード</option>
+        <option value="classic">左の「この瞬間」（前の配置）</option>
+      </select>
+    </label>
     <label class="set-row check">
-      <input name="pauseOnMark" type="checkbox">
-      <span>コメントマーク（C）を使ったら再生を止める</span>
+      <input name="cardAutoFold" type="checkbox">
+      <span>一覧をスクロールしたら、いまのカードを自動でたたむ<small>一覧の先頭に戻ると開きます。たたむ・ひらくは、カードの右上のボタンでもできます</small></span>
+    </label>
+    <label class="set-row check">
+      <input name="pauseOnComment" type="checkbox">
+      <span>コメントを書いている間は一時停止する<small>オフなら、書いている間も再生は止まりません（いまのカードの入力欄の横の ⏸ ボタンでも切り替えられます）</small></span>
     </label>
     <label class="set-row check">
       <input name="resumeAfterComment" type="checkbox">
-      <span>コメントを送信・取り消ししたら再生を再開する<small>コメントマークで止めたときだけ</small></span>
+      <span>コメントを送信・取り消ししたら再生を再開する<small>書いている間に一時停止したときだけ</small></span>
     </label>
     <div class="dialog-foot">
       <button class="btn primary" value="save">保存</button>

@@ -21,6 +21,7 @@ import { TlMenu } from './tlmenu.js';
 import { GridCells } from './gridcells.js';
 import { CellBar } from './cellbar.js';
 import { Palette } from './palette.js';
+import { NowCard } from './nowcard.js';
 import { $, clamp, fmt, round2, escapeHtml, icon, cellLabel } from './util.js';
 import { tr, trMaybe, lang, isEn, translatePage } from './i18n.js';
 
@@ -101,6 +102,22 @@ app.playlist = playlist;
 const library = new Library(app);
 const gridCells = new GridCells(app);
 const cellBar = new CellBar(app);
+const nowCard = new NowCard(app);
+
+// 操作の置き場所: 右のいまのカード（ops-card）か、左の「この瞬間」（前の配置）
+function applyOpsLayout() {
+  const card = app.settings.opsLayout !== 'classic';
+  document.body.classList.toggle('ops-card', card);
+  // 瞬間のコメント・文字起こしの一覧: いまのカードを使うときは左の列（読むもの）、前の配置では右のサイドバーの下
+  const ml = $('#momentList');
+  const home = card ? $('.left') : $('.sidebar');
+  if (ml.parentElement !== home) home.appendChild(ml);
+  nowCard.render();
+}
+// コメントを書き始める（C キー）・前後の目印の 💬 から、その目印に書く
+app.startComment = () => (nowCard.on ? nowCard.startComment() : moment.startMark());
+app.startCommentOn = (markerId) => (nowCard.on ? nowCard.startComment({ markerId }) : moment.startMarkOn(markerId));
+app.openPresets = () => presetDialog.open();
 // タイムラインのクリックの動きを切り替えたとき: 説明（title）などを描き直す
 app.onTlClickMode = () => timeline.render();
 // ライブ配信を見ている間に作った目印・セルには印を付ける（あとでアーカイブの時刻に合わせるため）
@@ -144,6 +161,7 @@ function renderAll() {
   xstrip.render();
   tlMenu.refresh();
   cellBar.render();
+  nowCard.render();
   updateCaptionButton();
   txIndex = -2; // 字幕の表示を次の監視で描き直す
   $('#btnUndo').disabled = !store.canUndo;
@@ -277,6 +295,10 @@ function renderJumpButtons() {
   b.title = bt === undefined
     ? tr('大きく移動したときに、移動する前の位置に戻ります (Backspace)')
     : tr('移動する前の位置（{time}）に戻る (Backspace)', { time: fmt(bt, true) });
+  const nb = $('#ncJump');
+  nb.disabled = bt === undefined;
+  nb.querySelector('span').textContent = bt === undefined ? tr('戻る') : fmt(bt);
+  nb.title = b.title;
   f.hidden = ft === undefined;
   if (ft !== undefined) {
     f.querySelector('span').textContent = tr('{time} へ進む', { time: fmt(ft) });
@@ -293,10 +315,12 @@ function togglePlay() {
 
 function updatePlayButton() {
   const paused = !app.player || app.player.paused;
-  const b = $('#btnPlay');
-  b.innerHTML = icon(paused ? 'play' : 'pause');
-  b.setAttribute('aria-label', paused ? tr('再生') : tr('一時停止'));
+  for (const b of [$('#btnPlay'), $('#ncPlay')]) {
+    b.innerHTML = icon(paused ? 'play' : 'pause');
+    b.setAttribute('aria-label', paused ? tr('再生') : tr('一時停止'));
+  }
 }
+app.togglePlay = () => togglePlay();
 
 // ---- 対象の目印 ----
 
@@ -994,6 +1018,7 @@ function closeMedia() {
   app.nearId = null;
   document.body.classList.remove('has-media');
   cellBar.render(); // 開いていないときは隠す
+  nowCard.render();
   $('#audioCover').hidden = true;
   $('#caption').hidden = true;
   $('#modeBadge').hidden = true;
@@ -1654,7 +1679,9 @@ function openSettings() {
   f.zoomRange.value = String(s.zoomRange);
   f.leadIn.value = s.leadIn;
   f.momentClip.value = s.momentClip;
-  f.pauseOnMark.checked = s.pauseOnMark;
+  f.pauseOnComment.checked = s.pauseOnComment;
+  f.opsLayout.value = s.opsLayout === 'classic' ? 'classic' : 'card';
+  f.cardAutoFold.checked = s.cardAutoFold;
   f.autoCellLeft.checked = s.autoCellLeft;
   f.splitSnap.checked = s.splitSnap;
   f.liveChat.checked = s.liveChat;
@@ -1695,7 +1722,9 @@ $('#settingsForm').addEventListener('submit', (e) => {
     zoomRange: Number(f.zoomRange.value) || DEFAULT_SETTINGS.zoomRange,
     leadIn: clamp(Math.round(num(f.leadIn.value, DEFAULT_SETTINGS.leadIn)), 1, 30),
     momentClip: clamp(Math.round(num(f.momentClip.value, DEFAULT_SETTINGS.momentClip)), 1, 60),
-    pauseOnMark: f.pauseOnMark.checked,
+    pauseOnComment: f.pauseOnComment.checked,
+    opsLayout: f.opsLayout.value,
+    cardAutoFold: f.cardAutoFold.checked,
     autoCellLeft: f.autoCellLeft.checked,
     splitSnap: f.splitSnap.checked,
     liveChat: f.liveChat.checked,
@@ -1703,6 +1732,7 @@ $('#settingsForm').addEventListener('submit', (e) => {
     captions: f.captions.checked,
   };
   saveSettings(app.settings);
+  applyOpsLayout();
   moment.renderOffsets();
   broadcast.applyChatSetting();
   commentList.paint(); // 「○秒前から」の秒数を描き直す
@@ -1851,7 +1881,7 @@ const palette = new Palette(app, () => {
     { group: g.mark, label: tr('いいね 2'), key: '2', run: () => app.rateMoment(2) },
     { group: g.mark, label: tr('いいね 3'), key: '3', run: () => app.rateMoment(3) },
     { group: g.mark, label: tr('ブックマーク'), key: 'B', run: () => app.toggleMomentBookmark() },
-    { group: g.mark, label: tr('ここにコメント'), key: 'C', run: () => moment.startMark() },
+    { group: g.mark, label: tr('ここにコメント'), key: 'C', run: () => app.startComment() },
     { group: g.cell, label: tr('区間をセル化'), key: 'Enter', words: 'cell', run: () => app.makeCellHere() },
     { group: g.cell, label: tr('左の区間をセル化'), key: 'Shift+Enter', run: () => app.makeCellLeft() },
     { group: g.cell, label: tr('セルを分割（再生位置）'), key: 'S', words: 'split cut 分ける', run: () => app.splitCellAt() },
@@ -1969,7 +1999,7 @@ document.addEventListener('keydown', (e) => {
     case 'c':
     case 'C':
       e.preventDefault();
-      moment.startMark();
+      app.startComment();
       break;
     case 'Enter':
       e.preventDefault();
@@ -2077,6 +2107,7 @@ function watch() {
     sidebar.updateActive();
   }
   cellBar.tick(now);
+  nowCard.tick(now);
 
   updateTranscript(now);
   digest.tick(now, !p.paused);
@@ -2151,6 +2182,7 @@ if ((qLang === 'ja' || qLang === 'en') && app.settings.lang !== qLang) {
   saveSettings(app.settings);
 }
 
+applyOpsLayout();
 const initial = new URLSearchParams(location.search).get('src');
 if (openShareFromHash()) showEmpty();
 else if (initial) openFromText(initial);

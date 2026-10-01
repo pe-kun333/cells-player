@@ -8,6 +8,7 @@ export class Moment {
     this.timeEl = $('#momentTime');
     this.chipEl = $('#targetChip');
     this.hintEl = $('#momentHint');
+    this.hintEl2 = $('#ncHint'); // いまのカードにも同じお知らせを出す
     this.feedEl = $('#feed');
     this.input = $('#commentInput');
     this.offsetsEl = $('#offsetButtons');
@@ -74,9 +75,11 @@ export class Moment {
   hint(msg, sticky = false) {
     clearTimeout(this.hintTimer);
     this.hintEl.textContent = msg;
+    if (this.hintEl2) this.hintEl2.textContent = msg;
     if (msg && !sticky) {
       this.hintTimer = setTimeout(() => {
         this.hintEl.textContent = '';
+        if (this.hintEl2) this.hintEl2.textContent = '';
       }, 4000);
     }
   }
@@ -102,7 +105,7 @@ export class Moment {
     if (!m || !app.player) return;
     const p = app.player;
     let resume = !!app.ui.commentPin?.resume;
-    if (app.settings.pauseOnMark && !p.paused) {
+    if (app.settings.pauseOnComment && !p.paused) {
       p.pause();
       resume = true;
     }
@@ -118,7 +121,7 @@ export class Moment {
     const now = app.now();
     const prev = app.ui.commentPin;
     let resume = !!prev?.resume;
-    if (byMark && app.settings.pauseOnMark && p && !p.paused) {
+    if (byMark && app.settings.pauseOnComment && p && !p.paused) {
       p.pause();
       resume = true;
     }
@@ -222,7 +225,7 @@ export class Moment {
       const act = e.target.closest('[data-act]')?.dataset.act;
       if (act === 'cycle') store.updateMarker(m.id, { lv: (m.lv + 1) % 4 });
       else if (act === 'bm') store.updateMarker(m.id, { bm: !m.bm });
-      else if (act === 'talk') this.startMarkOn(m.id);
+      else if (act === 'talk') this.app.startCommentOn(m.id);
       else if (act === 'del') {
         store.deleteMarker(m.id);
         this.hint(tr('目印を削除しました（Ctrl+Z で元に戻せます）'));

@@ -58,6 +58,19 @@ Press "?" at the top right for the list of keyboard shortcuts.
 
 For YouTube videos, captions are shown in a strip just below the player instead of over it, following YouTube's terms.
 
+## Now card (top of the right sidebar)
+
+The actions for the scene you are watching are gathered in the "now card" at the top of the right sidebar, so the mouse can stay on the right.
+
+- Top row: play, −5 s, +5 s, back to where you were, time, fold
+- Current cell: its range and note (click to edit in place), the latest comment, a strip inside the cell (click to go there, Shift+click to split), start/end at the playhead, repeat, like, bookmark, and "Split" at the right end
+- This moment: marker, marker a bit earlier, likes, bookmark, quick comments
+- Comment: write it, then press "To this moment" (a marker) or "To this cell". Enter sends it to this cell and Shift+Enter to this moment. It is pinned to the time you started writing
+  - Playback pauses while you write only if you turn on the ⏸ button next to the box (or the setting); normally it keeps playing
+- Turn on "Fold the now card automatically when you scroll the list" in Settings to fold it while you browse the list; it unfolds when you scroll back to the top
+- The moment comment and transcript list moves to the left column (under the video)
+- "Where the actions go" in Settings switches back to "This moment" on the left (the previous layout)
+
 ## Two subtitles (Japanese and English side by side)
 
 After loading subtitles, load another set (a translation, for example) to show two lines together.

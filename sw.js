@@ -27,6 +27,7 @@ const APP_FILES = [
   './js/i18n-en.js',
   './js/live.js',
   './js/moment.js',
+  './js/nowcard.js',
   './js/players.js',
   './js/practice.js',
   './js/presets.js',
