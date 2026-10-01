@@ -95,6 +95,22 @@ export class Moment {
     this.input.focus();
   }
 
+  // 「前後の目印」から: その目印にコメントを書く（再生位置は動かさない。止めるかどうかは C と同じ設定）
+  startMarkOn(id) {
+    const app = this.app;
+    const m = app.store.getMarker(id);
+    if (!m || !app.player) return;
+    const p = app.player;
+    let resume = !!app.ui.commentPin?.resume;
+    if (app.settings.pauseOnMark && !p.paused) {
+      p.pause();
+      resume = true;
+    }
+    app.ui.commentPin = { markerId: m.id, t: m.t, fromTarget: false, resume };
+    app.onPinChange();
+    this.input.focus();
+  }
+
   // byMark: コメントマークで固定したか（入力欄に直接書き始めたときは false）
   setPin(byMark) {
     const app = this.app;
@@ -206,6 +222,7 @@ export class Moment {
       const act = e.target.closest('[data-act]')?.dataset.act;
       if (act === 'cycle') store.updateMarker(m.id, { lv: (m.lv + 1) % 4 });
       else if (act === 'bm') store.updateMarker(m.id, { bm: !m.bm });
+      else if (act === 'talk') this.startMarkOn(m.id);
       else if (act === 'del') {
         store.deleteMarker(m.id);
         this.hint(tr('目印を削除しました（Ctrl+Z で元に戻せます）'));
@@ -276,10 +293,11 @@ export class Moment {
       .slice(0, 6)
       .sort((a, b) => a.t - b.t);
     const tid = ui.target?.id;
+    const pinId = ui.commentPin?.markerId || '';
     const lead = settings.leadIn;
     const key =
       near.map((m) => `${m.id}:${m.t}:${m.lv}:${m.bm}:${m.tags.join('\u0001')}:${m.comments.length}:${Math.abs(m.t - now) <= win ? 1 : 0}`).join('|') +
-      '|' + tid + '|' + !!this.app.player + '|' + lead;
+      '|' + tid + '|' + pinId + '|' + !!this.app.player + '|' + lead;
     if (key === this.feedKey) return;
     this.feedKey = key;
 
@@ -293,15 +311,19 @@ export class Moment {
     }
     this.feedEl.innerHTML = near
       .map((m) => {
-        const cls = (Math.abs(m.t - now) <= win ? ' is-now' : '') + (m.id === tid ? ' is-target' : '');
-        let text = `<span class="fi-text muted">${tr('コメントなし')}</span>`;
-        if (m.comments.length) text = `<span class="fi-text">${escapeHtml(commentSummary(m.comments))}</span>`;
+        const cls = (Math.abs(m.t - now) <= win ? ' is-now' : '') + (m.id === tid ? ' is-target' : '') + (m.id === pinId ? ' is-pinned' : '');
+        // コメントの文を押しても、その目印にコメントを書ける
+        const talkTip = tr('クリックでこの目印にコメントを書く');
+        let text = `<span class="fi-text muted" data-act="talk" title="${talkTip}">${tr('コメントなし')}</span>`;
+        if (m.comments.length) text = `<span class="fi-text" data-act="talk" title="${talkTip}">${escapeHtml(commentSummary(m.comments))}</span>`;
         else if (m.tags.length) text = '<span class="fi-text"></span>';
+        const n = m.comments.length;
         return `<div class="feed-item${cls}" data-id="${m.id}" title="${tr('クリックでこの目印へ移動・ダブルクリックでそこから再生')}">
           <span class="fi-time">${fmt(m.t, true)}</span>
           <button class="lead-btn" data-act="lead" title="${tr('{s}秒前へ移動（ダブルクリックでそこから再生）', { s: lead })}">${tr('−{s}秒', { s: lead })}</button>
           <button class="fi-like" data-act="cycle" title="${tr('いいね（クリックで 0→1→2→3→0）')}">${hearts(m.lv)}</button>
           <button class="fi-bm${m.bm ? ' on' : ''}" data-act="bm" title="${tr('ブックマーク')}">${icon('bookmark', m.bm ? 'fill' : '')}</button>
+          <button class="fi-talk" data-act="talk" title="${talkTip}" aria-label="${talkTip}">${icon('comment')}${n ? `<span class="n">${n}</span>` : ''}</button>
           ${tagChips(m.tags)}
           ${text}
           <button class="fi-del" data-act="del" title="${tr('目印を削除')}">${icon('x')}</button>

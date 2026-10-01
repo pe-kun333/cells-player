@@ -110,6 +110,7 @@ export const EN = {
   'いまいる区間（前後の目印の間）をセルにする (Enter)': 'Make the current segment (between the surrounding markers) a cell (Enter)',
   '区間をセル化': 'Make cell',
   '左の区間をセル化': 'Make left cell',
+  'クリックでこの目印にコメントを書く': 'Click to write a comment on this marker',
   '再生位置を含むセルがありません（セルの中で S を押すと、そこで2つに分けます）':
     'No cell contains the playhead (press S inside a cell to split it there)',
   '共有で読み込んだセルは分けられません': "Shared cells can't be split",

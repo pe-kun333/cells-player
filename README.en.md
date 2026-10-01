@@ -24,7 +24,8 @@ It then opens in its own window and also starts offline. After installing, you c
 
 1. While watching, press `M` to add a marker (playback does not stop). Buttons such as "−3s" add a marker a bit earlier
 2. Right after that, press `1` `2` `3` to like the moment, or `C` to write a comment.
-   `C` (comment pin) fixes the position when you press it, so it does not drift while you type
+   `C` (comment pin) fixes the position when you press it, so it does not drift while you type.
+   Later, press 💬 or "No comment" on a row in "Nearby markers" (under "This moment") to write a comment on a liked or bookmarked marker (the playhead does not move)
 3. Quick comments (tags such as "Review" or "Great scene") are added with one key press: `4` to `9`.
    Edit them with the pencil button and switch between sets (e.g. for study and for watching)
 4. Click a segment in the "Segments" row of the timeline to make the part between markers a cell (drag to include several segments)

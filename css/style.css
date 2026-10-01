@@ -438,6 +438,11 @@ html[lang="en"] .tl-label { width: 56px; }
 }
 .lead-btn:hover, .feed-item .lead-btn:hover { border-color: var(--accent); color: var(--accent-text); background: var(--accent-bg); }
 .feed-item:hover .fi-del { opacity: 1; }
+.feed-item .fi-talk { display: inline-flex; align-items: center; gap: 2px; }
+.feed-item .fi-talk .n { font-size: 11px; font-variant-numeric: tabular-nums; }
+.feed-item .fi-text[data-act="talk"] { cursor: text; border-radius: 4px; }
+.feed-item .fi-text[data-act="talk"]:hover { text-decoration: underline; text-decoration-color: var(--text-3); }
+.feed-item.is-pinned { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
 
 /* ---- サイドバー ---- */
 .sidebar {
