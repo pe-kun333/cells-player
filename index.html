@@ -35,6 +35,7 @@
     <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 5v14l-12-7z"/><path d="M4 5v14"/></symbol>
     <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
     <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.828 2.828 0 1 0-4-4l-10.5 10.5v4"/><path d="M13.5 6.5l4 4"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="7"/><path d="M21 21l-6-6"/></symbol>
     <symbol id="i-jump-back" viewBox="0 0 24 24"><path d="M9 11l-4 4l4 4M5 15h11a4 4 0 0 0 0-8h-1"/></symbol>
     <symbol id="i-jump-fwd" viewBox="0 0 24 24"><path d="M15 11l4 4l-4 4M19 15h-11a4 4 0 0 1 0-8h1"/></symbol>
     <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="7" r="3"/><circle cx="6" cy="17" r="3"/><path d="M8.6 8.6l10.4 10.4M8.6 15.4l10.4-10.4"/></symbol>
@@ -72,6 +73,7 @@
   <button id="btnExport" class="btn">書き出し</button>
   <button id="btnImport" class="btn" title="書き出したメモ（.cells.json）や、保存したプレイリスト（.playlist.json）を読み込みます">読み込み</button>
   <button id="btnSettings" class="btn">設定</button>
+  <button id="btnPalette" class="btn icon-btn" title="操作を探して実行 (Ctrl+K)" aria-label="操作を探して実行"><svg class="i" aria-hidden="true"><use href="#i-search"/></svg></button>
   <button id="btnHelp" class="btn icon-btn" title="ショートカット (?)" aria-label="ショートカット">?</button>
   <input type="file" id="fileInput" accept="video/*,audio/*,.mkv,.flac,.opus" hidden>
   <input type="file" id="importInput" accept=".json,application/json" hidden>
@@ -163,6 +165,9 @@
       <div class="tl-row"><span class="tl-label">区間</span><div class="tl-track tl-segs" id="tlSegs"></div></div>
       <div class="tl-row"><span class="tl-label">拡大</span><div class="tl-track tl-zoom" id="tlZoom"></div></div>
     </div>
+
+    <!-- いまのセル（再生位置にあるセル）の操作 -->
+    <div class="cell-bar" id="cellBar" hidden></div>
 
     <div class="live-sync-card" id="liveSyncCard" hidden></div>
     <div class="practice-card" id="practiceCard" hidden></div>
@@ -339,6 +344,10 @@
       <span>保存場所<small id="storageInfo"></small></span>
     </div>
     <label class="set-row check">
+      <input name="splitSnap" type="checkbox">
+      <span>セルを分けるとき、字幕の行の切れ目に合わせる<small>字幕があるとき、分ける位置の前後1秒以内に行と行の切れ目があれば、そこで分けます（声の途中で切れにくくなります）</small></span>
+    </label>
+    <label class="set-row check">
       <input name="autoCellLeft" type="checkbox">
       <span>目印を付けたら、その左の区間をセルにする<small>M や −N秒 で目印を付けるたびに、ひとつ前の目印（なければ先頭）から付けた目印までがセルになります。オフでも Shift+Enter や「左の区間をセル化」でできます</small></span>
     </label>
@@ -388,6 +397,14 @@
 
 <!-- タイムラインをクリックしたときのメニュー（区間・目印・セル） -->
 <div class="tl-menu" id="tlMenu" role="dialog" aria-label="タイムラインのメニュー" hidden></div>
+
+<dialog id="paletteDialog" class="palette-dialog">
+  <form method="dialog" class="palette-body">
+    <input id="paletteInput" class="field palette-input" type="search" placeholder="操作を探す（例: 分割、字幕、リピート）" autocomplete="off" aria-label="操作を探す">
+    <div class="palette-list" id="paletteList" role="listbox"></div>
+    <div class="palette-foot">↑↓ で選ぶ・Enter で実行・Esc で閉じる</div>
+  </form>
+</dialog>
 
 <dialog id="gridDialog">
   <form method="dialog" id="gridForm" class="dialog-body">
@@ -492,6 +509,8 @@
       <tr><td><kbd>Enter</kbd></td><td>いまいる区間をセルにする</td></tr>
       <tr><td><kbd>Shift</kbd>+<kbd>Enter</kbd></td><td>いま付けた目印の左の区間（ひとつ前の目印〜その目印）をセルにする</td></tr>
       <tr><td><kbd>S</kbd></td><td>再生位置でセルを2つに分ける（メモ・いいね・コメントは前のセルに残ります）</td></tr>
+      <tr><td><kbd>Shift</kbd>+クリック</td><td>タイムラインのセル・全体・拡大の段で、その位置でセルを分ける（Shift を押していると、分ける位置に ✂ が出ます）</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>操作の一覧（探して実行）</td></tr>
       <tr><td><kbd>Backspace</kbd></td><td>大きく移動したときに、移動する前の位置に戻る（<kbd>Shift</kbd>+<kbd>Backspace</kbd> で進む）</td></tr>
       <tr><td><kbd>R</kbd></td><td>再生位置のセルをリピート / 停止</td></tr>
       <tr><td><kbd>T</kbd></td><td>字幕の表示 / 非表示（読み込んでいなければ読み込む）</td></tr>

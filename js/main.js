@@ -19,6 +19,8 @@ import { Library } from './library.js';
 import { Playlist, isPlaylistJson } from './playlist.js';
 import { TlMenu } from './tlmenu.js';
 import { GridCells } from './gridcells.js';
+import { CellBar } from './cellbar.js';
+import { Palette } from './palette.js';
 import { $, clamp, fmt, round2, escapeHtml, icon, cellLabel } from './util.js';
 import { tr, trMaybe, lang, isEn, translatePage } from './i18n.js';
 
@@ -98,6 +100,7 @@ const playlist = new Playlist(app);
 app.playlist = playlist;
 const library = new Library(app);
 const gridCells = new GridCells(app);
+const cellBar = new CellBar(app);
 // タイムラインのクリックの動きを切り替えたとき: 説明（title）などを描き直す
 app.onTlClickMode = () => timeline.render();
 // ライブ配信を見ている間に作った目印・セルには印を付ける（あとでアーカイブの時刻に合わせるため）
@@ -140,6 +143,7 @@ function renderAll() {
   shareLayers.render();
   xstrip.render();
   tlMenu.refresh();
+  cellBar.render();
   updateCaptionButton();
   txIndex = -2; // 字幕の表示を次の監視で描き直す
   $('#btnUndo').disabled = !store.canUndo;
@@ -561,23 +565,79 @@ app.makeCellHere = () => {
   app.createCell(pts[i], pts[i + 1]);
 };
 
-// 再生位置でセルを2つに分ける（S キー・セルの「分割」）。前のセルに元の情報をすべて残し、後ろは新しいセルになる。
-// id がなければ、再生位置を含む自分のセル（重なっていれば一番短いもの）を分ける
-app.splitCellAt = (id) => {
+// ---- いまのセル（S で分ける・タイムラインの下のバーで操作するセル） ----
+// 時刻 t を含む自分のセル（短い順）
+app.cellsAt = (t = app.now()) =>
+  store.ownCells.filter((c) => t >= c.s && t < c.e).sort((a, b) => a.e - a.s - (b.e - b.s));
+// いまのセル: 選んだもの（app.ui.cellTarget）があればそれ、なければ一番短いもの
+app.cellAt = (t = app.now()) => {
+  const list = app.cellsAt(t);
+  return list.find((c) => c.id === app.ui.cellTarget) || list[0] || null;
+};
+// 重なっているセルのうち、操作するセルを順に切り替える
+app.cycleCellTarget = () => {
   if (!requireMedia()) return;
-  const t = app.now();
-  const inside = (c) => t > c.s + 0.1 && t < c.e - 0.1;
-  const c = id ? store.getCell(id) : store.ownCells.filter(inside).sort((a, b) => a.e - a.s - (b.e - b.s))[0];
+  const list = app.cellsAt();
+  if (list.length < 2) {
+    app.hint(tr('再生位置に重なっているセルはありません'));
+    return;
+  }
+  const next = list[(list.indexOf(app.cellAt()) + 1) % list.length];
+  app.ui.cellTarget = next.id;
+  refreshActive();
+  app.hint(tr('操作するセルを {range} にしました', { range: `${fmt(next.s)} – ${fmt(next.e)}` }));
+};
+
+// 字幕の行の切れ目（行と行の間。すき間があればそのまん中）のうち、t に一番近いもの（win 秒以内）。なければ null
+app.cueGapNear = (t, win = 1) => {
+  const cues = store.cues;
+  if (!cues.length) return null;
+  let best = null;
+  let bestD = win + 1e-6;
+  const consider = (p) => {
+    const d = Math.abs(p - t);
+    if (d < bestD) {
+      best = p;
+      bestD = d;
+    }
+  };
+  const i = Math.max(0, cueIndexAt(cues, t));
+  for (let k = Math.max(0, i - 2); k <= Math.min(cues.length - 1, i + 2); k++) {
+    const a = cues[k];
+    const b = cues[k + 1];
+    if (k === 0) consider(a.s);
+    if (b) consider(b.s >= a.e ? (a.e + b.s) / 2 : b.s);
+    else consider(a.e);
+  }
+  return best === null ? null : round2(best);
+};
+
+// セルを2つに分ける（S キー・いまのセルのバー・タイムラインの「ここで分割」と Shift+クリック）。
+// at: 分ける時刻（なければ再生位置）。id: 分けるセル（なければ at を含む、いまのセル）。
+// 設定がオンで字幕があれば、近くの行の切れ目（1秒以内）に合わせる。前のセルに元の情報をすべて残し、後ろは新しいセルになる
+app.splitCellAt = (id, at) => {
+  if (!requireMedia()) return;
+  let t = Number.isFinite(at) ? at : app.now();
+  const c = id ? store.getCell(id) : app.cellAt(t);
   if (!c) {
-    app.hint(tr('再生位置を含むセルがありません（セルの中で S を押すと、そこで2つに分けます）'));
+    app.hint(tr('分ける位置にセルがありません（セルの中で S を押すか、タイムラインのセルを Shift+クリックすると、そこで2つに分けます）'));
     return;
   }
   if (c.src) {
     app.hint(tr('共有で読み込んだセルは分けられません'));
     return;
   }
-  if (!inside(c)) {
-    app.hint(tr('分ける位置（再生位置）を、セルの中（端から少し内側）にしてください'));
+  const inside = (x) => x > c.s + 0.1 && x < c.e - 0.1;
+  let snapped = false;
+  if (app.settings.splitSnap) {
+    const g = app.cueGapNear(t);
+    if (g !== null && inside(g) && Math.abs(g - t) > 0.01) {
+      t = g;
+      snapped = true;
+    }
+  }
+  if (!inside(t)) {
+    app.hint(tr('分ける位置を、セルの中（端から少し内側）にしてください'));
     return;
   }
   const r = store.splitCell(c.id, t);
@@ -585,7 +645,42 @@ app.splitCellAt = (id) => {
   app.ui.flashId = r.tail.id;
   sidebar.render();
   app.hint(
-    tr('セルを {time} で2つに分けました（メモ・いいね・コメントは前のセルに残ります。Ctrl+Z で元に戻せます）', { time: fmt(t, true) }),
+    tr('セルを {time} で2つに分けました（メモ・いいね・コメントは前のセルに残ります。Ctrl+Z で元に戻せます）', { time: fmt(t, true) }) +
+      (snapped ? tr('（字幕の行の切れ目に合わせました）') : ''),
+  );
+};
+
+// ---- セルの境目（となり合ったセルの、前のセルの終わり＝後ろのセルの始まり） ----
+app.boundaryCells = (t) => {
+  const own = store.ownCells;
+  return { left: own.filter((c) => Math.abs(c.e - t) < 0.05), right: own.filter((c) => Math.abs(c.s - t) < 0.05) };
+};
+
+// 境目を t から nt へ動かす（両方のセルが一緒に動く）。動かした先の時刻を返す
+app.moveBoundary = (t, nt) => {
+  const { left, right } = app.boundaryCells(t);
+  if (!left.length || !right.length) return t;
+  const lo = Math.max(0, ...left.map((c) => c.s + 0.1));
+  const hi = Math.min(app.duration() || Infinity, ...right.map((c) => c.e - 0.1));
+  nt = round2(clamp(nt, lo, hi));
+  store.setCellEdges([...left.map((c) => ({ id: c.id, e: nt })), ...right.map((c) => ({ id: c.id, s: nt }))]);
+  return nt;
+};
+
+// セルの始まり（'s'）・終わり（'e'）を t にする。となりのセルと境目を共有していれば、そのセルの端も一緒に動かす
+app.setCellEdge = (id, edge, t = app.now()) => {
+  const c = store.getCell(id);
+  if (!c || c.src) return;
+  const { left, right } = app.boundaryCells(c[edge]);
+  const others = (edge === 's' ? left : right).filter((x) => x.id !== c.id);
+  const lo = edge === 's' ? Math.max(0, ...others.map((x) => x.s + 0.1)) : c.s + 0.1;
+  const hi = edge === 's' ? c.e - 0.1 : Math.min(app.duration() || Infinity, ...others.map((x) => x.e - 0.1));
+  const nt = round2(clamp(t, lo, hi));
+  const other = edge === 's' ? 'e' : 's';
+  store.setCellEdges([{ id: c.id, [edge]: nt }, ...others.map((x) => ({ id: x.id, [other]: nt }))]);
+  app.hint(
+    (edge === 's' ? tr('セルの始まりを {time} にしました', { time: fmt(nt, true) }) : tr('セルの終わりを {time} にしました', { time: fmt(nt, true) })) +
+      (others.length ? tr('（となりのセルとの境目も一緒に動かしました）') : ''),
   );
 };
 
@@ -878,6 +973,7 @@ function closeMedia() {
   if (store.doc) store.close();
   tlMenu.close();
   resetJumps();
+  app.ui.cellTarget = null;
   app.ui.target = null;
   app.ui.repeatId = null;
   clearTimeout(repeatState.timer);
@@ -897,6 +993,7 @@ function closeMedia() {
   app.activeCells = new Set();
   app.nearId = null;
   document.body.classList.remove('has-media');
+  cellBar.render(); // 開いていないときは隠す
   $('#audioCover').hidden = true;
   $('#caption').hidden = true;
   $('#modeBadge').hidden = true;
@@ -1559,6 +1656,7 @@ function openSettings() {
   f.momentClip.value = s.momentClip;
   f.pauseOnMark.checked = s.pauseOnMark;
   f.autoCellLeft.checked = s.autoCellLeft;
+  f.splitSnap.checked = s.splitSnap;
   f.liveChat.checked = s.liveChat;
   f.resumeAfterComment.checked = s.resumeAfterComment;
   f.captions.checked = s.captions;
@@ -1599,6 +1697,7 @@ $('#settingsForm').addEventListener('submit', (e) => {
     momentClip: clamp(Math.round(num(f.momentClip.value, DEFAULT_SETTINGS.momentClip)), 1, 60),
     pauseOnMark: f.pauseOnMark.checked,
     autoCellLeft: f.autoCellLeft.checked,
+    splitSnap: f.splitSnap.checked,
     liveChat: f.liveChat.checked,
     resumeAfterComment: f.resumeAfterComment.checked,
     captions: f.captions.checked,
@@ -1723,6 +1822,67 @@ window.addEventListener('drop', (e) => {
   openLocalFile(e.dataTransfer.files[0]);
 });
 
+// ---- 操作の一覧（Ctrl+K） ----
+// ボタンの場所やキーを覚えていなくても、文字で探して実行できる
+const clickBtn = (sel) => () => $(sel)?.click();
+const palette = new Palette(app, () => {
+  const g = {
+    play: tr('再生'),
+    mark: tr('目印・いいね・コメント'),
+    cell: tr('セル'),
+    tx: tr('字幕・練習'),
+    other: tr('そのほか'),
+  };
+  const addWord = () => {
+    if (!requireMedia()) return;
+    const cue = app.cueAt(app.now());
+    words.openAdd({ word: '', context: cue?.text || '', t: cue ? cue.s : app.now() });
+  };
+  return [
+    { group: g.play, label: tr('再生 / 一時停止'), key: 'Space', run: togglePlay },
+    { group: g.play, label: tr('5秒戻る'), key: '←', run: () => app.seek(app.now() - 5) },
+    { group: g.play, label: tr('5秒進む'), key: '→', run: () => app.seek(app.now() + 5) },
+    { group: g.play, label: tr('移動する前の位置に戻る'), key: 'Backspace', words: 'back undo', run: app.jumpBack },
+    { group: g.play, label: tr('戻る前の位置へ進む'), key: 'Shift+Backspace', run: app.jumpForward },
+    { group: g.play, label: tr('前の目印へ'), key: '[', run: () => jumpMarker(-1) },
+    { group: g.play, label: tr('次の目印へ'), key: ']', run: () => jumpMarker(1) },
+    { group: g.mark, label: tr('目印を付ける'), key: 'M', words: 'marker', run: () => app.markAt(app.now()) },
+    { group: g.mark, label: tr('いいね 1'), key: '1', run: () => app.rateMoment(1) },
+    { group: g.mark, label: tr('いいね 2'), key: '2', run: () => app.rateMoment(2) },
+    { group: g.mark, label: tr('いいね 3'), key: '3', run: () => app.rateMoment(3) },
+    { group: g.mark, label: tr('ブックマーク'), key: 'B', run: () => app.toggleMomentBookmark() },
+    { group: g.mark, label: tr('ここにコメント'), key: 'C', run: () => moment.startMark() },
+    { group: g.cell, label: tr('区間をセル化'), key: 'Enter', words: 'cell', run: () => app.makeCellHere() },
+    { group: g.cell, label: tr('左の区間をセル化'), key: 'Shift+Enter', run: () => app.makeCellLeft() },
+    { group: g.cell, label: tr('セルを分割（再生位置）'), key: 'S', words: 'split cut 分ける', run: () => app.splitCellAt() },
+    { group: g.cell, label: tr('いまのセルの始まりを再生位置に'), words: 'start edge 端', run: () => app.cellAt() ? app.setCellEdge(app.cellAt().id, 's') : app.hint(tr('再生位置にセルはありません')) },
+    { group: g.cell, label: tr('いまのセルの終わりを再生位置に'), words: 'end edge 端', run: () => app.cellAt() ? app.setCellEdge(app.cellAt().id, 'e') : app.hint(tr('再生位置にセルはありません')) },
+    { group: g.cell, label: tr('重なっているセルを切り替える'), run: () => app.cycleCellTarget() },
+    { group: g.cell, label: tr('いまのセルをリピート'), key: 'R', words: 'repeat loop', run: toggleRepeatHere },
+    { group: g.cell, label: tr('等間隔でセル化'), words: 'grid 30 60', run: () => gridCells.open() },
+    { group: g.cell, label: tr('一覧を連続再生'), words: 'digest', run: clickBtn('#btnDigest') },
+    { group: g.tx, label: tr('字幕の表示を切り替える'), key: 'T', words: 'caption subtitle', run: toggleCaptions },
+    { group: g.tx, label: tr('字幕を読み込む'), words: 'srt vtt', run: () => requireMedia() && $('#txInput').click() },
+    { group: g.tx, label: tr('2つめの字幕を読み込む'), words: 'srt vtt translation', run: () => requireMedia() && $('#tx2Input').click() },
+    { group: g.tx, label: tr('字幕を貼り付けて読み込む'), run: () => openPasteDialog() },
+    { group: g.tx, label: tr('音声認識'), words: 'speech live', run: clickBtn('#btnLive') },
+    { group: g.tx, label: tr('シャドーイング'), words: 'shadowing', run: () => requireMedia() && app.startPractice('shadow') },
+    { group: g.tx, label: tr('ディクテーション'), words: 'dictation', run: () => requireMedia() && app.startPractice('dictation') },
+    { group: g.tx, label: tr('字幕のツール（書き出し・時刻のずれ・自動でセル）'), run: () => requireMedia() && app.openTxTools() },
+    { group: g.tx, label: tr('単語帳に追加'), key: 'W', run: addWord },
+    { group: g.other, label: tr('ライブラリ・プレイリスト'), key: 'L', words: 'library playlist', run: () => library.open() },
+    { group: g.other, label: tr('単語帳'), words: 'words vocabulary', run: clickBtn('#btnWords') },
+    { group: g.other, label: tr('ファイルを開く'), words: 'open file', run: () => $('#fileInput').click() },
+    { group: g.other, label: tr('共有'), words: 'share x', run: clickBtn('#btnShare') },
+    { group: g.other, label: tr('書き出し'), words: 'export', run: exportJson },
+    { group: g.other, label: tr('読み込み'), words: 'import', run: () => $('#importInput').click() },
+    { group: g.other, label: tr('元に戻す'), key: 'Ctrl+Z', words: 'undo', run: () => store.undo() },
+    { group: g.other, label: tr('やり直す'), key: 'Ctrl+Y', words: 'redo', run: () => store.redo() },
+    { group: g.other, label: tr('設定'), words: 'settings', run: openSettings },
+    { group: g.other, label: tr('ショートカットの一覧'), key: '?', words: 'help', run: () => $('#helpDialog').showModal() },
+  ];
+});
+
 // ---- キーボード ----
 
 document.addEventListener('keydown', (e) => {
@@ -1751,6 +1911,12 @@ document.addEventListener('keydown', (e) => {
   }
   if (k === '?') {
     $('#helpDialog').showModal();
+    return;
+  }
+  // 操作の一覧（Ctrl+K）
+  if (ctrl && (k === 'k' || k === 'K')) {
+    e.preventDefault();
+    palette.open();
     return;
   }
   // ライブラリは、動画を開いていなくても使える
@@ -1863,6 +2029,10 @@ document.addEventListener('keydown', (e) => {
 
 let lastNow = 0;
 let activeKey = '';
+// 強調（再生中のセル・いまのセルなど）を、次の監視で描き直す
+function refreshActive() {
+  activeKey = '';
+}
 
 function watch() {
   const p = app.player;
@@ -1889,18 +2059,24 @@ function watch() {
     renderAll();
   }
 
-  // 再生位置を含むセル・近くの目印の強調
+  // 再生位置を含むセル・近くの目印・いまのセル（S やバーで操作するセル）の強調
   const act = [];
   for (const c of store.cells) if (now >= c.s && now < c.e) act.push(c.id);
   const near = store.nearestMarker(now, app.settings.mergeWindow);
-  const key = act.join(',') + '|' + (near ? near.id : '') + '|' + (app.ui.target ? app.ui.target.id : '');
+  // 選んだセルから再生位置が出たら、選んだのを忘れる
+  const ct = app.ui.cellTarget && store.getCell(app.ui.cellTarget);
+  if (app.ui.cellTarget && (!ct || now < ct.s || now >= ct.e)) app.ui.cellTarget = null;
+  const cur = app.cellAt(now);
+  const key = act.join(',') + '|' + (near ? near.id : '') + '|' + (app.ui.target ? app.ui.target.id : '') + '|' + (cur?.id || '');
   if (key !== activeKey) {
     activeKey = key;
     app.activeCells = new Set(act);
     app.nearId = near ? near.id : null;
+    app.curCellId = cur?.id || null;
     timeline.updateActive();
     sidebar.updateActive();
   }
+  cellBar.tick(now);
 
   updateTranscript(now);
   digest.tick(now, !p.paused);

@@ -628,6 +628,79 @@ export const EN = {
   '「{title}」は手元のファイルです。同じファイルを開くと、メモが復元されます': '"{title}" is a file on your computer. Open the same file to bring back its notes',
   'すべて見る・検索（ライブラリ）': 'See all and search (Library)',
 
+  // ---- 分割・境目・いまのセル・操作の一覧 ----
+  '2つのセルをつなげました（Ctrl+Z で元に戻せます）': 'Joined the two cells (Ctrl+Z to undo)',
+  '{time} の境目（ドラッグで両方のセルが一緒に動きます・クリックでメニュー）': 'Boundary at {time} (drag to move both cells together, click for the menu)',
+  '⇤ 始まりをここに': '⇤ Start here',
+  '終わりをここに ⇥': 'End here ⇥',
+  '⇤ 始まりを再生位置に': '⇤ Start at playhead',
+  '終わりを再生位置に ⇥': 'End at playhead ⇥',
+  'ここでセルを分ける': 'Split the cell here',
+  'ここで分割（{time}）': 'Split here ({time})',
+  '再生位置で分割（{time}）': 'Split at playhead ({time})',
+  'この位置でセルを分ける': 'Split the cell at this position',
+  'ここに目印': 'Add a marker here',
+  'ここへ移動': 'Go here',
+  'このセルにコメントを書く': 'Write a comment on this cell',
+  'そのほかの操作（メニュー）': 'More actions (menu)',
+  'となりのセルとの境目も一緒に動きます': 'The boundary with the neighboring cell moves too',
+  'セルにコメントしました': 'Commented on the cell',
+  'セルの境目': 'Cell boundary',
+  'セルの境目を {time} に動かしました': 'Moved the cell boundary to {time}',
+  'セルの始まりを {time} にしました': 'The cell now starts at {time}',
+  'セルの終わりを {time} にしました': 'The cell now ends at {time}',
+  'セルの始まりを再生位置にする（となりのセルとの境目も一緒に動きます）': 'Start the cell at the playhead (the boundary with the neighboring cell moves too)',
+  'セルの終わりを再生位置にする（となりのセルとの境目も一緒に動きます）': 'End the cell at the playhead (the boundary with the neighboring cell moves too)',
+  '再生位置にセルはありません': 'No cell at the playhead',
+  '再生位置に合わせる': 'Move to the playhead',
+  '再生位置に重なっているセルはありません': 'No overlapping cells at the playhead',
+  '分ける位置にセルがありません（セルの中で S を押すか、タイムラインのセルを Shift+クリックすると、そこで2つに分けます）':
+    'No cell to split there (press S inside a cell, or Shift-click a cell on the timeline, to split it in two there)',
+  '分ける位置を、セルの中（端から少し内側）にしてください': 'Choose a split point inside the cell, a little away from its edges',
+  '前のセル {a}・後ろのセル {b}': 'Earlier cell {a} · later cell {b}',
+  '境目は、拡大の段でつまみをドラッグしても動かせます。両方のセルが一緒に動きます': 'You can also drag the handle in the Zoom row. Both cells move together',
+  '境目をなくす（2つのセルをつなげる）': 'Remove the boundary (join the two cells)',
+  '字幕の切れ目（{time}）に合わせる': 'Snap to the subtitle break ({time})',
+  '操作するセルを {range} にしました': 'Now working on the cell {range}',
+  '重なっているセルのうち、操作するセルを切り替える': 'Switch which of the overlapping cells to work on',
+  '（となりのセルとの境目も一緒に動かしました）': ' (the boundary with the neighboring cell moved too)',
+  '（字幕の行の切れ目に合わせました）': ' (snapped to the break between subtitle lines)',
+  // 操作の一覧
+  '目印・いいね・コメント': 'Markers, likes and comments',
+  '字幕・練習': 'Subtitles and practice',
+  'そのほか': 'Other',
+  '再生 / 一時停止': 'Play / pause',
+  '5秒戻る': 'Back 5 seconds',
+  '5秒進む': 'Forward 5 seconds',
+  '移動する前の位置に戻る': 'Go back to where you were',
+  '戻る前の位置へ進む': 'Go forward again',
+  '前の目印へ': 'Previous marker',
+  '次の目印へ': 'Next marker',
+  '目印を付ける': 'Add a marker',
+  'いいね 1': 'Like 1',
+  'いいね 2': 'Like 2',
+  'いいね 3': 'Like 3',
+  'セルを分割（再生位置）': 'Split the cell (at the playhead)',
+  'いまのセルの始まりを再生位置に': 'Start the current cell at the playhead',
+  'いまのセルの終わりを再生位置に': 'End the current cell at the playhead',
+  '重なっているセルを切り替える': 'Switch between overlapping cells',
+  'いまのセルをリピート': 'Repeat the current cell',
+  '字幕の表示を切り替える': 'Show or hide subtitles',
+  '2つめの字幕を読み込む': 'Load second subtitles',
+  '字幕を貼り付けて読み込む': 'Paste subtitles',
+  '字幕のツール（書き出し・時刻のずれ・自動でセル）': 'Subtitle tools (export, timing, automatic cells)',
+  'ライブラリ・プレイリスト': 'Library and playlist',
+  'ショートカットの一覧': 'Keyboard shortcuts',
+  '操作を探して実行 (Ctrl+K)': 'Find and run an action (Ctrl+K)',
+  '操作を探して実行': 'Find and run an action',
+  '操作を探す（例: 分割、字幕、リピート）': 'Find an action (e.g. split, subtitles, repeat)',
+  '操作を探す': 'Find an action',
+  '↑↓ で選ぶ・Enter で実行・Esc で閉じる': '↑↓ to choose · Enter to run · Esc to close',
+  'セルを分けるとき、字幕の行の切れ目に合わせる': 'When splitting a cell, snap to the break between subtitle lines',
+  '字幕があるとき、分ける位置の前後1秒以内に行と行の切れ目があれば、そこで分けます（声の途中で切れにくくなります）':
+    "With subtitles loaded, if there is a break between lines within 1 second of the split point, the cell is split there (so it doesn't cut through speech)",
+  'いまのセル（再生位置にあるセル）の操作': 'Actions for the current cell',
+
   // ---- タイムラインのメニュー ----
   'タイムラインのメニュー': 'Timeline menu',
   '{range} を選んでいます（離すとメニュー）': 'Selecting {range} (release for the menu)',
@@ -945,6 +1018,8 @@ export const EN_HTML = {
       <tr><td><kbd>Enter</kbd></td><td>Make the current segment a cell</td></tr>
       <tr><td><kbd>Shift</kbd>+<kbd>Enter</kbd></td><td>Make the segment to the left of the marker you just added (previous marker to that marker) a cell</td></tr>
       <tr><td><kbd>S</kbd></td><td>Split the cell in two at the playhead (the note, likes and comments stay with the earlier cell)</td></tr>
+      <tr><td><kbd>Shift</kbd>+click</td><td>On the Cells, Full or Zoom row of the timeline, split the cell at that point (holding Shift shows ✂ where it will split)</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>Action list (find and run)</td></tr>
       <tr><td><kbd>Backspace</kbd></td><td>After a big jump, go back to where you were (<kbd>Shift</kbd>+<kbd>Backspace</kbd> to go forward again)</td></tr>
       <tr><td><kbd>R</kbd></td><td>Repeat the cell at the playback position / stop</td></tr>
       <tr><td><kbd>T</kbd></td><td>Show / hide captions (loads captions if none)</td></tr>

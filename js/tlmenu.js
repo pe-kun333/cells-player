@@ -1,8 +1,8 @@
-import { $, fmt, fmtLen, escapeHtml, icon, cellLabel, clamp } from './util.js';
+import { $, fmt, fmtLen, escapeHtml, icon, cellLabel, clamp, round2 } from './util.js';
 import { saveSettings } from './store.js';
 import { tr } from './i18n.js';
 
-// タイムラインをクリックしたときのメニュー（区間・目印・セル）。
+// タイムラインをクリックしたときのメニュー（区間・目印・セル。右クリックなら、何もない位置やセルの境目も）。
 // 再生位置を動かさずに、いいね・コメント・位置の調整・セル化などができる（移動・再生はメニューから選ぶ）。
 // クリックしたときにメニューを出すか、これまでのようにすぐ動くかは、種類ごとにメニューの下で選べる。
 // 右クリックなら、どちらの設定でもメニューを出す
@@ -21,7 +21,7 @@ export class TlMenu {
   constructor(app) {
     this.app = app;
     this.el = $('#tlMenu');
-    this.cur = null; // { kind: 'seg' | 'marker' | 'cell', id, s, e, x, y }
+    this.cur = null; // { kind: 'seg' | 'marker' | 'cell' | 'pos' | 'bound', id, s, e, t, x, y, focus }
     this.el.addEventListener('click', (e) => this.onClick(e));
     this.el.addEventListener('change', (e) => this.onChange(e));
     this.el.addEventListener('keydown', (e) => this.onKeydown(e));
@@ -50,8 +50,12 @@ export class TlMenu {
 
   open(cur) {
     this.cur = cur;
+    // セルのメニューを開いたら、そのセルを「いまのセル」（S やバーで操作するセル）にする
+    if (cur.kind === 'cell') this.app.ui.cellTarget = cur.id;
     this.render();
-    if (this.cur) this.place();
+    if (!this.cur) return;
+    this.place();
+    if (cur.focus === 'comment') this.el.querySelector('[data-tlm-input]')?.focus();
   }
 
   close() {
@@ -63,7 +67,7 @@ export class TlMenu {
 
   // メモが変わったとき（main の renderAll から）: 開いていれば描き直す。書きかけのコメントは残す
   refresh() {
-    if (!this.cur) return;
+    if (!this.cur || this.hold) return;
     const inp = this.el.querySelector('[data-tlm-input]');
     const text = inp?.value || '';
     const focused = inp && document.activeElement === inp;
@@ -94,7 +98,12 @@ export class TlMenu {
     const { store } = this.app;
     let html = '';
     if (c.kind === 'seg') html = this.segHtml(c);
-    else if (c.kind === 'marker') {
+    else if (c.kind === 'pos') html = this.posHtml(c);
+    else if (c.kind === 'bound') {
+      const { left, right } = this.app.boundaryCells(c.t);
+      if (!left.length || !right.length) return this.close();
+      html = this.boundHtml(c.t, left, right);
+    } else if (c.kind === 'marker') {
       const m = store.getMarker(c.id);
       if (!m) return this.close();
       html = this.markerHtml(m);
@@ -103,7 +112,7 @@ export class TlMenu {
       if (!x) return this.close();
       html = this.cellHtml(x);
     }
-    this.el.innerHTML = html + this.footHtml(c.kind);
+    this.el.innerHTML = html + (CLICK_OPTS[c.kind] ? this.footHtml(c.kind) : '');
     this.el.hidden = false;
   }
 
@@ -174,6 +183,7 @@ export class TlMenu {
       <div class="tlm-row">
         <button type="button" data-tlm="m-left">${tr('← 左の区間をセルに')}</button>
         <button type="button" data-tlm="m-right">${tr('右の区間をセルに →')}</button>
+        ${this.cutCell(m.t) ? `<button type="button" data-tlm="m-split">${icon('scissors')} ${tr('この位置でセルを分ける')}</button>` : ''}
       </div>
       <div class="tlm-row">
         <label class="tlm-check"><input type="checkbox" data-tlm-chk="mark"${m.mark ? ' checked' : ''}> ${tr('区間の区切りにする')}</label>
@@ -201,16 +211,73 @@ export class TlMenu {
         <div class="tlm-row"><button type="button" data-tlm="c-open">${tr('カードを開く（メモ・コメント）')}</button></div>`;
     }
     const inPl = this.app.playlist.has(store.doc?.id, c.id);
+    const inside = (t) => Number.isFinite(t) && t > c.s + 0.1 && t < c.e - 0.1;
+    const now = this.app.now();
+    const here = this.cur.t;
+    const cuts = [
+      inside(here) ? `<button type="button" data-tlm="c-split-here">${icon('scissors')} ${tr('ここで分割（{time}）', { time: fmt(here, true) })}</button>` : '',
+      inside(now) && !(inside(here) && Math.abs(here - now) < 0.2) ? `<button type="button" data-tlm="c-split-now">${icon('scissors')} ${tr('再生位置で分割（{time}）', { time: fmt(now, true) })}</button>` : '',
+    ].join('');
+    const comments = c.comments.length
+      ? `<div class="tlm-comments">${c.comments.map((cm) => `<div class="tlm-comment">${escapeHtml(cm.text)}</div>`).join('')}</div>`
+      : '';
     return `${this.head('cell', `${fmt(c.s)} – ${fmt(c.e)}`, fmtLen(c.e - c.s))}
       ${memoHtml}${moveRow}
       <div class="tlm-row">${this.likeRow(c, 'c')}
         <button type="button" class="${inPl ? 'on' : ''}" data-tlm="c-pl" title="${inPl ? tr('プレイリストから外す') : tr('プレイリストに入れる')}">${icon(inPl ? 'check' : 'list-add')}</button>
       </div>
+      ${cuts ? `<div class="tlm-row">${cuts}</div>` : ''}
+      <div class="tlm-row">
+        <button type="button" data-tlm="c-start" title="${tr('となりのセルとの境目も一緒に動きます')}">${tr('⇤ 始まりを再生位置に')}</button>
+        <button type="button" data-tlm="c-end" title="${tr('となりのセルとの境目も一緒に動きます')}">${tr('終わりを再生位置に ⇥')}</button>
+      </div>
+      ${comments}
+      <input type="text" class="field tlm-input" data-tlm-input="comment" placeholder="${tr('コメントを書く（Enter で追加）')}" autocomplete="off">
       <div class="tlm-row">
         <button type="button" data-tlm="c-open">${tr('カードを開く（メモ・コメント）')}</button>
         <span class="spacer"></span>
         <button type="button" class="danger" data-tlm="c-del">${icon('trash')} ${tr('削除')}</button>
       </div>`;
+  }
+
+  // その時刻を含む、分けられる自分のセル（端から少し内側）
+  cutCell(t) {
+    return this.app.cellsAt(t).find((c) => t > c.s + 0.1 && t < c.e - 0.1) || null;
+  }
+
+  // ---- 何もない位置（右クリック） ----
+
+  posHtml({ t }) {
+    return `${this.head('pin', fmt(t, true), '')}
+      <div class="tlm-row">
+        <button type="button" data-tlm="p-play">${icon('play')} ${tr('ここから再生')}</button>
+        <button type="button" data-tlm="p-seek">${tr('ここへ移動')}</button>
+      </div>
+      <div class="tlm-row">
+        <button type="button" data-tlm="p-mark">${icon('pin')} ${tr('ここに目印')}</button>
+        ${this.cutCell(t) ? `<button type="button" data-tlm="p-split">${icon('scissors')} ${tr('ここでセルを分ける')}</button>` : ''}
+      </div>`;
+  }
+
+  // ---- セルの境目 ----
+
+  boundHtml(t, left, right) {
+    const range = (c) => `${fmt(c.s)} – ${fmt(c.e)}`;
+    const nudges = NUDGES.map((d) => `<button type="button" data-tlm="b-nudge" data-d="${d}">${d > 0 ? '+' : '−'}${Math.abs(d)}</button>`).join('');
+    const gap = this.app.cueGapNear(t);
+    const canSnap = gap !== null && Math.abs(gap - t) > 0.01;
+    return `${this.head('cell', fmt(t, true), tr('セルの境目'))}
+      <div class="tlm-note">${tr('前のセル {a}・後ろのセル {b}', { a: range(left[0]), b: range(right[0]) })}</div>
+      <div class="tlm-row"><span class="tlm-label">${tr('位置')}</span>${nudges}</div>
+      <div class="tlm-row">
+        <button type="button" data-tlm="b-here">${tr('再生位置に合わせる')}</button>
+        ${canSnap ? `<button type="button" data-tlm="b-snap">${tr('字幕の切れ目（{time}）に合わせる', { time: fmt(gap, true) })}</button>` : ''}
+      </div>
+      <div class="tlm-row">
+        <button type="button" data-tlm="b-play">${icon('play')} ${tr('ここから再生')}</button>
+        ${left.length === 1 && right.length === 1 ? `<button type="button" data-tlm="b-join">${tr('境目をなくす（2つのセルをつなげる）')}</button>` : ''}
+      </div>
+      <div class="tlm-note">${tr('境目は、拡大の段でつまみをドラッグしても動かせます。両方のセルが一緒に動きます')}</div>`;
   }
 
   // ---- 操作 ----
@@ -228,6 +295,56 @@ export class TlMenu {
     const cur = this.cur;
     const act = b.dataset.tlm;
     if (act === 'close') return this.close();
+
+    if (cur.kind === 'pos') {
+      const t = cur.t;
+      if (act === 'p-play') this.play(t);
+      else if (act === 'p-seek') app.seek(t);
+      else if (act === 'p-mark') {
+        const m = store.addMarker(round2(t), { mark: true });
+        app.hint(tr('{time} に目印を付けました', { time: fmt(m.t, true) }));
+      } else if (act === 'p-split') app.splitCellAt(this.cutCell(t)?.id, t);
+      return this.close();
+    }
+
+    if (cur.kind === 'bound') {
+      const t = cur.t;
+      // 境目を動かすと時刻が変わるので、動かし終わってから新しい時刻で描き直す（途中の描き直しはしない）
+      const moveTo = (nt) => {
+        this.hold = true;
+        try {
+          cur.t = app.moveBoundary(t, nt);
+        } finally {
+          this.hold = false;
+        }
+        this.render();
+      };
+      switch (act) {
+        case 'b-nudge':
+          moveTo(t + Number(b.dataset.d));
+          return;
+        case 'b-here':
+          moveTo(app.now());
+          return;
+        case 'b-snap': {
+          const g = app.cueGapNear(t);
+          if (g !== null) moveTo(g);
+          return;
+        }
+        case 'b-play':
+          this.play(t);
+          return this.close();
+        case 'b-join': {
+          const { left, right } = app.boundaryCells(t);
+          if (left.length === 1 && right.length === 1) {
+            store.mergeCells([left[0].id, right[0].id]);
+            app.hint(tr('2つのセルをつなげました（Ctrl+Z で元に戻せます）'));
+          }
+          return this.close();
+        }
+      }
+      return;
+    }
 
     if (cur.kind === 'seg') {
       const { s, e: end } = cur;
@@ -274,6 +391,9 @@ export class TlMenu {
         case 'm-right':
           app.cellBeside(m.t, act === 'm-left' ? 'left' : 'right');
           return this.close();
+        case 'm-split':
+          app.splitCellAt(this.cutCell(m.t)?.id, m.t);
+          return this.close();
         case 'm-del':
           store.deleteMarker(m.id);
           app.hint(tr('目印を削除しました（Ctrl+Z で元に戻せます）'));
@@ -306,6 +426,18 @@ export class TlMenu {
         app.playlist.toggle(store.doc, 'cell', c);
         this.refresh();
         return;
+      case 'c-split-here':
+        app.splitCellAt(c.id, cur.t);
+        return this.close();
+      case 'c-split-now':
+        app.splitCellAt(c.id, app.now());
+        return this.close();
+      case 'c-start':
+        app.setCellEdge(c.id, 's');
+        return;
+      case 'c-end':
+        app.setCellEdge(c.id, 'e');
+        return;
       case 'c-open':
         app.revealCell(c.id);
         return this.close();
@@ -337,11 +469,22 @@ export class TlMenu {
     if (!inp || e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
     e.preventDefault();
     const text = inp.value.trim();
-    const m = this.cur?.kind === 'marker' && this.app.store.getMarker(this.cur.id);
-    if (!text || !m) return;
-    inp.value = '';
-    this.app.store.addComment('marker', m.id, text, m.t);
-    this.app.hint(tr('{time} の目印にコメントしました', { time: fmt(m.t, true) }));
+    const { store } = this.app;
+    const cur = this.cur;
+    if (!text || !cur) return;
+    if (cur.kind === 'marker') {
+      const m = store.getMarker(cur.id);
+      if (!m) return;
+      inp.value = '';
+      store.addComment('marker', m.id, text, m.t);
+      this.app.hint(tr('{time} の目印にコメントしました', { time: fmt(m.t, true) }));
+    } else if (cur.kind === 'cell') {
+      const c = store.getCell(cur.id);
+      if (!c) return;
+      inp.value = '';
+      store.addComment('cell', c.id, text, clamp(this.app.now(), c.s, c.e));
+      this.app.hint(tr('セルにコメントしました'));
+    }
     this.el.querySelector('[data-tlm-input]')?.focus();
   }
 }

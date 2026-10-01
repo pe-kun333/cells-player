@@ -36,6 +36,7 @@ export const DEFAULT_SETTINGS = {
   tlMarkerClick: 'menu',     // 目印: menu / seek（その目印へ移動）
   tlCellClick: 'menu',       // セル: menu / seek（セルの頭へ移動）
   gridSec: 30,               // 等間隔でセル化の長さ（秒。最後に使ったもの）
+  splitSnap: true,           // セルを分けるとき、字幕があれば近くの行の切れ目（1秒以内）に合わせる
   resumeAfterComment: true,  // コメントマークで止めたとき、送信・取り消しのあと再生を戻す
   volume: 1,
   presetSets: DEFAULT_PRESET_SETS,
@@ -665,6 +666,18 @@ export class Store {
       const made = fresh.map((r) => ({ id: uid(), s: round2(r.s), e: round2(r.e), memo: '', lv: 0, bm: false, comments: [], at: Date.now(), ...this.liveFlag() }));
       doc.cells.push(...made);
       return made;
+    });
+  }
+
+  // いくつかのセルの端をまとめて動かす（境目を動かすとき。1回の Ctrl+Z で戻る）。list: [{ id, s?, e? }]
+  setCellEdges(list) {
+    this.mutate(() => {
+      for (const x of list) {
+        const c = this.getCell(x.id);
+        if (!c || c.src) continue;
+        if (x.s !== undefined) c.s = round2(x.s);
+        if (x.e !== undefined) c.e = round2(x.e);
+      }
     });
   }
 

@@ -38,12 +38,14 @@ export class Timeline {
     this.hoverEl = this.mainEl.querySelector('.tl-hover');
 
     this.zoomEl.innerHTML =
-      '<div class="tz-world"><div class="tz-bands"></div><div class="tz-labels"></div><div class="tz-marks"></div></div><div class="tz-playhead"></div><div class="tz-drag" hidden></div>';
+      '<div class="tz-world"><div class="tz-bands"></div><div class="tz-labels"></div><div class="tz-marks"></div><div class="tz-bounds"></div></div><div class="tz-playhead"></div><div class="tz-guide" hidden></div><div class="tz-drag" hidden></div>';
     this.world = this.zoomEl.querySelector('.tz-world');
     this.bandsEl = this.zoomEl.querySelector('.tz-bands');
     this.labelsEl = this.zoomEl.querySelector('.tz-labels');
     this.marksEl = this.zoomEl.querySelector('.tz-marks');
     this.dragEl = this.zoomEl.querySelector('.tz-drag');
+    this.boundsEl = this.zoomEl.querySelector('.tz-bounds');
+    this.guideEl = this.zoomEl.querySelector('.tz-guide');
 
     this.laneOf = new Map();
     this.segPts = [];
@@ -62,6 +64,23 @@ export class Timeline {
 
   get dur() {
     return this.app.duration();
+  }
+
+  // 全体の幅を使う段（セル・全体）で、x の位置の時刻
+  timeAtX(el, x) {
+    const r = el.getBoundingClientRect();
+    return clamp((x - r.left) / r.width, 0, 1) * this.dur;
+  }
+
+  // 拡大の段で、x の位置の時刻（まん中が再生位置）
+  zoomTimeAt(x) {
+    const r = this.zoomEl.getBoundingClientRect();
+    return clamp(this.app.now() + (x - r.left - this.W / 2) / this.pps, 0, this.dur);
+  }
+
+  // Shift を押しているときは「ここで分割」の目安、そうでなければ時刻だけ
+  guideText(t, shift) {
+    return shift ? `✂ ${fmt(t, true)}` : fmt(t, true);
   }
 
   get store() {
@@ -114,6 +133,7 @@ export class Timeline {
       return;
     }
     el.style.height = count * (LANE_H + LANE_GAP) - LANE_GAP + 'px';
+    el.appendChild(this.laneGuide);
     if (!d) return;
     const rep = this.app.ui.repeatId;
     const sel = this.app.ui.selectedCells;
@@ -133,6 +153,26 @@ export class Timeline {
   }
 
   bindLanes() {
+    // セルの上で、クリックした位置の時刻を出す（Shift を押していれば ✂ 分ける位置）
+    this.laneGuide = document.createElement('div');
+    this.laneGuide.className = 'tl-guide';
+    this.laneGuide.hidden = true;
+    this.lanesEl.addEventListener('pointermove', (e) => {
+      const b = e.target.closest('.tl-cell');
+      if (!b || !this.dur) {
+        this.laneGuide.hidden = true;
+        return;
+      }
+      const r = this.lanesEl.getBoundingClientRect();
+      const t = this.timeAtX(this.lanesEl, e.clientX);
+      this.laneGuide.hidden = false;
+      this.laneGuide.classList.toggle('is-cut', e.shiftKey);
+      this.laneGuide.style.left = e.clientX - r.left + 'px';
+      this.laneGuide.dataset.t = this.guideText(t, e.shiftKey);
+    });
+    this.lanesEl.addEventListener('pointerleave', () => {
+      this.laneGuide.hidden = true;
+    });
     this.lanesEl.addEventListener('click', (e) => {
       const b = e.target.closest('.tl-cell');
       const c = b && this.store.getCell(b.dataset.id);
@@ -142,8 +182,14 @@ export class Timeline {
         this.app.toggleCellSelect(c.id);
         return;
       }
+      const t = this.timeAtX(this.lanesEl, e.clientX);
+      // Shift+クリック: クリックした位置ですぐに分ける
+      if (e.shiftKey) {
+        this.app.splitCellAt(c.id, t);
+        return;
+      }
       if (this.app.tlMenu.mode('cell') === 'menu') {
-        this.app.tlMenu.open({ kind: 'cell', id: c.id, x: e.clientX, y: e.clientY });
+        this.app.tlMenu.open({ kind: 'cell', id: c.id, t, x: e.clientX, y: e.clientY });
         return;
       }
       this.app.seek(c.s);
@@ -154,13 +200,17 @@ export class Timeline {
       const b = e.target.closest('.tl-cell');
       if (!b || !this.store.getCell(b.dataset.id)) return;
       e.preventDefault();
-      this.app.tlMenu.open({ kind: 'cell', id: b.dataset.id, x: e.clientX, y: e.clientY });
+      this.app.tlMenu.open({ kind: 'cell', id: b.dataset.id, t: this.timeAtX(this.lanesEl, e.clientX), x: e.clientX, y: e.clientY });
     });
   }
 
   updateActive() {
     const act = this.app.activeCells;
-    for (const el of this.lanesEl.children) el.classList.toggle('is-active', act.has(el.dataset.id));
+    const cur = act.size > 1 ? this.app.curCellId : null; // 重なっているときだけ、どれを操作するかを示す
+    for (const el of this.lanesEl.querySelectorAll('.tl-cell')) {
+      el.classList.toggle('is-active', act.has(el.dataset.id));
+      el.classList.toggle('is-cur', el.dataset.id === cur);
+    }
   }
 
   // ---- 全体のシークバー ----
@@ -214,6 +264,11 @@ export class Timeline {
         else this.app.focusMarker(pin.dataset.id);
         return;
       }
+      // Shift+クリック: その位置でセルを分ける（再生位置は動かさない）
+      if (e.shiftKey) {
+        this.app.splitCellAt(null, timeAt(e.clientX));
+        return;
+      }
       this.app.seek(timeAt(e.clientX));
       el.setPointerCapture(e.pointerId);
       const move = (ev) => this.app.seek(timeAt(ev.clientX));
@@ -231,17 +286,20 @@ export class Timeline {
       const r = el.getBoundingClientRect();
       const x = clamp(e.clientX - r.left, 0, r.width);
       this.hoverEl.hidden = false;
-      this.hoverEl.textContent = fmt((x / r.width) * this.dur);
+      this.hoverEl.classList.toggle('is-cut', e.shiftKey);
+      this.hoverEl.textContent = e.shiftKey ? this.guideText((x / r.width) * this.dur, true) : fmt((x / r.width) * this.dur);
       this.hoverEl.style.left = clamp(x, 24, r.width - 24) + 'px';
     });
     el.addEventListener('pointerleave', () => {
       this.hoverEl.hidden = true;
     });
     el.addEventListener('contextmenu', (e) => {
-      const pin = e.target.closest('.tl-pin');
-      if (!pin?.dataset.id) return;
+      if (!this.dur) return;
       e.preventDefault();
-      this.app.tlMenu.open({ kind: 'marker', id: pin.dataset.id, x: e.clientX, y: e.clientY });
+      const pin = e.target.closest('.tl-pin');
+      // 目印なら目印のメニュー、何もない所ならその位置のメニュー（移動・目印・分割）
+      if (pin?.dataset.id) this.app.tlMenu.open({ kind: 'marker', id: pin.dataset.id, x: e.clientX, y: e.clientY });
+      else this.app.tlMenu.open({ kind: 'pos', t: timeAt(e.clientX), x: e.clientX, y: e.clientY });
     });
   }
 
@@ -390,6 +448,20 @@ export class Timeline {
     }
     this.bandsEl.appendChild(bands);
 
+    // となり合った自分のセルの境目に、つまみを出す（ドラッグで両方のセルが一緒に動く）
+    this.boundsEl.innerHTML = '';
+    const bounds = document.createDocumentFragment();
+    for (const t of this.boundaryTimes()) {
+      const g = document.createElement('div');
+      g.className = 'tz-bound';
+      g.style.left = t * pps + 'px';
+      g.dataset.t = t;
+      g.title = tr('{time} の境目（ドラッグで両方のセルが一緒に動きます・クリックでメニュー）', { time: fmt(t, true) });
+      g.innerHTML = '<div class="tz-grip"></div>';
+      bounds.appendChild(g);
+    }
+    this.boundsEl.appendChild(bounds);
+
     const tid = this.app.ui.target?.id;
     const pin = this.app.ui.commentPin;
     const marks = document.createDocumentFragment();
@@ -419,6 +491,15 @@ export class Timeline {
     }
     this.marksEl.appendChild(marks);
     this.tick(this.app.now());
+  }
+
+  // 自分のセルどうしの境目（前のセルの終わり＝後ろのセルの始まり）の時刻
+  boundaryTimes() {
+    const own = this.store.ownCells;
+    const ends = own.map((c) => c.e);
+    const out = new Set();
+    for (const c of own) if (ends.some((e) => Math.abs(e - c.s) < 0.05)) out.add(round2(c.s));
+    return [...out];
   }
 
   renderLabels(center) {
@@ -451,8 +532,40 @@ export class Timeline {
       let move;
       let finish;
       const markEl = e.target.closest('.tz-mark');
+      const boundEl = !markEl && e.target.closest('.tz-bound');
+      this.guideEl.hidden = true;
 
-      if (markEl) {
+      if (boundEl) {
+        // セルの境目をドラッグ: 前のセルの終わりと後ろのセルの始まりを一緒に動かす。クリックだけならメニュー
+        const t0 = Number(boundEl.dataset.t);
+        const { left, right } = this.app.boundaryCells(t0);
+        if (!left.length || !right.length) return;
+        const lo = Math.max(0, ...left.map((c) => c.s + 0.1));
+        const hi = Math.min(this.dur, ...right.map((c) => c.e - 0.1));
+        let nt = t0;
+        move = (ev) => {
+          const dx = ev.clientX - startX;
+          if (!moved) {
+            if (Math.abs(dx) < 3) return;
+            moved = true;
+            this.store.checkpoint();
+          }
+          nt = round2(clamp(t0 + dx / this.pps, lo, hi));
+          for (const c of left) c.e = nt;
+          for (const c of right) c.s = nt;
+          this.renderZoom();
+          this.showDragLabel(nt);
+        };
+        finish = (ev) => {
+          this.dragEl.hidden = true;
+          if (moved) {
+            this.store.touch();
+            this.app.hint(tr('セルの境目を {time} に動かしました', { time: fmt(nt, true) }));
+          } else if (ev.type !== 'pointercancel') {
+            this.app.tlMenu.open({ kind: 'bound', t: t0, x: ev.clientX, y: ev.clientY });
+          }
+        };
+      } else if (markEl) {
         // 目印をドラッグして微調整。クリックだけならその目印へ移動して対象にする
         const m = this.store.getMarker(markEl.dataset.id);
         if (!m) return;
@@ -493,9 +606,12 @@ export class Timeline {
         };
         finish = (ev) => {
           el.classList.remove('is-grabbing');
-          if (moved) return;
+          if (moved || ev.type === 'pointercancel') return;
           const r = el.getBoundingClientRect();
-          this.app.seek(clamp(t0 + (ev.clientX - r.left - this.W / 2) / this.pps, 0, this.dur));
+          const t = clamp(t0 + (ev.clientX - r.left - this.W / 2) / this.pps, 0, this.dur);
+          // Shift+クリック: その位置でセルを分ける（再生位置は動かさない）
+          if (ev.shiftKey) this.app.splitCellAt(null, t);
+          else this.app.seek(t);
         };
       }
 
@@ -511,10 +627,28 @@ export class Timeline {
       el.addEventListener('pointercancel', end);
     });
     el.addEventListener('contextmenu', (e) => {
-      const markEl = e.target.closest('.tz-mark');
-      if (!markEl?.dataset.id) return;
+      if (!this.dur) return;
       e.preventDefault();
-      this.app.tlMenu.open({ kind: 'marker', id: markEl.dataset.id, x: e.clientX, y: e.clientY });
+      const markEl = e.target.closest('.tz-mark');
+      const boundEl = e.target.closest('.tz-bound');
+      if (markEl?.dataset.id) this.app.tlMenu.open({ kind: 'marker', id: markEl.dataset.id, x: e.clientX, y: e.clientY });
+      else if (boundEl) this.app.tlMenu.open({ kind: 'bound', t: Number(boundEl.dataset.t), x: e.clientX, y: e.clientY });
+      else this.app.tlMenu.open({ kind: 'pos', t: this.zoomTimeAt(e.clientX), x: e.clientX, y: e.clientY });
+    });
+    // Shift を押しながら動かすと、分ける位置の目安（線と時刻）を出す
+    el.addEventListener('pointermove', (e) => {
+      if (!this.dur || e.buttons || !e.shiftKey || e.target.closest('.tz-mark, .tz-bound')) {
+        this.guideEl.hidden = true;
+        return;
+      }
+      const r = el.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      this.guideEl.hidden = false;
+      this.guideEl.style.left = x + 'px';
+      this.guideEl.dataset.t = this.guideText(this.zoomTimeAt(e.clientX), true);
+    });
+    el.addEventListener('pointerleave', () => {
+      this.guideEl.hidden = true;
     });
   }
 

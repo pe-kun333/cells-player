@@ -210,6 +210,8 @@ export class Sidebar {
       el.classList.toggle('is-digest', el.dataset.id === ui.digestId);
       if (el.dataset.kind === 'cell') {
         el.classList.toggle('is-active', activeCells.has(el.dataset.id));
+        // S やタイムラインの下のバーで操作するセル（重なっているときに分かるように）
+        el.classList.toggle('is-cur-cell', el.dataset.id === this.app.curCellId && activeCells.size > 1);
       } else {
         el.classList.toggle('is-target', el.dataset.id === tid);
         el.classList.toggle('is-now', el.dataset.id === nearId);

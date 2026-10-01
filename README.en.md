@@ -36,6 +36,11 @@ It then opens in its own window and also starts offline. After installing, you c
    "Even cells" in the right sidebar splits the whole video into cells of the same length, such as every 30 seconds or every minute (the short leftover at the end can join the previous cell; Ctrl+Z undoes them all at once).
    After a big jump from a card or the timeline, press "Back to 0:12" next to the play buttons or Backspace to return to where you were (Shift+Backspace to go forward again).
    Press S inside a cell (or "Split" on the card of the cell being played) to split it in two at the playhead. The note, likes, bookmark and comments stay with the earlier cell, and the later part becomes a new cell
+   - You can also split at a clicked point with "Split here" in a cell's timeline menu, or Shift+click on the Cells, Full or Zoom row (holding Shift shows ✂ and the time where it will split)
+   - With subtitles loaded, the split snaps to the break between subtitle lines within 1 second (can be turned off in Settings)
+   - Where two cells touch, a handle appears at the top of the Zoom row. Drag it to move the end of the earlier cell and the start of the later cell together; click it to nudge by ±0.1 s or ±1 s, snap to a subtitle break, or join the cells
+   The "current cell" bar right under the timeline lets you split, set the start or end at the playhead (the boundary with a neighboring cell moves too), repeat, like, bookmark and comment on the cell at the playhead. When cells overlap, "1/2 ⇄" switches which one you work on, and S splits that one
+   Press Ctrl+K (or 🔍 at the top right) to open the action list, find an action by typing and run it right away
 5. In the sidebar, rate, write notes, comment and repeat cells. "Play list" plays the listed cells and markers in order
 
 Press "?" at the top right for the list of keyboard shortcuts.

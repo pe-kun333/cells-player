@@ -372,6 +372,72 @@ html[lang="en"] .tl-label { width: 56px; }
   font: 11px var(--mono); padding: 0 5px; border-radius: 4px; background: var(--accent); color: #fff;
 }
 
+/* いまのセル（S・バーで操作するセル）。重なっているときだけ印を付ける */
+.tl-cell.is-cur { outline: 2px solid var(--accent); outline-offset: 1px; z-index: 1; }
+.card.cell-card.is-cur-cell { box-shadow: 0 0 0 1px var(--accent), inset 4px 0 0 var(--accent); }
+/* セルの段・全体の段・拡大の段の目安（Shift を押すと ✂ 分ける位置） */
+.tl-guide { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 1px dashed var(--text-3); pointer-events: none; z-index: 2; }
+.tl-guide::after {
+  content: attr(data-t); position: absolute; bottom: 100%; left: 0; transform: translateX(-50%); margin-bottom: 2px;
+  font: 11px var(--mono); padding: 0 4px; border-radius: 4px; background: var(--text); color: var(--bg); white-space: nowrap;
+}
+.tl-guide.is-cut { border-left: 2px solid var(--accent); }
+.tl-guide.is-cut::after { background: var(--accent); color: #fff; }
+.tl-hover.is-cut { background: var(--accent); color: #fff; }
+.tz-guide { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px solid var(--accent); pointer-events: none; z-index: 4; }
+.tz-guide::after {
+  content: attr(data-t); position: absolute; top: 0; left: 4px;
+  font: 11px var(--mono); padding: 0 4px; border-radius: 4px; background: var(--accent); color: #fff; white-space: nowrap;
+}
+/* セルの境目のつまみ（拡大の段の上のほう。ドラッグで両方のセルが一緒に動く） */
+.tz-bounds { position: absolute; inset: 0; pointer-events: none; }
+.tz-bound { position: absolute; top: 0; width: 0; height: 14px; pointer-events: auto; }
+.tz-grip {
+  position: absolute; top: 0; left: -5px; width: 10px; height: 13px; border-radius: 3px; cursor: ew-resize;
+  background: var(--accent); opacity: 0.85;
+  background-image: linear-gradient(to right, transparent 3px, rgba(255, 255, 255, 0.75) 3px, rgba(255, 255, 255, 0.75) 4px, transparent 4px, transparent 6px, rgba(255, 255, 255, 0.75) 6px, rgba(255, 255, 255, 0.75) 7px, transparent 7px);
+}
+.tz-bound:hover .tz-grip { opacity: 1; transform: scaleY(1.15); }
+
+/* ---- いまのセルのバー（タイムラインのすぐ下） ---- */
+.cell-bar {
+  flex: none; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; min-height: 36px; padding: 4px 10px;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--panel); font-size: 12.5px;
+}
+.cb-empty { color: var(--text-3); font-size: 12px; }
+.cb-cell { display: inline-flex; align-items: center; gap: 6px; min-width: 0; flex: 0 1 auto; }
+.cb-cell > .i { color: var(--accent); width: 15px; height: 15px; flex: none; }
+.cb-cell b { font: 600 12px var(--mono); white-space: nowrap; }
+.cb-memo { min-width: 0; max-width: 16em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
+.cb-acts { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 3px; margin-left: auto; }
+.cell-bar button {
+  display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 7px;
+  border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--text); cursor: pointer; font-size: 12px; white-space: nowrap;
+}
+.cell-bar button:hover { background: var(--panel-2); }
+.cell-bar button.on { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-text); }
+.cell-bar button .i { width: 14px; height: 14px; }
+.cell-bar button kbd { font-size: 10px; padding: 0 3px; }
+.cell-bar .cb-cycle { border-style: dashed; font-variant-numeric: tabular-nums; }
+.cell-bar .cb-like:not([data-lv="0"]) { color: var(--heart); }
+.cell-bar .cb-like .pips { display: inline-flex; gap: 2px; }
+.cell-bar .cb-like .pips i { width: 4px; height: 4px; border-radius: 50%; background: var(--line-strong); }
+.cell-bar .cb-like .pips i.on { background: var(--heart); }
+.cell-bar .n { font-size: 11px; font-variant-numeric: tabular-nums; }
+
+/* ---- 操作の一覧（Ctrl+K） ---- */
+dialog.palette-dialog { width: min(560px, 94vw); margin-top: 12vh; }
+.palette-body { display: flex; flex-direction: column; gap: 6px; padding: 12px; }
+.palette-input { width: 100%; height: 36px; font-size: 14px; }
+.palette-list { max-height: min(56vh, 460px); overflow-y: auto; display: flex; flex-direction: column; }
+.pal-group { padding: 8px 8px 2px; font-size: 11px; color: var(--text-3); }
+.pal-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 7px; cursor: pointer; font-size: 13.5px; }
+.pal-item.is-sel { background: var(--accent-bg); color: var(--accent-text); }
+.pal-label { flex: 1; min-width: 0; }
+.pal-item kbd { flex: none; font-size: 11px; }
+.pal-empty { padding: 14px 8px; font-size: 13px; color: var(--text-3); }
+.palette-foot { font-size: 11px; color: var(--text-3); text-align: right; }
+
 /* ---- この瞬間パネル ---- */
 .moment {
   background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
