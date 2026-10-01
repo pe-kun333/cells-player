@@ -1,6 +1,7 @@
 import { $, $$, fmt, fmtLen, escapeHtml, icon, cellLabel, clamp, round2 } from './util.js';
 import { saveSettings } from './store.js';
 import { tr } from './i18n.js';
+import { gridLabel } from './gridcells.js';
 
 // いまのカード（右のサイドバーの先頭）: いま見ている場面の操作を1か所にまとめる。
 // ・上: 再生の操作（再生・±5秒・移動する前に戻る）と時刻、たたむ
@@ -136,7 +137,7 @@ export class NowCard {
     const last = c?.comments[c.comments.length - 1];
     const key = c
       ? [c.id, c.s, c.e, c.lv, c.bm, c.memo, c.comments.length, last?.text, app.ui.repeatId === c.id, list.length, list.indexOf(c), inPl].join('|')
-      : 'none';
+      : `none:${app.settings.gridSec}`;
     if (key === this.cellKey) return;
     this.cellKey = key;
     if (!c) {
@@ -144,6 +145,7 @@ export class NowCard {
         <div class="nc-row">
           <button type="button" class="nc-btn" data-nc="make" title="${tr('いまいる区間（前後の目印の間）をセルにする (Enter)')}">${icon('cell')}${tr('区間をセル化')}<kbd>Enter</kbd></button>
           <button type="button" class="nc-btn" data-nc="makeLeft" title="${tr('いま付けた目印（目印を選んでいなければ、再生位置の直前の目印）の左の区間を、セルにする (Shift+Enter)')}">${tr('左の区間をセル化')}<kbd>Shift+Enter</kbd></button>
+          <button type="button" class="nc-btn" data-nc="grid" title="${tr('動画の最初から最後まで、同じ長さのセルに区切ります（長さは「設定」で変えられます）')}">${icon('cell')}${gridLabel(Number(app.settings.gridSec) || 30)}</button>
         </div>`;
       return;
     }
@@ -441,6 +443,8 @@ export class NowCard {
         return app.makeCellHere();
       case 'makeLeft':
         return app.makeCellLeft();
+      case 'grid':
+        return app.gridQuick();
       case 'cycle':
         return app.cycleCellTarget();
     }

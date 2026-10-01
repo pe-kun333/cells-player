@@ -525,9 +525,34 @@ body.ops-card .sidebar > .side-head {
   order: 3; flex-direction: column-reverse; padding: 8px 12px 10px;
   border-bottom: 0; border-top: 1px solid var(--line);
 }
-/* いまのカードを使うときは、瞬間のコメント・文字起こしの一覧を左の列へ（読むものは左、押すものは右） */
-body.ops-card .left > .mlist { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-body.ops-card .left > .mlist .mlist-body { height: 200px; }
+/* いまのカードを使うときは、動画の下を左右半分ずつに: 左に「この瞬間」、右に瞬間のコメント・文字起こしの一覧 */
+.lower-row { display: flex; flex-direction: column; gap: 12px; }
+body.ops-card .lower-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
+body.ops-card .lower-row > .mlist { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+body.ops-card .lower-row > .mlist .mlist-body { flex: 1; height: auto; min-height: 180px; }
+@media (max-width: 1000px) {
+  body.ops-card .lower-row { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* 動画と字幕の帯（全画面にするときは、この2つをまとめて） */
+.player { display: flex; flex-direction: column; flex: none; }
+.player > .caption-bar { margin-top: 0; }
+.player:fullscreen { background: #000; justify-content: center; }
+.player:fullscreen .stage { flex: 1 1 auto; min-height: 0; width: 100%; max-height: none; aspect-ratio: auto; border-radius: 0; }
+.player:fullscreen .caption-bar { border-radius: 0; border-top: 0; min-height: calc(clamp(18px, 2.4vw, 34px) * 3 + 14px); }
+.player:fullscreen .caption-bar.is-dual { min-height: calc(clamp(18px, 2.4vw, 34px) * 4.4 + 14px); }
+.player:fullscreen .caption { font-size: clamp(18px, 2.4vw, 34px); }
+
+/* 右下の検索・絞り込み・連続再生の区画をたたむボタン（セル／目印／すべての横） */
+.side-tabs-row { display: flex; align-items: center; gap: 6px; }
+.side-tabs-row .tabs { flex: 1; min-width: 0; }
+.side-fold { position: relative; flex: none; }
+.side-fold .i { transition: transform 0.15s; }
+body.side-folded .side-fold .i { transform: rotate(180deg); }
+body.side-folded .side-search, body.side-folded .side-filters, body.side-folded .side-digest { display: none; }
+.side-fold.has-filter::after { content: ""; position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+/* 等間隔でセル化のボタン（すぐに区切る） */
+.grid-quick { border-color: var(--accent); color: var(--accent-text); }
 .nc-tag {
   display: inline-flex; align-items: center; gap: 4px; max-width: 10em; height: 26px; padding: 0 8px;
   border: 1px solid var(--line-strong); border-radius: 999px; background: var(--panel); color: var(--text); cursor: pointer; font-size: 12px;

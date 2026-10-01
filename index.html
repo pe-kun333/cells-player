@@ -35,6 +35,8 @@
     <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 5v14l-12-7z"/><path d="M4 5v14"/></symbol>
     <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
     <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.828 2.828 0 1 0-4-4l-10.5 10.5v4"/><path d="M13.5 6.5l4 4"/></symbol>
+    <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/></symbol>
+    <symbol id="i-full-exit" viewBox="0 0 24 24"><path d="M8 4v4H4M16 4v4h4M8 20v-4H4M16 20v-4h4"/></symbol>
     <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="7"/><path d="M21 21l-6-6"/></symbol>
     <symbol id="i-jump-back" viewBox="0 0 24 24"><path d="M9 11l-4 4l4 4M5 15h11a4 4 0 0 0 0-8h-1"/></symbol>
     <symbol id="i-jump-fwd" viewBox="0 0 24 24"><path d="M15 11l4 4l-4 4M19 15h-11a4 4 0 0 1 0-8h1"/></symbol>
@@ -113,6 +115,8 @@
     <p class="chat-note">書き込むには、このブラウザで YouTube にログインしてください。コメントは YouTube のチャット画面から、あなたのアカウントで投稿されます（このアプリはその内容を受け取りません）。</p>
   </aside>
   <section class="left">
+    <!-- 動画と字幕の帯（全画面にするときは、この2つをまとめて） -->
+    <div class="player" id="playerBox">
     <div class="stage" id="stage">
       <div class="stage-media" id="stageMedia"></div>
       <div class="audio-cover" id="audioCover" hidden>
@@ -137,6 +141,7 @@
     </div>
     <!-- YouTube のときは、プレーヤーの上に重ねず、この帯に字幕を出す -->
     <div class="caption-bar" id="captionBar" hidden></div>
+    </div>
 
     <div class="controls">
       <button id="btnPlay" class="btn icon-btn" title="再生 / 一時停止 (Space)" aria-label="再生"><svg class="i" aria-hidden="true"><use href="#i-play"/></svg></button>
@@ -157,6 +162,7 @@
       <input type="file" id="txInput" accept=".srt,.vtt,.json,.txt" hidden>
       <label class="ctl">速度 <select id="rateSelect"><option value="1">1x</option></select></label>
       <label class="ctl" title="音量"><svg class="i" aria-hidden="true"><use href="#i-volume"/></svg><input type="range" id="volume" min="0" max="1" step="0.05" value="1"></label>
+      <button id="btnFull" class="btn small" title="動画を全画面で表示する（字幕の帯も一緒に） (F)"><svg class="i" aria-hidden="true"><use href="#i-full"/></svg><span>全画面</span></button>
     </div>
 
     <div class="timeline" id="timeline">
@@ -172,6 +178,7 @@
     <div class="live-sync-card" id="liveSyncCard" hidden></div>
     <div class="practice-card" id="practiceCard" hidden></div>
 
+    <div class="lower-row" id="lowerRow">
     <div class="moment" id="moment">
       <div class="moment-head">
         <span class="moment-title">この瞬間</span>
@@ -206,6 +213,7 @@
       <div class="hint" id="momentHint"></div>
       <div class="feed-head">前後の目印</div>
       <div class="feed" id="feed"></div>
+    </div>
     </div>
   </section>
 
@@ -257,10 +265,13 @@
       </div>
     </section>
     <div class="side-head">
+      <div class="side-tabs-row">
       <div class="tabs" id="sideTabs" role="tablist">
         <button class="tab" data-tab="cells" role="tab">セル</button>
         <button class="tab" data-tab="markers" role="tab" data-i18n="目印（タブ）">目印</button>
         <button class="tab" data-tab="all" role="tab">すべて</button>
+      </div>
+      <button type="button" class="btn icon-btn side-fold" id="btnSideFold" title="検索・絞り込み・連続再生をたたむ（セルの一覧を広く）" aria-label="検索・絞り込み・連続再生をたたむ" aria-expanded="true"><svg class="i" aria-hidden="true"><use href="#i-chevron"/></svg></button>
       </div>
       <div class="side-search">
         <input id="sideSearch" type="search" class="field" placeholder="メモ・コメント・タグを検索" autocomplete="off">
@@ -283,7 +294,8 @@
       </div>
       <div class="side-digest">
         <button class="btn small" id="btnDigest" title="いま一覧に並んでいるセル・目印を、上から順に続けて再生します（絞り込み・検索・並び順がそのまま使われます）"><svg class="i" aria-hidden="true"><use href="#i-play"/></svg> 一覧を連続再生</button>
-        <button class="btn small" id="btnGridCells" title="動画の最初から最後まで、30秒ごと・60秒ごとなど同じ長さのセルに区切ります"><svg class="i" aria-hidden="true"><use href="#i-cell"/></svg> 等間隔でセル化</button>
+        <button class="btn small grid-quick" id="btnGridQuick"><svg class="i" aria-hidden="true"><use href="#i-cell"/></svg><span></span></button>
+        <button class="btn small icon-btn" id="btnGridCells" title="長さを選んで、等間隔でセル化" aria-label="長さを選んで、等間隔でセル化"><svg class="i" aria-hidden="true"><use href="#i-dots"/></svg></button>
         <span class="spacer"></span>
         <span class="count" id="sideCount"></span>
       </div>
@@ -392,6 +404,10 @@
     <label class="set-row check">
       <input name="splitSnap" type="checkbox">
       <span>セルを分けるとき、字幕の行の切れ目に合わせる<small>字幕があるとき、分ける位置の前後1秒以内に行と行の切れ目があれば、そこで分けます（声の途中で切れにくくなります）</small></span>
+    </label>
+    <label class="set-row">
+      <span>等間隔でセル化の長さ（秒）<small>「30秒ごとに全部セル化」のボタンで、動画の最初から最後までをこの長さのセルに区切ります</small></span>
+      <input class="field" name="gridSec" type="number" min="1" max="3600" step="1">
     </label>
     <label class="set-row check">
       <input name="autoCellLeft" type="checkbox">
@@ -568,6 +584,7 @@
       <tr><td><kbd>S</kbd></td><td>再生位置でセルを2つに分ける（メモ・いいね・コメントは前のセルに残ります）</td></tr>
       <tr><td><kbd>Shift</kbd>+クリック</td><td>タイムラインのセル・全体・拡大の段で、その位置でセルを分ける（Shift を押していると、分ける位置に ✂ が出ます）</td></tr>
       <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>操作の一覧（探して実行）</td></tr>
+      <tr><td><kbd>F</kbd></td><td>動画を全画面で表示する／やめる</td></tr>
       <tr><td><kbd>Backspace</kbd></td><td>大きく移動したときに、移動する前の位置に戻る（<kbd>Shift</kbd>+<kbd>Backspace</kbd> で進む）</td></tr>
       <tr><td><kbd>R</kbd></td><td>再生位置のセルをリピート / 停止</td></tr>
       <tr><td><kbd>T</kbd></td><td>字幕の表示 / 非表示（読み込んでいなければ読み込む）</td></tr>

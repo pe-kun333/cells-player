@@ -3,10 +3,27 @@ import { saveSettings } from './store.js';
 import { tr } from './i18n.js';
 
 // 等間隔でセル化: 動画の最初から最後まで、同じ長さ（30秒ごと・60秒ごとなど）のセルに区切る。
+// 「30秒ごとに全部セル化」のボタンは、設定の長さですぐに区切る。「…」で長さを選ぶ画面を開く。
 // すでにある同じ範囲のセルは作らない。まとめて1回の Ctrl+Z で元に戻せる
 const MAX_CELLS = 500;
 // 長さの表し方（ちょうど何分なら「1分」、それ以外は「1分30秒」「45秒」）
 const lenText = (sec) => (sec >= 60 && sec % 60 === 0 ? tr('{m}分', { m: sec / 60 }) : fmtLen(sec));
+
+// 長さ d の動画を sec 秒ごとに区切った範囲。merge: 最後の余りを前のセルに含める
+function gridRanges(d, sec, merge) {
+  if (!d || !sec) return [];
+  const out = [];
+  for (let s = 0; s < d - 0.05; s += sec) out.push({ s: round2(s), e: round2(Math.min(d, s + sec)) });
+  const last = out[out.length - 1];
+  if (out.length > 1 && merge && last.e - last.s < sec - 0.05) {
+    out.pop();
+    out[out.length - 1].e = last.e;
+  }
+  return out;
+}
+
+// 「30秒ごとに全部セル化」のような、ボタンの文字
+export const gridLabel = (sec) => tr('{len}ごとに全部セル化', { len: lenText(sec) });
 
 export class GridCells {
   constructor(app) {
@@ -14,6 +31,8 @@ export class GridCells {
     this.dialog = $('#gridDialog');
     this.form = $('#gridForm');
     $('#btnGridCells').addEventListener('click', () => this.open());
+    $('#btnGridQuick').addEventListener('click', () => this.quick());
+    this.renderButtons();
     this.form.addEventListener('click', (e) => {
       const b = e.target.closest('[data-sec]');
       if (!b) return;
@@ -46,6 +65,53 @@ export class GridCells {
     this.dialog.showModal();
   }
 
+  // 設定の長さ（秒）
+  get presetSec() {
+    const v = Number(this.app.settings.gridSec);
+    return Number.isFinite(v) && v >= 1 ? Math.min(v, 3600) : 30;
+  }
+
+  // ボタンの文字を設定の長さに合わせる
+  renderButtons() {
+    const sec = this.presetSec;
+    const b = $('#btnGridQuick');
+    b.querySelector('span').textContent = gridLabel(sec);
+    b.title = tr('動画の最初から最後まで、{len}ごとのセルに区切ります（長さは「設定」か、となりの「…」で変えられます。Ctrl+Z でまとめて元に戻せます）', { len: lenText(sec) });
+  }
+
+  // 設定の長さで、すぐに区切る（余りが長さの半分より短ければ前のセルに含める）
+  quick() {
+    const { app } = this;
+    if (!app.player) {
+      app.toast(tr('先に動画か音声を開いてください'));
+      return;
+    }
+    const d = app.duration();
+    if (!d) {
+      app.hint(tr('まだ動画の長さが分かりません。少し再生してから、もう一度押してください'));
+      return;
+    }
+    const sec = this.presetSec;
+    const rem = d - Math.floor(d / sec) * sec;
+    const ranges = gridRanges(d, sec, rem < sec / 2);
+    if (ranges.length > MAX_CELLS) {
+      app.hint(tr('セルが多すぎます（{n} 個）。{max} 個までになるよう、長さを長くしてください', { n: ranges.length, max: MAX_CELLS }));
+      return;
+    }
+    this.apply(ranges, sec);
+  }
+
+  apply(ranges, sec) {
+    const { app } = this;
+    const made = app.store.addCells(ranges);
+    if (made.length) app.revealCell(made[0].id);
+    app.hint(
+      made.length
+        ? tr('{len}ごとに {n} 個のセルを作りました（Ctrl+Z でまとめて元に戻せます）', { len: lenText(sec), n: made.length })
+        : tr('同じ範囲のセルはもうあります'),
+    );
+  }
+
   sec() {
     const v = Number(this.form.sec.value);
     return Number.isFinite(v) && v >= 1 ? Math.min(v, 3600) : 0;
@@ -53,17 +119,7 @@ export class GridCells {
 
   // 区切る範囲。最後の余りは、選んでいれば前のセルに含める
   ranges() {
-    const d = this.app.duration();
-    const sec = this.sec();
-    if (!d || !sec) return [];
-    const out = [];
-    for (let s = 0; s < d - 0.05; s += sec) out.push({ s: round2(s), e: round2(Math.min(d, s + sec)) });
-    const last = out[out.length - 1];
-    if (out.length > 1 && this.form.merge.checked && last.e - last.s < sec - 0.05) {
-      out.pop();
-      out[out.length - 1].e = last.e;
-    }
-    return out;
+    return gridRanges(this.app.duration(), this.sec(), this.form.merge.checked);
   }
 
   preview() {
@@ -103,13 +159,8 @@ export class GridCells {
     if (!ranges.length || ranges.length > MAX_CELLS) return false;
     app.settings.gridSec = sec;
     saveSettings(app.settings);
-    const made = app.store.addCells(ranges);
-    if (made.length) app.revealCell(made[0].id);
-    app.hint(
-      made.length
-        ? tr('{len}ごとに {n} 個のセルを作りました（Ctrl+Z でまとめて元に戻せます）', { len: lenText(sec), n: made.length })
-        : tr('同じ範囲のセルはもうあります'),
-    );
+    this.renderButtons();
+    this.apply(ranges, sec);
     return true;
   }
 }

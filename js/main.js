@@ -18,7 +18,7 @@ import { XStrip } from './xstrip.js';
 import { Library } from './library.js';
 import { Playlist, isPlaylistJson } from './playlist.js';
 import { TlMenu } from './tlmenu.js';
-import { GridCells } from './gridcells.js';
+import { GridCells, gridLabel } from './gridcells.js';
 import { CellBar } from './cellbar.js';
 import { Palette } from './palette.js';
 import { NowCard } from './nowcard.js';
@@ -108,9 +108,10 @@ const nowCard = new NowCard(app);
 function applyOpsLayout() {
   const card = app.settings.opsLayout !== 'classic';
   document.body.classList.toggle('ops-card', card);
-  // 瞬間のコメント・文字起こしの一覧: いまのカードを使うときは左の列（読むもの）、前の配置では右のサイドバーの下
+  // 瞬間のコメント・文字起こしの一覧: いまのカードを使うときは「この瞬間」の右（動画の下を左右半分ずつ）、
+  // 前の配置では右のサイドバーの下
   const ml = $('#momentList');
-  const home = card ? $('.left') : $('.sidebar');
+  const home = card ? $('#lowerRow') : $('.sidebar');
   if (ml.parentElement !== home) home.appendChild(ml);
   nowCard.render();
 }
@@ -118,6 +119,43 @@ function applyOpsLayout() {
 app.startComment = () => (nowCard.on ? nowCard.startComment() : moment.startMark());
 app.startCommentOn = (markerId) => (nowCard.on ? nowCard.startComment({ markerId }) : moment.startMarkOn(markerId));
 app.openPresets = () => presetDialog.open();
+app.gridQuick = () => gridCells.quick();
+
+// ---- 検索・絞り込み・連続再生の区画をたたむ（セルの一覧を広く見る） ----
+function applySideFold() {
+  const folded = !!app.settings.sideFolded;
+  document.body.classList.toggle('side-folded', folded);
+  const b = $('#btnSideFold');
+  b.setAttribute('aria-expanded', String(!folded));
+  b.title = folded ? tr('検索・絞り込み・連続再生をひらく') : tr('検索・絞り込み・連続再生をたたむ（セルの一覧を広く）');
+  // たたんでいる間も、絞り込み中なら印を付ける（絞り込んだままなのを忘れないように）
+  const filtering = !!(app.ui.query || app.ui.minLike || app.ui.tag || app.ui.bmOnly);
+  b.classList.toggle('has-filter', folded && filtering);
+}
+$('#btnSideFold').addEventListener('click', () => {
+  app.settings.sideFolded = !app.settings.sideFolded;
+  saveSettings(app.settings);
+  applySideFold();
+});
+
+// ---- 全画面（動画と字幕の帯をまとめて） ----
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen?.();
+    return;
+  }
+  if (!requireMedia()) return;
+  const p = $('#playerBox').requestFullscreen?.();
+  if (p) p.catch(() => toast(tr('全画面にできませんでした')));
+}
+document.addEventListener('fullscreenchange', () => {
+  const on = document.fullscreenElement === $('#playerBox');
+  const b = $('#btnFull');
+  b.querySelector('use').setAttribute('href', on ? '#i-full-exit' : '#i-full');
+  b.querySelector('span').textContent = on ? tr('全画面をやめる') : tr('全画面');
+  document.body.classList.toggle('is-full', on);
+});
+$('#btnFull').addEventListener('click', toggleFullscreen);
 // タイムラインのクリックの動きを切り替えたとき: 説明（title）などを描き直す
 app.onTlClickMode = () => timeline.render();
 // ライブ配信を見ている間に作った目印・セルには印を付ける（あとでアーカイブの時刻に合わせるため）
@@ -162,6 +200,8 @@ function renderAll() {
   tlMenu.refresh();
   cellBar.render();
   nowCard.render();
+  gridCells.renderButtons();
+  applySideFold();
   updateCaptionButton();
   txIndex = -2; // 字幕の表示を次の監視で描き直す
   $('#btnUndo').disabled = !store.canUndo;
@@ -1684,6 +1724,7 @@ function openSettings() {
   f.cardAutoFold.checked = s.cardAutoFold;
   f.autoCellLeft.checked = s.autoCellLeft;
   f.splitSnap.checked = s.splitSnap;
+  f.gridSec.value = s.gridSec;
   f.liveChat.checked = s.liveChat;
   f.resumeAfterComment.checked = s.resumeAfterComment;
   f.captions.checked = s.captions;
@@ -1727,6 +1768,7 @@ $('#settingsForm').addEventListener('submit', (e) => {
     cardAutoFold: f.cardAutoFold.checked,
     autoCellLeft: f.autoCellLeft.checked,
     splitSnap: f.splitSnap.checked,
+    gridSec: clamp(Math.round(num(f.gridSec.value, DEFAULT_SETTINGS.gridSec)), 1, 3600),
     liveChat: f.liveChat.checked,
     resumeAfterComment: f.resumeAfterComment.checked,
     captions: f.captions.checked,
@@ -1870,6 +1912,7 @@ const palette = new Palette(app, () => {
   };
   return [
     { group: g.play, label: tr('再生 / 一時停止'), key: 'Space', run: togglePlay },
+    { group: g.play, label: tr('全画面'), key: 'F', words: 'fullscreen', run: toggleFullscreen },
     { group: g.play, label: tr('5秒戻る'), key: '←', run: () => app.seek(app.now() - 5) },
     { group: g.play, label: tr('5秒進む'), key: '→', run: () => app.seek(app.now() + 5) },
     { group: g.play, label: tr('移動する前の位置に戻る'), key: 'Backspace', words: 'back undo', run: app.jumpBack },
@@ -1889,7 +1932,8 @@ const palette = new Palette(app, () => {
     { group: g.cell, label: tr('いまのセルの終わりを再生位置に'), words: 'end edge 端', run: () => app.cellAt() ? app.setCellEdge(app.cellAt().id, 'e') : app.hint(tr('再生位置にセルはありません')) },
     { group: g.cell, label: tr('重なっているセルを切り替える'), run: () => app.cycleCellTarget() },
     { group: g.cell, label: tr('いまのセルをリピート'), key: 'R', words: 'repeat loop', run: toggleRepeatHere },
-    { group: g.cell, label: tr('等間隔でセル化'), words: 'grid 30 60', run: () => gridCells.open() },
+    { group: g.cell, label: gridLabel(Number(app.settings.gridSec) || 30), words: 'grid 30 60 等間隔', run: () => gridCells.quick() },
+    { group: g.cell, label: tr('等間隔でセル化（長さを選ぶ）'), words: 'grid 30 60', run: () => gridCells.open() },
     { group: g.cell, label: tr('一覧を連続再生'), words: 'digest', run: clickBtn('#btnDigest') },
     { group: g.tx, label: tr('字幕の表示を切り替える'), key: 'T', words: 'caption subtitle', run: toggleCaptions },
     { group: g.tx, label: tr('字幕を読み込む'), words: 'srt vtt', run: () => requireMedia() && $('#txInput').click() },
@@ -2013,6 +2057,10 @@ document.addEventListener('keydown', (e) => {
     case 's':
     case 'S':
       app.splitCellAt();
+      break;
+    case 'f':
+    case 'F':
+      toggleFullscreen();
       break;
     case 't':
     case 'T':
@@ -2183,6 +2231,7 @@ if ((qLang === 'ja' || qLang === 'en') && app.settings.lang !== qLang) {
 }
 
 applyOpsLayout();
+applySideFold();
 const initial = new URLSearchParams(location.search).get('src');
 if (openShareFromHash()) showEmpty();
 else if (initial) openFromText(initial);

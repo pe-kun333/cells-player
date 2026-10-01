@@ -32,6 +32,7 @@ export const DEFAULT_SETTINGS = {
   pauseOnComment: false,     // コメントを書いている間は一時停止する（選んだときだけ）
   opsLayout: 'card',         // 操作の置き場所（card: 右のいまのカード / classic: 左の「この瞬間」）
   cardAutoFold: false,       // 一覧をスクロールしたら、いまのカードを自動でたたむ
+  sideFolded: false,         // 右下の検索・絞り込み・連続再生の区画をたたむ（セルの一覧を広く）
   autoCellLeft: false,       // 目印（M・−N秒）を付けたら、その左の区間（ひとつ前の区切り〜その目印）をセルにする
   // タイムラインをクリックしたときの動き（menu: メニューを出す。右クリックはいつでもメニュー）
   tlSegClick: 'menu',        // 区間: menu / cell（すぐセルにする）/ seek（区間の頭へ移動）

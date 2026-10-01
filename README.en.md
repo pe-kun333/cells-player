@@ -33,7 +33,8 @@ It then opens in its own window and also starts offline. After installing, you c
    Choose what a click does for each kind with "On click" at the bottom of the menu (for example "Make a cell right away" for segments or "Go to that marker" for markers, as before). Right-click always opens the menu.
    "Make cell" (Enter) makes the current segment a cell, and "Make left cell" (Shift+Enter) makes the segment to the left of the marker you just added (previous marker to that marker) a cell.
    Turn on "When you add a marker, make the segment to its left a cell" in Settings to do this automatically each time you add a marker.
-   "Even cells" in the right sidebar splits the whole video into cells of the same length, such as every 30 seconds or every minute (the short leftover at the end can join the previous cell; Ctrl+Z undoes them all at once).
+   The "Cells every 30 s" button (next to continuous play at the bottom right, and on the now card) splits the whole video into cells of the length set in Settings right away; "…" next to it lets you choose another length (the short leftover at the end can join the previous cell; Ctrl+Z undoes them all at once).
+   "Full screen" next to the play buttons (or the F key) shows the video full screen together with the subtitle bar.
    After a big jump from a card or the timeline, press "Back to 0:12" next to the play buttons or Backspace to return to where you were (Shift+Backspace to go forward again).
    Press S inside a cell (or "Split" on the card of the cell being played) to split it in two at the playhead. The note, likes, bookmark and comments stay with the earlier cell, and the later part becomes a new cell
    - You can also split at a clicked point with "Split here" in a cell's timeline menu, or Shift+click on the Cells, Full or Zoom row (holding Shift shows ✂ and the time where it will split)
@@ -68,7 +69,8 @@ The actions for the scene you are watching are gathered in the "now card" at the
 - Comment: write it, then press "To this moment" (a marker) or "To this cell". Enter sends it to this cell and Shift+Enter to this moment. It is pinned to the time you started writing
   - Playback pauses while you write only if you turn on the ⏸ button next to the box (or the setting); normally it keeps playing
 - Turn on "Fold the now card automatically when you scroll the list" in Settings to fold it while you browse the list; it unfolds when you scroll back to the top
-- The moment comment and transcript list moves to the left column (under the video)
+- The cell list sits right under the card, with search, filters and continuous play below it (the Cells / Markers / All switch at the very bottom). The button next to the switch folds search, filters and continuous play so the cell list gets more room
+- Under the video, "This moment" (nearby markers) and the moment comment / transcript list sit side by side
 - "Where the actions go" in Settings switches back to "This moment" on the left (the previous layout)
 
 ## Two subtitles (Japanese and English side by side)

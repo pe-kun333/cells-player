@@ -628,6 +628,27 @@ export const EN = {
   '「{title}」は手元のファイルです。同じファイルを開くと、メモが復元されます': '"{title}" is a file on your computer. Open the same file to bring back its notes',
   'すべて見る・検索（ライブラリ）': 'See all and search (Library)',
 
+  // ---- 全画面・たたむ・すぐに等間隔でセル化 ----
+  '{len}ごとに全部セル化': 'Cells every {len}',
+  '全画面': 'Full screen',
+  '全画面をやめる': 'Exit full screen',
+  '全画面にできませんでした': "Couldn't switch to full screen",
+  '動画の最初から最後まで、{len}ごとのセルに区切ります（長さは「設定」か、となりの「…」で変えられます。Ctrl+Z でまとめて元に戻せます）':
+    'Splits the whole video into cells every {len} (change the length in Settings or with "…" next to it; Ctrl+Z undoes them all)',
+  '動画の最初から最後まで、同じ長さのセルに区切ります（長さは「設定」で変えられます）':
+    'Splits the whole video into cells of the same length (change the length in Settings)',
+  '同じ範囲のセルはもうあります': 'Cells with the same ranges already exist',
+  '検索・絞り込み・連続再生をたたむ（セルの一覧を広く）': 'Fold search, filters and continuous play (more room for the cell list)',
+  '検索・絞り込み・連続再生をたたむ': 'Fold search, filters and continuous play',
+  '検索・絞り込み・連続再生をひらく': 'Show search, filters and continuous play',
+  '等間隔でセル化（長さを選ぶ）': 'Even cells (choose the length)',
+  '動画を全画面で表示する（字幕の帯も一緒に） (F)': 'Show the video full screen, with the subtitle bar (F)',
+  '長さを選んで、等間隔でセル化': 'Choose a length and make even cells',
+  '等間隔でセル化の長さ（秒）': 'Length for even cells (seconds)',
+  '「30秒ごとに全部セル化」のボタンで、動画の最初から最後までをこの長さのセルに区切ります':
+    'The "Cells every 30 s" button splits the whole video into cells of this length',
+  '動画を全画面で表示する／やめる': 'Show the video full screen / exit',
+
   // ---- いまのカード ----
   'いまのカード': 'Now card',
   '空き（「登録」から登録できます）': 'Empty (add one with "Edit")',
@@ -1057,6 +1078,7 @@ export const EN_HTML = {
       <tr><td><kbd>S</kbd></td><td>Split the cell in two at the playhead (the note, likes and comments stay with the earlier cell)</td></tr>
       <tr><td><kbd>Shift</kbd>+click</td><td>On the Cells, Full or Zoom row of the timeline, split the cell at that point (holding Shift shows ✂ where it will split)</td></tr>
       <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>Action list (find and run)</td></tr>
+      <tr><td><kbd>F</kbd></td><td>Show the video full screen / exit</td></tr>
       <tr><td><kbd>Backspace</kbd></td><td>After a big jump, go back to where you were (<kbd>Shift</kbd>+<kbd>Backspace</kbd> to go forward again)</td></tr>
       <tr><td><kbd>R</kbd></td><td>Repeat the cell at the playback position / stop</td></tr>
       <tr><td><kbd>T</kbd></td><td>Show / hide captions (loads captions if none)</td></tr>
