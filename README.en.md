@@ -34,7 +34,8 @@ It then opens in its own window and also starts offline. After installing, you c
    "Make cell" (Enter) makes the current segment a cell, and "Make left cell" (Shift+Enter) makes the segment to the left of the marker you just added (previous marker to that marker) a cell.
    Turn on "When you add a marker, make the segment to its left a cell" in Settings to do this automatically each time you add a marker.
    The "Cells every 30 s" button (next to continuous play at the bottom right, and on the now card) splits the whole video into cells of the length set in Settings right away; "…" next to it lets you choose another length (the short leftover at the end can join the previous cell; Ctrl+Z undoes them all at once).
-   "Full screen" next to the play buttons (or the F key) shows the video full screen together with the subtitle bar.
+   "Full screen" in the top bar (or the F key) uses the whole screen for the app, including the browser bar at the top (the layout stays the same; Esc to exit).
+   On the Cells row of the timeline, press a cell and drag left or right to select the cells in that row across the range. When you release, it asks whether to merge them; "Merge" makes them one cell (handy after splitting the video every 30 seconds)
    After a big jump from a card or the timeline, press "Back to 0:12" next to the play buttons or Backspace to return to where you were (Shift+Backspace to go forward again).
    Press S inside a cell (or "Split" on the card of the cell being played) to split it in two at the playhead. The note, likes, bookmark and comments stay with the earlier cell, and the later part becomes a new cell
    - You can also split at a clicked point with "Split here" in a cell's timeline menu, or Shift+click on the Cells, Full or Zoom row (holding Shift shows ✂ and the time where it will split)

@@ -138,21 +138,24 @@ $('#btnSideFold').addEventListener('click', () => {
   applySideFold();
 });
 
-// ---- 全画面（動画と字幕の帯をまとめて） ----
+// ---- 全画面: ブラウザの上の部分（タブやアドレスバー）も使って、アプリ全体を画面いっぱいに表示する。
+// ボタン・セルの一覧などの配置はそのまま。Esc か、もう一度押すと戻る
 function toggleFullscreen() {
   if (document.fullscreenElement) {
     document.exitFullscreen?.();
     return;
   }
-  if (!requireMedia()) return;
-  const p = $('#playerBox').requestFullscreen?.();
+  const p = document.documentElement.requestFullscreen?.();
   if (p) p.catch(() => toast(tr('全画面にできませんでした')));
+  else toast(tr('このブラウザでは全画面にできません'));
 }
 document.addEventListener('fullscreenchange', () => {
-  const on = document.fullscreenElement === $('#playerBox');
+  const on = !!document.fullscreenElement;
   const b = $('#btnFull');
   b.querySelector('use').setAttribute('href', on ? '#i-full-exit' : '#i-full');
   b.querySelector('span').textContent = on ? tr('全画面をやめる') : tr('全画面');
+  b.setAttribute('aria-label', on ? tr('全画面をやめる') : tr('全画面'));
+  b.title = on ? tr('全画面をやめる (F・Esc)') : tr('ブラウザの上の部分も使って、アプリ全体を画面いっぱいに表示する (F)');
   document.body.classList.toggle('is-full', on);
 });
 $('#btnFull').addEventListener('click', toggleFullscreen);
@@ -819,6 +822,14 @@ app.toggleCellSelect = (id) => {
   const sel = app.ui.selectedCells;
   if (sel.has(id)) sel.delete(id);
   else sel.add(id);
+  renderAll();
+};
+
+// 選んだセルの表示だけを描き直す（タイムラインの段とサイドバーのカード）
+app.refreshSelection = () => renderAll();
+// 連結するセルとして選んでいるものを ids にする（なくなったセル・共有のセルは外す）
+app.setCellSelection = (ids) => {
+  app.ui.selectedCells = new Set(ids.filter((id) => store.getCell(id) && !store.getCell(id).src));
   renderAll();
 };
 
@@ -1993,7 +2004,11 @@ document.addEventListener('keydown', (e) => {
     palette.open();
     return;
   }
-  // ライブラリは、動画を開いていなくても使える
+  // 全画面とライブラリは、動画を開いていなくても使える
+  if ((k === 'f' || k === 'F') && !ctrl && !e.altKey) {
+    toggleFullscreen();
+    return;
+  }
   if ((k === 'l' || k === 'L') && !ctrl && !e.altKey) {
     library.open();
     return;
@@ -2057,10 +2072,6 @@ document.addEventListener('keydown', (e) => {
     case 's':
     case 'S':
       app.splitCellAt();
-      break;
-    case 'f':
-    case 'F':
-      toggleFullscreen();
       break;
     case 't':
     case 'T':

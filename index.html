@@ -75,6 +75,7 @@
   <button id="btnExport" class="btn">書き出し</button>
   <button id="btnImport" class="btn" title="書き出したメモ（.cells.json）や、保存したプレイリスト（.playlist.json）を読み込みます">読み込み</button>
   <button id="btnSettings" class="btn">設定</button>
+  <button id="btnFull" class="btn" title="ブラウザの上の部分も使って、アプリ全体を画面いっぱいに表示する (F)" aria-label="全画面"><svg class="i" aria-hidden="true"><use href="#i-full"/></svg><span>全画面</span></button>
   <button id="btnPalette" class="btn icon-btn" title="操作を探して実行 (Ctrl+K)" aria-label="操作を探して実行"><svg class="i" aria-hidden="true"><use href="#i-search"/></svg></button>
   <button id="btnHelp" class="btn icon-btn" title="ショートカット (?)" aria-label="ショートカット">?</button>
   <input type="file" id="fileInput" accept="video/*,audio/*,.mkv,.flac,.opus" hidden>
@@ -162,7 +163,6 @@
       <input type="file" id="txInput" accept=".srt,.vtt,.json,.txt" hidden>
       <label class="ctl">速度 <select id="rateSelect"><option value="1">1x</option></select></label>
       <label class="ctl" title="音量"><svg class="i" aria-hidden="true"><use href="#i-volume"/></svg><input type="range" id="volume" min="0" max="1" step="0.05" value="1"></label>
-      <button id="btnFull" class="btn small" title="動画を全画面で表示する（字幕の帯も一緒に） (F)"><svg class="i" aria-hidden="true"><use href="#i-full"/></svg><span>全画面</span></button>
     </div>
 
     <div class="timeline" id="timeline">
@@ -584,7 +584,7 @@
       <tr><td><kbd>S</kbd></td><td>再生位置でセルを2つに分ける（メモ・いいね・コメントは前のセルに残ります）</td></tr>
       <tr><td><kbd>Shift</kbd>+クリック</td><td>タイムラインのセル・全体・拡大の段で、その位置でセルを分ける（Shift を押していると、分ける位置に ✂ が出ます）</td></tr>
       <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>操作の一覧（探して実行）</td></tr>
-      <tr><td><kbd>F</kbd></td><td>動画を全画面で表示する／やめる</td></tr>
+      <tr><td><kbd>F</kbd></td><td>全画面（ブラウザの上の部分も使って、アプリ全体を画面いっぱいに）／やめる</td></tr>
       <tr><td><kbd>Backspace</kbd></td><td>大きく移動したときに、移動する前の位置に戻る（<kbd>Shift</kbd>+<kbd>Backspace</kbd> で進む）</td></tr>
       <tr><td><kbd>R</kbd></td><td>再生位置のセルをリピート / 停止</td></tr>
       <tr><td><kbd>T</kbd></td><td>字幕の表示 / 非表示（読み込んでいなければ読み込む）</td></tr>

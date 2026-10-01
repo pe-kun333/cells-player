@@ -21,13 +21,13 @@ export class TlMenu {
   constructor(app) {
     this.app = app;
     this.el = $('#tlMenu');
-    this.cur = null; // { kind: 'seg' | 'marker' | 'cell' | 'pos' | 'bound', id, s, e, t, x, y, focus }
+    this.cur = null; // { kind: 'seg' | 'marker' | 'cell' | 'pos' | 'bound' | 'merge', id, ids, s, e, t, x, y, focus }
     this.el.addEventListener('click', (e) => this.onClick(e));
     this.el.addEventListener('change', (e) => this.onChange(e));
     this.el.addEventListener('keydown', (e) => this.onKeydown(e));
     // メニューの外を押したら閉じる（メニューを開いたクリックより先に動くよう、捕捉の段階で見る）
     document.addEventListener('pointerdown', (e) => {
-      if (this.cur && !this.el.contains(e.target)) this.close();
+      if (this.cur && !this.el.contains(e.target)) this.close({ byPress: true });
     }, true);
     document.addEventListener('keydown', (e) => {
       if (!this.cur || e.key !== 'Escape' || e.isComposing) return;
@@ -58,11 +58,16 @@ export class TlMenu {
     if (cur.focus === 'comment') this.el.querySelector('[data-tlm-input]')?.focus();
   }
 
-  close() {
+  // byPress: メニューの外を押して閉じた（そのクリックが効くよう、ここでは描き直さない）
+  close({ byPress = false } = {}) {
     if (!this.cur) return;
+    const cur = this.cur;
     this.cur = null;
     this.el.hidden = true;
     this.el.innerHTML = '';
+    // 連結するか聞いていたのをキャンセル・Esc でやめたときは、ドラッグする前の選び方に戻す。
+    // 外を押して閉じたときは、選んだのを残す（サイドバーの「連結」「解除」でも扱える）
+    if (cur.kind === 'merge' && !cur.done && !byPress) this.app.setCellSelection(cur.prev || []);
   }
 
   // メモが変わったとき（main の renderAll から）: 開いていれば描き直す。書きかけのコメントは残す
@@ -99,6 +104,11 @@ export class TlMenu {
     let html = '';
     if (c.kind === 'seg') html = this.segHtml(c);
     else if (c.kind === 'pos') html = this.posHtml(c);
+    else if (c.kind === 'merge') {
+      const cells = c.ids.map((id) => store.getCell(id)).filter(Boolean);
+      if (cells.length < 2) return this.close();
+      html = this.mergeHtml(cells);
+    }
     else if (c.kind === 'bound') {
       const { left, right } = this.app.boundaryCells(c.t);
       if (!left.length || !right.length) return this.close();
@@ -245,6 +255,21 @@ export class TlMenu {
     return this.app.cellsAt(t).find((c) => t > c.s + 0.1 && t < c.e - 0.1) || null;
   }
 
+  // ---- ドラッグで選んだセルを連結するか ----
+
+  mergeHtml(cells) {
+    cells.sort((a, b) => a.s - b.s);
+    const s = cells[0].s;
+    const e = Math.max(...cells.map((c) => c.e));
+    return `${this.head('cell', `${fmt(s)} – ${fmt(e)}`, tr('{n} 個のセル', { n: cells.length }))}
+      <div class="tlm-ask">${tr('{n} 個のセルを1つに連結しますか？', { n: cells.length })}</div>
+      <div class="tlm-note">${tr('メモ・コメントはまとめて1つのセルに入ります。Ctrl+Z で元に戻せます')}</div>
+      <div class="tlm-row">
+        <button type="button" class="primary" data-tlm="merge-ok">${tr('連結する')}</button>
+        <button type="button" data-tlm="merge-cancel">${tr('キャンセル')}</button>
+      </div>`;
+  }
+
   // ---- 何もない位置（右クリック） ----
 
   posHtml({ t }) {
@@ -295,6 +320,16 @@ export class TlMenu {
     const cur = this.cur;
     const act = b.dataset.tlm;
     if (act === 'close') return this.close();
+
+    if (cur.kind === 'merge') {
+      if (act === 'merge-ok') {
+        // 連結すると選んだのは外れるので、そのあと閉じても選び方は戻さない
+        cur.done = true;
+        app.ui.selectedCells = new Set(cur.ids.filter((id) => store.getCell(id)));
+        app.mergeSelectedCells();
+      }
+      return this.close();
+    }
 
     if (cur.kind === 'pos') {
       const t = cur.t;

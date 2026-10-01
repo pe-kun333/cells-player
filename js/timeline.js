@@ -173,7 +173,11 @@ export class Timeline {
     this.lanesEl.addEventListener('pointerleave', () => {
       this.laneGuide.hidden = true;
     });
+    this.bindLaneDrag();
     this.lanesEl.addEventListener('click', (e) => {
+      // ドラッグで範囲を選んだ直後のクリック（離したときに出るもの）は、メニューを開かない。
+      // 出ないこともあるので、印を残さず時間で見分ける（押し直したときは bindLaneDrag で 0 に戻す）
+      if (performance.now() - (this.dragEndAt || 0) < 350) return;
       const b = e.target.closest('.tl-cell');
       const c = b && this.store.getCell(b.dataset.id);
       if (!c) return;
@@ -201,6 +205,81 @@ export class Timeline {
       if (!b || !this.store.getCell(b.dataset.id)) return;
       e.preventDefault();
       this.app.tlMenu.open({ kind: 'cell', id: b.dataset.id, t: this.timeAtX(this.lanesEl, e.clientX), x: e.clientX, y: e.clientY });
+    });
+  }
+
+  // セルを押したまま左右にドラッグすると、同じ段のその範囲のセルをまとめて選び、離したところで連結するか聞く
+  bindLaneDrag() {
+    const el = this.lanesEl;
+    el.addEventListener('pointerdown', (e) => {
+      // 押し直したら新しいクリックなので、ドラッグ直後のクリックとして無視しない
+      this.dragEndAt = 0;
+      if (e.button !== 0 || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey || !this.dur) return;
+      const b = e.target.closest('.tl-cell');
+      const start = b && this.store.getCell(b.dataset.id);
+      if (!start || start.src) return;
+      const lane = this.laneOf.get(start.id);
+      const t0 = this.timeAtX(el, e.clientX);
+      const x0 = e.clientX;
+      // タッチ・ペンは指が少しぶれてもタップのままにする
+      const threshold = e.pointerType === 'mouse' ? 5 : 10;
+      let dragging = false;
+      let picked = [start];
+      // 同じ段の自分のセルのうち、ドラッグした範囲にかかるもの（押したセルはいつも入る）。
+      // 同じ段のセルは重ならないので、かかったセルが続けて並ぶ
+      const pick = (x) => {
+        const t1 = this.timeAtX(el, x);
+        const a = Math.min(t0, t1);
+        const z = Math.max(t0, t1);
+        return this.store.cells
+          .filter((c) => c.id === start.id || (!c.src && this.laneOf.get(c.id) === lane && c.e > a && c.s < z))
+          .sort((p, q) => p.s - q.s);
+      };
+      const mark = () => {
+        const ids = new Set(picked.map((c) => c.id));
+        for (const bar of el.querySelectorAll('.tl-cell')) bar.classList.toggle('is-drag-sel', ids.has(bar.dataset.id));
+      };
+      const move = (ev) => {
+        if (ev.pointerId !== e.pointerId) return;
+        if (!dragging) {
+          // ドラッグになる前にボタンが離れていた（段の外で離した）ら、ここで終える
+          if (e.pointerType === 'mouse' && !(ev.buttons & 1)) return end(ev);
+          if (Math.abs(ev.clientX - x0) < threshold) return;
+          dragging = true;
+          try {
+            el.setPointerCapture(e.pointerId);
+          } catch {}
+          this.laneGuide.hidden = true;
+        }
+        picked = pick(ev.clientX);
+        mark();
+        const s = picked[0].s;
+        const end = Math.max(...picked.map((c) => c.e));
+        this.app.hint(
+          tr('{n} 個のセルを選んでいます（{range}）。離すと連結するか聞きます', { n: picked.length, range: `${fmt(s)} – ${fmt(end)}` }),
+          true,
+        );
+      };
+      const end = (ev) => {
+        if (ev.pointerId !== e.pointerId) return;
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', end);
+        window.removeEventListener('pointercancel', end);
+        if (!dragging) return;
+        this.dragEndAt = performance.now();
+        for (const bar of el.querySelectorAll('.tl-cell.is-drag-sel')) bar.classList.remove('is-drag-sel');
+        this.app.hint('');
+        if (ev.type === 'pointercancel' || picked.length < 2) return;
+        // 選んだセルを「連結するセル」にして、連結するか聞く（キャンセルしたら、ドラッグする前の選び方に戻す）
+        const prev = [...this.app.ui.selectedCells];
+        this.app.ui.selectedCells = new Set(picked.map((c) => c.id));
+        this.app.tlMenu.open({ kind: 'merge', ids: picked.map((c) => c.id), prev, x: ev.clientX, y: ev.clientY });
+        this.app.refreshSelection();
+      };
+      // 段の外で離しても終わるよう、window で受ける（ドラッグ中は段がポインターを捕まえる）
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', end);
+      window.addEventListener('pointercancel', end);
     });
   }
 

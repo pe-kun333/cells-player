@@ -628,6 +628,14 @@ export const EN = {
   '「{title}」は手元のファイルです。同じファイルを開くと、メモが復元されます': '"{title}" is a file on your computer. Open the same file to bring back its notes',
   'すべて見る・検索（ライブラリ）': 'See all and search (Library)',
 
+  // ---- ドラッグで選んだセルを連結 ----
+  '{n} 個のセルを選んでいます（{range}）。離すと連結するか聞きます': (v) => `${pl(v.n, 'cell')} selected (${v.range}). Release to choose whether to merge them`,
+  '{n} 個のセルを1つに連結しますか？': (v) => `Merge these ${pl(v.n, 'cell')} into one?`,
+  '{n} 個のセル': (v) => pl(v.n, 'cell'),
+  '連結する': 'Merge',
+  '全画面をやめる (F・Esc)': 'Exit full screen (F / Esc)',
+  'メモ・コメントはまとめて1つのセルに入ります。Ctrl+Z で元に戻せます': 'Notes and comments are combined into the one cell. Ctrl+Z undoes it',
+
   // ---- 全画面・たたむ・すぐに等間隔でセル化 ----
   '{len}ごとに全部セル化': 'Cells every {len}',
   '全画面': 'Full screen',
@@ -642,12 +650,13 @@ export const EN = {
   '検索・絞り込み・連続再生をたたむ': 'Fold search, filters and continuous play',
   '検索・絞り込み・連続再生をひらく': 'Show search, filters and continuous play',
   '等間隔でセル化（長さを選ぶ）': 'Even cells (choose the length)',
-  '動画を全画面で表示する（字幕の帯も一緒に） (F)': 'Show the video full screen, with the subtitle bar (F)',
+  'ブラウザの上の部分も使って、アプリ全体を画面いっぱいに表示する (F)': 'Use the whole screen for the app, including the browser bar at the top (F)',
+  'このブラウザでは全画面にできません': "This browser can't switch to full screen",
   '長さを選んで、等間隔でセル化': 'Choose a length and make even cells',
   '等間隔でセル化の長さ（秒）': 'Length for even cells (seconds)',
   '「30秒ごとに全部セル化」のボタンで、動画の最初から最後までをこの長さのセルに区切ります':
     'The "Cells every 30 s" button splits the whole video into cells of this length',
-  '動画を全画面で表示する／やめる': 'Show the video full screen / exit',
+
 
   // ---- いまのカード ----
   'いまのカード': 'Now card',
@@ -1078,7 +1087,7 @@ export const EN_HTML = {
       <tr><td><kbd>S</kbd></td><td>Split the cell in two at the playhead (the note, likes and comments stay with the earlier cell)</td></tr>
       <tr><td><kbd>Shift</kbd>+click</td><td>On the Cells, Full or Zoom row of the timeline, split the cell at that point (holding Shift shows ✂ where it will split)</td></tr>
       <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>Action list (find and run)</td></tr>
-      <tr><td><kbd>F</kbd></td><td>Show the video full screen / exit</td></tr>
+      <tr><td><kbd>F</kbd></td><td>Full screen (use the whole screen for the app, including the browser bar at the top) / exit</td></tr>
       <tr><td><kbd>Backspace</kbd></td><td>After a big jump, go back to where you were (<kbd>Shift</kbd>+<kbd>Backspace</kbd> to go forward again)</td></tr>
       <tr><td><kbd>R</kbd></td><td>Repeat the cell at the playback position / stop</td></tr>
       <tr><td><kbd>T</kbd></td><td>Show / hide captions (loads captions if none)</td></tr>

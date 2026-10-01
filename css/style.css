@@ -132,10 +132,11 @@ select {
   height: 52px; display: flex; align-items: center; gap: 8px;
   padding: 0 14px; border-bottom: 1px solid var(--line); background: var(--panel);
 }
-.brand { font-weight: 600; margin-right: 6px; }
-.url-form { display: flex; gap: 6px; }
+.brand { flex: none; font-weight: 600; margin-right: 6px; white-space: nowrap; }
+.topbar > .btn { flex: none; }
+.url-form { display: flex; gap: 6px; min-width: 0; flex: 0 1 auto; }
 .url-form input {
-  width: 280px; height: 30px; padding: 0 10px;
+  width: 280px; min-width: 120px; flex: 0 1 280px; height: 30px; padding: 0 10px;
   border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--bg);
 }
 .media-title {
@@ -258,6 +259,7 @@ body.caption-below .stage { border-radius: 10px 10px 0 0; }
 .tlm-input { width: 100%; height: 28px; font-size: 13px; }
 .tlm-memo { font-size: 12.5px; line-height: 1.5; color: var(--text-2); overflow-wrap: anywhere; }
 .tlm-note { font-size: 11.5px; line-height: 1.6; color: var(--text-3); }
+.tlm-ask { font-size: 13px; font-weight: 600; }
 .tlm-foot { display: flex; align-items: center; gap: 6px; padding-top: 7px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--text-3); white-space: nowrap; }
 .tlm-foot select { flex: 1; min-width: 0; height: 24px; font-size: 12px; }
 
@@ -280,7 +282,7 @@ body.caption-below .stage { border-radius: 10px 10px 0 0; }
 .tl-row { display: flex; align-items: center; gap: 10px; }
 .tl-label { width: 28px; flex: none; font-size: 12px; color: var(--text-3); }
 html[lang="en"] .tl-label { width: 56px; }
-.tl-lanes { position: relative; flex: 1; min-width: 0; }
+.tl-lanes { position: relative; flex: 1; min-width: 0; touch-action: pan-y; }
 .tl-lanes.is-empty { height: 18px; display: flex; align-items: center; font-size: 11.5px; color: var(--text-3); }
 .tl-cell {
   position: absolute; height: 10px; min-width: 3px; border-radius: 3px;
@@ -292,6 +294,8 @@ html[lang="en"] .tl-label { width: 56px; }
 .tl-cell.is-active { box-shadow: 0 0 0 1.5px var(--accent); }
 .tl-cell.is-repeat { outline: 2px dashed var(--accent); outline-offset: 1px; }
 .tl-cell.is-selected { outline: 2px solid var(--accent); outline-offset: 1px; z-index: 1; }
+/* ドラッグして選んでいる範囲のセル */
+.tl-cell.is-drag-sel { outline: 2px solid var(--accent); outline-offset: 1px; z-index: 1; filter: brightness(1.25); }
 .tl-track { position: relative; flex: 1; min-width: 0; border-radius: 5px; background: var(--track); overflow: hidden; }
 .tl-main { height: 26px; cursor: pointer; touch-action: none; }
 .tl-played { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--played); pointer-events: none; }
@@ -534,14 +538,9 @@ body.ops-card .lower-row > .mlist .mlist-body { flex: 1; height: auto; min-heigh
   body.ops-card .lower-row { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* 動画と字幕の帯（全画面にするときは、この2つをまとめて） */
+/* 動画と字幕の帯をまとめる入れ物 */
 .player { display: flex; flex-direction: column; flex: none; }
 .player > .caption-bar { margin-top: 0; }
-.player:fullscreen { background: #000; justify-content: center; }
-.player:fullscreen .stage { flex: 1 1 auto; min-height: 0; width: 100%; max-height: none; aspect-ratio: auto; border-radius: 0; }
-.player:fullscreen .caption-bar { border-radius: 0; border-top: 0; min-height: calc(clamp(18px, 2.4vw, 34px) * 3 + 14px); }
-.player:fullscreen .caption-bar.is-dual { min-height: calc(clamp(18px, 2.4vw, 34px) * 4.4 + 14px); }
-.player:fullscreen .caption { font-size: clamp(18px, 2.4vw, 34px); }
 
 /* 右下の検索・絞り込み・連続再生の区画をたたむボタン（セル／目印／すべての横） */
 .side-tabs-row { display: flex; align-items: center; gap: 6px; }
@@ -551,6 +550,11 @@ body.ops-card .lower-row > .mlist .mlist-body { flex: 1; height: auto; min-heigh
 body.side-folded .side-fold .i { transform: rotate(180deg); }
 body.side-folded .side-search, body.side-folded .side-filters, body.side-folded .side-digest { display: none; }
 .side-fold.has-filter::after { content: ""; position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+/* 上のバーが狭いときは、全画面のボタンを記号だけにする */
+@media (max-width: 1400px) {
+  #btnFull { width: 30px; padding: 0; justify-content: center; }
+  #btnFull span { display: none; }
+}
 /* 等間隔でセル化のボタン（すぐに区切る） */
 .grid-quick { border-color: var(--accent); color: var(--accent-text); }
 .nc-tag {
