@@ -809,6 +809,9 @@ dialog.wide-dialog.lib-dialog { width: min(1120px, 96vw); }
   .lib-list, .pl-list { max-height: 45vh; }
 }
 .act.pl.on { color: var(--accent); }
+/* 分割は、再生位置がそのセルの中にあるときだけ出す */
+.act.split { display: none; }
+.cell-card.is-active .act.split { display: inline-flex; }
 
 .recent-head { display: flex; align-items: center; gap: 8px; }
 .recent-lib { margin-left: auto; padding: 0; border: 0; background: none; cursor: pointer; font-size: 12px; color: var(--accent-text); }

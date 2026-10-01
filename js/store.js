@@ -665,6 +665,20 @@ export class Store {
 
   // 複数のセルを、最初の開始から最後の終了までの1つのセルにまとめる（元のセルは消える）。
   // メモは時間順に改行でつなぎ、コメントはすべて移し、いいねは一番高いものを残す
+  // セルを t で2つに分ける。前のセル（元の id のまま）にメモ・いいね・ブックマーク・コメントをすべて残し、
+  // 後ろは新しい空のセルにする。端に近すぎる位置では分けない（null）
+  splitCell(id, t) {
+    const c = this.getCell(id);
+    if (!c || c.src || t <= c.s + 0.1 || t >= c.e - 0.1) return null;
+    return this.mutate((doc) => {
+      const at = round2(t);
+      const tail = { id: uid(), s: at, e: c.e, memo: '', lv: 0, bm: false, comments: [], at: Date.now(), ...(c.fromLive ? { fromLive: true } : {}) };
+      c.e = at;
+      doc.cells.push(tail);
+      return { head: c, tail };
+    });
+  }
+
   mergeCells(ids) {
     const parts = this.ownCells.filter((c) => ids.includes(c.id)).sort((a, b) => a.s - b.s || a.e - b.e);
     if (parts.length < 2) return null;

@@ -29,7 +29,8 @@ It then opens in its own window and also starts offline. After installing, you c
    Edit them with the pencil button and switch between sets (e.g. for study and for watching)
 4. Click a segment in the "Segments" row of the timeline to make the part between markers a cell (drag to include several segments)
    "Make cell" (Enter) makes the current segment a cell, and "Make left cell" (Shift+Enter) makes the segment to the left of the marker you just added (previous marker to that marker) a cell.
-   Turn on "When you add a marker, make the segment to its left a cell" in Settings to do this automatically each time you add a marker
+   Turn on "When you add a marker, make the segment to its left a cell" in Settings to do this automatically each time you add a marker.
+   Press S inside a cell (or "Split" on the card of the cell being played) to split it in two at the playhead. The note, likes, bookmark and comments stay with the earlier cell, and the later part becomes a new cell
 5. In the sidebar, rate, write notes, comment and repeat cells. "Play list" plays the listed cells and markers in order
 
 Press "?" at the top right for the list of keyboard shortcuts.

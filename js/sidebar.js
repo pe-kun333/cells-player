@@ -292,6 +292,7 @@ export class Sidebar {
         ${sh && !c.comments.length ? '' : `<button class="act talk${talk ? ' open' : ''}" data-act="talk" title="${tr('コメント')}" aria-expanded="${talk}">${icon('comment')}${c.comments.length ? `<span class="n">${c.comments.length}</span>` : ''}</button>`}
         <button class="act rep${rep ? ' on' : ''}" data-act="repeat" title="${tr('リピート再生（同時に1つだけ）')}">${icon('repeat')}<span>${tr('リピート')}</span></button>
         ${this.plBtn(c)}
+        ${sh ? '' : `<button class="act split" data-act="split" title="${tr('再生位置で2つに分ける（メモ・いいね・コメントは前のセルに残ります） (S)')}">${icon('scissors')}<span>${tr('分割')}</span></button>`}
         ${this.app.store.cues.length ? `<button class="act tx${tx ? ' open' : ''}" data-act="tx" title="${tr('この区間の文字起こし')}" aria-expanded="${tx}">${icon('text')}<span>${tr('文字起こし')}</span></button>` : ''}
       </div>
       ${tx ? this.txHtml(c) : ''}
@@ -339,7 +340,7 @@ export class Sidebar {
     return `<div class="card-detail" data-act="noop">
       ${this.edgeRow(tr('開始'), 's', c.s)}
       ${this.edgeRow(tr('終了'), 'e', c.e)}
-      <div class="detail-foot"><button class="btn tiny danger" data-act="delete">${icon('trash')} ${tr('セルを削除')}</button></div>
+      <div class="detail-foot"><button class="btn tiny" data-act="split" title="${tr('再生位置で2つに分ける（メモ・いいね・コメントは前のセルに残ります） (S)')}">${icon('scissors')} ${tr('再生位置で分割')}</button><span class="spacer"></span><button class="btn tiny danger" data-act="delete">${icon('trash')} ${tr('セルを削除')}</button></div>
     </div>`;
   }
 
@@ -546,6 +547,9 @@ export class Sidebar {
         break;
       case 'repeat':
         app.toggleRepeat(id);
+        break;
+      case 'split':
+        app.splitCellAt(id);
         break;
       case 'pl': {
         const added = app.playlist.toggle(store.doc, kind, o);

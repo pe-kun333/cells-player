@@ -472,6 +472,34 @@ app.makeCellHere = () => {
   app.createCell(pts[i], pts[i + 1]);
 };
 
+// 再生位置でセルを2つに分ける（S キー・セルの「分割」）。前のセルに元の情報をすべて残し、後ろは新しいセルになる。
+// id がなければ、再生位置を含む自分のセル（重なっていれば一番短いもの）を分ける
+app.splitCellAt = (id) => {
+  if (!requireMedia()) return;
+  const t = app.now();
+  const inside = (c) => t > c.s + 0.1 && t < c.e - 0.1;
+  const c = id ? store.getCell(id) : store.ownCells.filter(inside).sort((a, b) => a.e - a.s - (b.e - b.s))[0];
+  if (!c) {
+    app.hint(tr('再生位置を含むセルがありません（セルの中で S を押すと、そこで2つに分けます）'));
+    return;
+  }
+  if (c.src) {
+    app.hint(tr('共有で読み込んだセルは分けられません'));
+    return;
+  }
+  if (!inside(c)) {
+    app.hint(tr('分ける位置（再生位置）を、セルの中（端から少し内側）にしてください'));
+    return;
+  }
+  const r = store.splitCell(c.id, t);
+  if (!r) return;
+  app.ui.flashId = r.tail.id;
+  sidebar.render();
+  app.hint(
+    tr('セルを {time} で2つに分けました（メモ・いいね・コメントは前のセルに残ります。Ctrl+Z で元に戻せます）', { time: fmt(t, true) }),
+  );
+};
+
 // 時刻 t の区切り（目印）の左の区間（ひとつ前の区切り、なければ先頭〜その区切り）をセルにする。
 // t に区切りがなければ、t より前の一番近い区切りを使う。左に区間がなければ null
 function cellLeftOf(t) {
@@ -1692,6 +1720,10 @@ document.addEventListener('keydown', (e) => {
     case 'r':
     case 'R':
       toggleRepeatHere();
+      break;
+    case 's':
+    case 'S':
+      app.splitCellAt();
       break;
     case 't':
     case 'T':

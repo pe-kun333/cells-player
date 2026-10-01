@@ -110,6 +110,16 @@ export const EN = {
   'いまいる区間（前後の目印の間）をセルにする (Enter)': 'Make the current segment (between the surrounding markers) a cell (Enter)',
   '区間をセル化': 'Make cell',
   '左の区間をセル化': 'Make left cell',
+  '再生位置を含むセルがありません（セルの中で S を押すと、そこで2つに分けます）':
+    'No cell contains the playhead (press S inside a cell to split it there)',
+  '共有で読み込んだセルは分けられません': "Shared cells can't be split",
+  '分ける位置（再生位置）を、セルの中（端から少し内側）にしてください': 'Put the split point (the playhead) inside the cell, a little away from its edges',
+  'セルを {time} で2つに分けました（メモ・いいね・コメントは前のセルに残ります。Ctrl+Z で元に戻せます）':
+    'Split the cell in two at {time} (the note, likes and comments stay with the earlier cell; Ctrl+Z to undo)',
+  '再生位置で2つに分ける（メモ・いいね・コメントは前のセルに残ります） (S)':
+    'Split in two at the playhead (the note, likes and comments stay with the earlier cell) (S)',
+  '分割': 'Split',
+  '再生位置で分割': 'Split at playhead',
   'いま付けた目印（目印を選んでいなければ、再生位置の直前の目印）の左の区間を、セルにする (Shift+Enter)':
     'Make the segment to the left of the marker you just added (or, with no marker selected, the marker just before the playhead) a cell (Shift+Enter)',
   '。左の区間（{range}）をセルにしました': '. Made the segment to its left ({range}) a cell',
@@ -868,6 +878,7 @@ export const EN_HTML = {
       <tr><td><kbd>C</kbd></td><td>Comment pin (pin this moment and write a comment; Enter to save, Esc to cancel)</td></tr>
       <tr><td><kbd>Enter</kbd></td><td>Make the current segment a cell</td></tr>
       <tr><td><kbd>Shift</kbd>+<kbd>Enter</kbd></td><td>Make the segment to the left of the marker you just added (previous marker to that marker) a cell</td></tr>
+      <tr><td><kbd>S</kbd></td><td>Split the cell in two at the playhead (the note, likes and comments stay with the earlier cell)</td></tr>
       <tr><td><kbd>R</kbd></td><td>Repeat the cell at the playback position / stop</td></tr>
       <tr><td><kbd>T</kbd></td><td>Show / hide captions (loads captions if none)</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>V</kbd></td><td>Paste a copied transcript to load it</td></tr>
