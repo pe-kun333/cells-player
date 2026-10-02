@@ -251,6 +251,7 @@ body.caption-below .stage { border-radius: 10px 10px 0 0; }
 .tlm-row button.on { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-text); }
 .tlm-row button.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
 .tlm-row button.danger { color: var(--danger); }
+.tlm-row button.tlm-color.on { border-color: var(--cc, var(--line)); }
 .tlm-row .hearts .i { width: 12px; height: 12px; }
 .tlm-row .tag-chip button { height: auto; padding: 0; border: 0; background: none; }
 .tlm-label { min-width: 2.5em; font-size: 11.5px; color: var(--text-3); }
@@ -300,6 +301,9 @@ html[lang="en"] .tl-label { width: 56px; }
 .tl-cell.is-selected { outline: 2px solid var(--accent); outline-offset: 1px; z-index: 1; }
 /* ドラッグして選んでいる範囲のセル */
 .tl-cell.is-drag-sel { outline: 2px solid var(--accent); outline-offset: 1px; z-index: 1; filter: brightness(1.25); }
+/* 色を付けたセル: バーの枠をその色に（再生中の印の輪は外側に残す） */
+.tl-cell.has-color { box-shadow: inset 0 0 0 2px var(--cc); }
+.tl-cell.has-color.is-active { box-shadow: inset 0 0 0 2px var(--cc), 0 0 0 1.5px var(--accent); }
 .tl-track { position: relative; flex: 1; min-width: 0; border-radius: 5px; background: var(--track); overflow: hidden; }
 .tl-main { height: 26px; cursor: pointer; touch-action: none; }
 .tl-played { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--played); pointer-events: none; }
@@ -422,7 +426,8 @@ html[lang="en"] .tl-label { width: 56px; }
   display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 7px;
   border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--text); cursor: pointer; font-size: 12px; white-space: nowrap;
 }
-.cell-bar button:hover { background: var(--panel-2); }
+.cell-bar button:hover:not(:disabled) { background: var(--panel-2); }
+.cell-bar button:disabled { opacity: 0.45; cursor: default; }
 .cell-bar button.on { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-text); }
 .cell-bar button .i { width: 14px; height: 14px; }
 .cell-bar button kbd { font-size: 10px; padding: 0 3px; }
@@ -861,6 +866,62 @@ dialog.palette-dialog { width: min(560px, 94vw); margin-top: 12vh; }
 .act.mark.on { color: var(--accent); }
 .act.talk.open { background: var(--panel-2); color: var(--text); }
 .act.rep.on { color: var(--accent-text); background: var(--accent-bg); }
+/* 色を付けるボタン（色を付けていれば、その色の丸を出す） */
+.cdot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--cc); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); flex: none; }
+.act.color.on { color: var(--text-2); }
+/* 色を付けたセルのカード: 枠をその色に */
+.card.cell-card.has-color { border-color: var(--cc); box-shadow: 0 0 0 1px var(--cc); }
+.card.cell-card.has-color.is-active { border-color: var(--cc); box-shadow: 0 0 0 1px var(--cc), 0 0 0 3px var(--accent); }
+.card.cell-card.has-color.is-cur-cell { box-shadow: 0 0 0 1px var(--cc), inset 4px 0 0 var(--accent); }
+.card.cell-card.has-color.is-active.is-cur-cell { box-shadow: 0 0 0 1px var(--cc), 0 0 0 3px var(--accent), inset 4px 0 0 var(--accent); }
+.card.cell-card.has-color.is-digest { box-shadow: 0 0 0 1px var(--cc), 0 0 0 3px var(--accent); }
+.card.cell-card.has-color.is-selected { border-color: var(--cc); }
+.merge-row .btn:disabled { opacity: 0.45; cursor: default; }
+
+/* ---- セルの色のポップアップ ---- */
+.color-pop {
+  position: fixed; z-index: 70; width: 240px; max-width: calc(100vw - 16px);
+  display: flex; flex-direction: column; gap: 8px; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--text); box-shadow: var(--shadow);
+  font-size: 13px;
+}
+.cpop-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.cpop-head > .i { color: var(--accent); }
+.cpop-sub { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); font-size: 12px; color: var(--text-3); }
+.cpop-x {
+  margin-left: auto; flex: none; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 6px; background: none; color: var(--text-3); cursor: pointer;
+}
+.cpop-x:hover { background: var(--panel-2); color: var(--text); }
+.cpop-x .i { width: 14px; height: 14px; }
+.cpop-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.cpop-sw {
+  display: flex; align-items: center; justify-content: center; aspect-ratio: 1; padding: 0;
+  border: 0; border-radius: 50%; background: var(--sw); cursor: pointer;
+  color: #fff; font-size: 11px; font-weight: 700; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  transition: transform 0.1s;
+}
+.cpop-sw:hover { transform: scale(1.1); }
+.cpop-sw.on { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--sw); }
+.cpop-sw:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.cpop-edit { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--text-3); cursor: pointer; }
+.cpop-edit input[type="color"] {
+  width: 30px; height: 30px; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%;
+  background: none; cursor: pointer; overflow: hidden;
+}
+.cpop-edit input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.cpop-edit input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 50%; }
+.cpop-edit input[type="color"]::-moz-color-swatch { border: 0; border-radius: 50%; }
+.cpop-note { font-size: 11.5px; line-height: 1.6; color: var(--text-3); }
+.cpop-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; row-gap: 6px; }
+.cpop-foot button {
+  display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 9px;
+  border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--text); cursor: pointer; font-size: 12.5px; white-space: nowrap;
+}
+.cpop-foot button:hover:not(:disabled) { background: var(--panel-2); }
+.cpop-foot button.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+.cpop-foot button:disabled { opacity: 0.45; cursor: default; }
+.cpop-foot button .i { width: 14px; height: 14px; }
 
 /* コメント（ポスト） */
 .thread { margin-top: 6px; padding: 8px 0 6px; border-top: 1px solid var(--line); }

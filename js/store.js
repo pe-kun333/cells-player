@@ -21,6 +21,23 @@ export const DEFAULT_PRESET_SETS = isEn
       { id: 'watch', name: '鑑賞用', items: ['名場面', '笑った', '泣ける', '鳥肌', '映像がいい', 'もう一度見たい'] },
     ];
 
+// セルの枠に付ける色（登録した6色）。セルには何番目の色か（color: 1〜6、0 か無しは色なし）を持たせる
+export const CELL_COLOR_COUNT = 6;
+export const DEFAULT_CELL_COLORS = ['#e5484d', '#f76b15', '#f5b400', '#30a46c', '#0090ff', '#8e4ec6'];
+
+export function normalizeCellColors(list) {
+  return Array.from({ length: CELL_COLOR_COUNT }, (_, i) => {
+    const v = Array.isArray(list) ? list[i] : null;
+    return typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v) ? v.toLowerCase() : DEFAULT_CELL_COLORS[i];
+  });
+}
+
+// セルの枠の色（色を付けていなければ null）
+export function cellColorOf(settings, c) {
+  const n = c?.color | 0;
+  return n >= 1 && n <= CELL_COLOR_COUNT ? settings.cellColors[n - 1] : null;
+}
+
 export const DEFAULT_SETTINGS = {
   offsets: [3, 6, 9],      // 「少し前に目印」ボタンの秒数
   mergeWindow: 2,          // この秒数以内の既存の目印はまとめる
@@ -66,6 +83,7 @@ export const DEFAULT_SETTINGS = {
   splitGap: 2,               // 文字起こしから自動でセルにするときの、区切る間（秒）
   splitMax: 60,              // 同じく、1つのセルの長さの上限（秒）
   wordScope: 'media',        // 単語帳の表示（media: いまのメディア / all: すべて）
+  cellColors: DEFAULT_CELL_COLORS, // セルの枠に付ける色（登録した6色）
 };
 
 function readJSON(key) {
@@ -122,6 +140,7 @@ export function loadSettings() {
   const s = { ...structuredClone(DEFAULT_SETTINGS), ...(readJSON(SETTINGS_KEY) || {}) };
   delete s.pauseWhileTyping; // コメントマークの設定に置き換えた古い設定
   s.presetSets = normalizePresetSets(s.presetSets);
+  s.cellColors = normalizeCellColors(s.cellColors);
   if (!s.presetSets.some((x) => x.id === s.activePresetSet)) s.activePresetSet = s.presetSets[0].id;
   if (!['time', 'like', 'new', 'comments'].includes(s.sidebarSort)) s.sidebarSort = 'time';
   return s;
@@ -718,6 +737,9 @@ export class Store {
         at: Date.now(),
         ...(this.liveNow() || parts.every((c) => c.fromLive) ? { fromLive: true } : {}),
       };
+      // 色は、色を付けたセルのうち時間が早いほうのものを残す
+      const color = parts.find((c) => c.color | 0)?.color | 0;
+      if (color) merged.color = color;
       doc.cells = doc.cells.filter((c) => !ids.includes(c.id));
       doc.cells.push(merged);
       return merged;
@@ -887,6 +909,7 @@ export class Store {
           comments: Array.isArray(c.comments) ? c.comments : [],
           at: c.at || 0,
           ...(c.fromLive ? { fromLive: true } : {}),
+          ...((c.color | 0) >= 1 && (c.color | 0) <= CELL_COLOR_COUNT ? { color: c.color | 0 } : {}),
         });
         addedC++;
       }

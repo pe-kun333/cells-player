@@ -1,5 +1,5 @@
 import { $, fmt, fmtLen, fmtDate, escapeHtml, hearts, icon, commentSummary, tagChips, whoColor, viaBadges, clamp } from './util.js';
-import { saveSettings } from './store.js';
+import { saveSettings, cellColorOf } from './store.js';
 import { cuesIn, subTextAt } from './transcript.js';
 import { tr } from './i18n.js';
 
@@ -291,7 +291,7 @@ export class Sidebar {
     // 手でスクロールした直後・一覧の中で書いている間は、このセルは送らない（次のセルから、また追いかける）
     const a = document.activeElement;
     const typing = a && this.listEl.contains(a) && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT' || a.tagName === 'SELECT');
-    if (t < this.followPause || app.ui.editingMemo || typing) return;
+    if (t < this.followPause || app.ui.editingMemo || typing || app.colorPop?.isOpen) return;
     this.scrollToCard(el);
   }
 
@@ -361,8 +361,10 @@ export class Sidebar {
   cardAttrs(kind, o, depth, extra) {
     const d = Math.min(depth, 4);
     const sh = this.app.store.shareOf(o);
-    const cls = `card ${kind}-card${d ? ' is-nested' : ''}${this.app.ui.expanded.has(o.id) ? ' is-open' : ''}${sh ? ' is-shared' : ''}${extra}`;
-    return `class="${cls}" data-kind="${kind}" data-id="${o.id}" style="--depth:${d}${sh ? `;--who:${whoColor(sh)}` : ''}"`;
+    // 色を付けたセルは、枠をその色にする
+    const cc = kind === 'cell' && !sh ? cellColorOf(this.app.settings, o) : null;
+    const cls = `card ${kind}-card${d ? ' is-nested' : ''}${this.app.ui.expanded.has(o.id) ? ' is-open' : ''}${sh ? ' is-shared' : ''}${cc ? ' has-color' : ''}${extra}`;
+    return `class="${cls}" data-kind="${kind}" data-id="${o.id}" style="--depth:${d}${sh ? `;--who:${whoColor(sh)}` : ''}${cc ? `;--cc:${cc}` : ''}"`;
   }
 
   // 共有で読み込んだものに付ける、共有した人の名前
@@ -400,12 +402,13 @@ export class Sidebar {
         ${rep ? `<span class="badge-rep">${icon('repeat')}${tr('リピート中')}</span>` : ''}
         <span class="spacer"></span>
         ${sh ? this.whoChip(sh) : `<input type="checkbox" class="cell-check" data-act="select"${selected ? ' checked' : ''} title="${tr('連結するセルとして選ぶ')}" aria-label="${tr('このセルを選ぶ')}">
-        <button class="tool" data-act="toggle" title="${open ? tr('閉じる') : tr('範囲の調整・削除')}" aria-label="${tr('その他')}">${icon('dots')}</button>`}
+        <button class="tool" data-act="toggle" title="${open ? tr('閉じる') : tr('範囲の調整・上下のセルとの結合・削除')}" aria-label="${tr('その他')}">${icon('dots')}</button>`}
       </div>
       ${memo}
       <div class="actions">
         ${sh ? this.sharedMarks(c, sh, pips) : `<button class="act like" data-act="cycle" data-lv="${c.lv}" title="${tr('いいね（押すたびに 1 → 2 → 3 → 解除）')}">${icon('heart', c.lv ? 'fill' : '')}<span class="pips">${pips}</span></button>
-        <button class="act mark${c.bm ? ' on' : ''}" data-act="bm" title="${tr('ブックマーク')}" aria-pressed="${c.bm}">${icon('bookmark', c.bm ? 'fill' : '')}</button>`}
+        <button class="act mark${c.bm ? ' on' : ''}" data-act="bm" title="${tr('ブックマーク')}" aria-pressed="${c.bm}">${icon('bookmark', c.bm ? 'fill' : '')}</button>
+        ${this.colorBtn(c)}`}
         ${sh && !c.comments.length ? '' : `<button class="act talk${talk ? ' open' : ''}" data-act="talk" title="${tr('コメント')}" aria-expanded="${talk}">${icon('comment')}${c.comments.length ? `<span class="n">${c.comments.length}</span>` : ''}</button>`}
         <button class="act rep${rep ? ' on' : ''}" data-act="repeat" title="${tr('リピート再生（同時に1つだけ）')}">${icon('repeat')}<span>${tr('リピート')}</span></button>
         ${this.plBtn(c)}
@@ -453,10 +456,34 @@ export class Sidebar {
     for (const el of this.listEl.querySelectorAll(`.tx-line[data-i="${i}"]`)) el.classList.add('cur');
   }
 
+  // 色を付けるボタン（押すと登録した6色のポップアップ）。色を付けていれば、その色の丸も出す
+  colorBtn(c) {
+    const cc = cellColorOf(this.app.settings, c);
+    const title = cc ? tr('色を変える・外す（いまは 色 {n}）', { n: c.color | 0 }) : tr('色を付ける（登録した6色から選ぶ）');
+    return `<button class="act color${cc ? ' on' : ''}" data-act="color" title="${title}" aria-label="${title}" aria-haspopup="dialog">${icon('palette')}${cc ? `<span class="cdot" style="--cc:${cc}"></span>` : ''}</button>`;
+  }
+
+  // 上（前）・下（後ろ）のセルと結合するボタン。時間順の一覧では、時間が前のセルが上に並ぶ。
+  // 時間順でないときや、絞り込み・検索で間のセルが隠れているときは「前／次」と書く（となりは時間で決めるため）
+  mergeRow(c) {
+    const { ui } = this.app;
+    const timeSort = !SORTS[this.app.settings.sidebarSort] && !(ui.minLike || ui.bmOnly || ui.tag || ui.query.trim());
+    const btn = (dir) => {
+      const n = this.app.neighborCell(c.id, dir);
+      const label = timeSort ? (dir < 0 ? tr('↑ 上のセルと結合') : tr('↓ 下のセルと結合')) : dir < 0 ? tr('← 前のセルと結合') : tr('次のセルと結合 →');
+      const title = n
+        ? tr('{range} のセルと1つにまとめる（メモ・コメントもまとめて入ります。Ctrl+Z で元に戻せます）', { range: `${fmt(n.s)} – ${fmt(n.e)}` })
+        : dir < 0 ? tr('前に結合できるセルがありません') : tr('後ろに結合できるセルがありません');
+      return `<button class="btn tiny" data-act="${dir < 0 ? 'merge-up' : 'merge-down'}" title="${title}"${n ? '' : ' disabled'}>${label}</button>`;
+    };
+    return `<div class="edge-row merge-row"><span class="edge-label">${tr('結合')}</span>${btn(-1)}${btn(1)}</div>`;
+  }
+
   cellDetail(c) {
     return `<div class="card-detail" data-act="noop">
       ${this.edgeRow(tr('開始'), 's', c.s)}
       ${this.edgeRow(tr('終了'), 'e', c.e)}
+      ${this.mergeRow(c)}
       <div class="detail-foot"><button class="btn tiny" data-act="split" title="${tr('再生位置で2つに分ける（メモ・いいね・コメントは前のセルに残ります） (S)')}">${icon('scissors')} ${tr('再生位置で分割')}</button><span class="spacer"></span><button class="btn tiny danger" data-act="delete">${icon('trash')} ${tr('セルを削除')}</button></div>
     </div>`;
   }
@@ -667,6 +694,13 @@ export class Sidebar {
         break;
       case 'split':
         app.splitCellAt(id);
+        break;
+      case 'color':
+        app.colorPop.open(id, actEl);
+        break;
+      case 'merge-up':
+      case 'merge-down':
+        app.mergeWithNeighbor(id, act === 'merge-up' ? -1 : 1);
         break;
       case 'pl': {
         const added = app.playlist.toggle(store.doc, kind, o);

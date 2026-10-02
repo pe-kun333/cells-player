@@ -1,5 +1,6 @@
 import { $, clamp, fmt, round2, cellLabel, whoColor } from './util.js';
 import { tr } from './i18n.js';
+import { cellColorOf } from './store.js';
 
 const LANE_H = 10;
 const LANE_GAP = 3;
@@ -146,6 +147,11 @@ export class Timeline {
       b.style.width = ((c.e - c.s) / d) * 100 + '%';
       b.style.top = lanes.get(c.id) * (LANE_H + LANE_GAP) + 'px';
       b.dataset.id = c.id;
+      const cc = cellColorOf(this.app.settings, c);
+      if (cc) {
+        b.classList.add('has-color');
+        b.style.setProperty('--cc', cc);
+      }
       b.title = `${fmt(c.s)} – ${fmt(c.e)}  ${cellLabel(c) || tr('（メモなし）')}`;
       frag.appendChild(b);
     }

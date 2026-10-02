@@ -1,5 +1,5 @@
 import { $, fmt, fmtLen, escapeHtml, icon, cellLabel, clamp, round2 } from './util.js';
-import { saveSettings } from './store.js';
+import { saveSettings, cellColorOf } from './store.js';
 import { tr } from './i18n.js';
 
 // タイムラインをクリックしたときのメニュー（区間・目印・セル。右クリックなら、何もない位置やセルの境目も）。
@@ -31,7 +31,7 @@ export class TlMenu {
     this.el.addEventListener('keydown', (e) => this.onKeydown(e));
     // メニューの外を押したら閉じる（メニューを開いたクリックより先に動くよう、捕捉の段階で見る）
     document.addEventListener('pointerdown', (e) => {
-      if (this.cur && !this.el.contains(e.target)) this.close({ byPress: true });
+      if (this.cur && !this.el.contains(e.target) && !e.target.closest?.('#colorPop')) this.close({ byPress: true });
     }, true);
     document.addEventListener('keydown', (e) => {
       if (!this.cur || e.key !== 'Escape' || e.isComposing) return;
@@ -285,8 +285,10 @@ export class TlMenu {
       ${memoHtml}${moveRow}
       <div class="tlm-row">${this.likeRow(c, 'c')}
         <button type="button" class="${inPl ? 'on' : ''}" data-tlm="c-pl" title="${inPl ? tr('プレイリストから外す') : tr('プレイリストに入れる')}">${icon(inPl ? 'check' : 'list-add')}</button>
+        ${this.colorBtn(c)}
       </div>
       ${cuts ? `<div class="tlm-row">${cuts}</div>` : ''}
+      ${this.mergeRow(c)}
       <div class="tlm-row">
         <button type="button" data-tlm="c-start" title="${tr('となりのセルとの境目も一緒に動きます')}">${tr('⇤ 始まりを再生位置に')}</button>
         <button type="button" data-tlm="c-end" title="${tr('となりのセルとの境目も一緒に動きます')}">${tr('終わりを再生位置に ⇥')}</button>
@@ -297,6 +299,25 @@ export class TlMenu {
         <button type="button" data-tlm="c-open">${tr('カードを開く（メモ・コメント）')}</button>
         <span class="spacer"></span>
         <button type="button" class="danger" data-tlm="c-del">${icon('trash')} ${tr('削除')}</button>
+      </div>`;
+  }
+
+  // 色を付けるボタン（押すと登録した6色のポップアップ）
+  colorBtn(c) {
+    const cc = cellColorOf(this.app.settings, c);
+    const title = cc ? tr('色を変える・外す（いまは 色 {n}）', { n: c.color | 0 }) : tr('色を付ける（登録した6色から選ぶ）');
+    return `<button type="button" class="tlm-color${cc ? ' on' : ''}" data-tlm="c-color"${cc ? ` style="--cc:${cc}"` : ''} title="${title}" aria-label="${title}" aria-haspopup="dialog">${icon('palette')}${cc ? `<span class="cdot" style="--cc:${cc}"></span>` : ''}</button>`;
+  }
+
+  // 左・右のセルと結合するボタン（となりがなければ出さない）
+  mergeRow(c) {
+    const left = this.app.neighborCell(c.id, -1);
+    const right = this.app.neighborCell(c.id, 1);
+    if (!left && !right) return '';
+    const title = (n) => tr('{range} のセルと1つにまとめる（メモ・コメントもまとめて入ります。Ctrl+Z で元に戻せます）', { range: `${fmt(n.s)} – ${fmt(n.e)}` });
+    return `<div class="tlm-row">
+        ${left ? `<button type="button" data-tlm="c-merge-left" title="${title(left)}">${tr('← 左のセルと結合')}</button>` : ''}
+        ${right ? `<button type="button" data-tlm="c-merge-right" title="${title(right)}">${tr('右のセルと結合 →')}</button>` : ''}
       </div>`;
   }
 
@@ -511,6 +532,26 @@ export class TlMenu {
         app.playlist.toggle(store.doc, 'cell', c);
         this.refresh();
         return;
+      case 'c-color':
+        app.colorPop.open(c.id, b);
+        return;
+      case 'c-merge-left':
+      case 'c-merge-right': {
+        // まとめるとセルが新しくなるので、まとめ終わってから、まとめたセルのメニューとして描き直す（続けて結合できる）
+        this.hold = true;
+        let merged = null;
+        try {
+          merged = app.mergeWithNeighbor(c.id, act === 'c-merge-left' ? -1 : 1, { reveal: false });
+        } finally {
+          this.hold = false;
+        }
+        if (!merged) return;
+        cur.id = merged.id;
+        app.ui.cellTarget = merged.id;
+        this.refresh(); // 書きかけのコメントは残す
+        if (this.cur) this.place();
+        return;
+      }
       case 'c-split-here':
         app.splitCellAt(c.id, cur.t);
         return this.close();

@@ -28,6 +28,7 @@ const APP_FILES = [
   './js/live.js',
   './js/moment.js',
   './js/nowcard.js',
+  './js/colorpop.js',
   './js/players.js',
   './js/practice.js',
   './js/presets.js',

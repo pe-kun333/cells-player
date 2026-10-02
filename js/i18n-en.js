@@ -635,6 +635,38 @@ export const EN = {
   '連結する': 'Merge',
   '全画面をやめる (F・Esc)': 'Exit full screen (F / Esc)',
 
+  // ---- セルの色・となりのセルとの結合 ----
+  'セルの色': 'Cell color',
+  '色を登録': 'Edit colors',
+  '色 {n} を選び直す': (v) => `Choose color ${v.n} again`,
+  '色 {n}': (v) => `Color ${v.n}`,
+  '色 {n}（もう一度押すと外す）': (v) => `Color ${v.n} (press again to remove)`,
+  '丸を押して色を選び直します。その番号の色を付けたセルも、まとめて変わります':
+    'Press a circle to choose a new color. Cells with that color number change too',
+  'はじめの6色に戻す': 'Reset colors',
+  '完了': 'Done',
+  '色なし': 'No color',
+  '6つの色を選び直す': 'Choose the 6 colors again',
+  '色を変える・外す（いまは 色 {n}）': (v) => `Change or remove the color (now color ${v.n})`,
+  '色を付ける（登録した6色から選ぶ）': 'Color this cell (choose from your 6 colors)',
+  '範囲の調整・上下のセルとの結合・削除': 'Adjust the range, merge with the cell above or below, delete',
+  '結合': 'Merge',
+  '↑ 上のセルと結合': '↑ Merge with the cell above',
+  '↓ 下のセルと結合': '↓ Merge with the cell below',
+  '← 前のセルと結合': '← Merge with the previous cell',
+  '次のセルと結合 →': 'Merge with the next cell →',
+  '← 左のセルと結合': '← Merge with the cell on the left',
+  '右のセルと結合 →': 'Merge with the cell on the right →',
+  '← 結合': '← Merge',
+  '結合 →': 'Merge →',
+  '{range} のセルと1つにまとめる（メモ・コメントもまとめて入ります。Ctrl+Z で元に戻せます）': (v) =>
+    `Merge into one cell with ${v.range} (notes and comments are combined; Ctrl+Z undoes it)`,
+  '前に結合できるセルがありません': 'There is no earlier cell to merge with',
+  '後ろに結合できるセルがありません': 'There is no later cell to merge with',
+  '前（左）に結合できるセルがありません': 'There is no cell on the left to merge with',
+  '後ろ（右）に結合できるセルがありません': 'There is no cell on the right to merge with',
+  '{range} の1つのセルに結合しました': (v) => `Merged into one cell: ${v.range}`,
+
   // ---- タイムラインのメニューの位置・一覧の連動・前後の目印の操作 ----
   'タイムラインのメニューの出る位置': 'Where timeline menus appear',
   'セルや目印をクリックしたときのメニューです。「いつも下」にすると動画にかぶらず、入りきらない分はメニューの中でスクロールします（メニューの一番下でも切り替えられます）':

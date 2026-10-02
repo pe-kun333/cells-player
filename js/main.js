@@ -22,6 +22,7 @@ import { GridCells, gridLabel } from './gridcells.js';
 import { CellBar } from './cellbar.js';
 import { Palette } from './palette.js';
 import { NowCard } from './nowcard.js';
+import { ColorPop } from './colorpop.js';
 import { $, clamp, fmt, round2, escapeHtml, icon, cellLabel } from './util.js';
 import { tr, trMaybe, lang, isEn, translatePage } from './i18n.js';
 
@@ -104,6 +105,8 @@ const library = new Library(app);
 const gridCells = new GridCells(app);
 const cellBar = new CellBar(app);
 const nowCard = new NowCard(app);
+const colorPop = new ColorPop(app);
+app.colorPop = colorPop;
 
 // 操作の置き場所: 右のいまのカード（ops-card）か、左の「この瞬間」（前の配置）
 function applyOpsLayout() {
@@ -201,6 +204,7 @@ function renderAll() {
   shareLayers.render();
   xstrip.render();
   tlMenu.refresh();
+  colorPop.refresh();
   cellBar.render();
   nowCard.render();
   gridCells.renderButtons();
@@ -853,13 +857,11 @@ app.mergeSelectedCells = () => {
     if (c.s > end + 0.05) gap = true;
     end = Math.max(end, c.e);
   }
-  const wasRepeat = ids.includes(app.ui.repeatId);
   const hadComments = ids.some((id) => app.ui.commentsOpen.has(id));
   app.ui.selectedCells.clear();
   if (ids.includes(app.ui.editingMemo)) app.ui.editingMemo = null;
-  const merged = store.mergeCells(ids);
+  const merged = mergeKeepingRepeat(ids);
   if (!merged) return;
-  if (wasRepeat) app.ui.repeatId = merged.id;
   if (hadComments) app.ui.commentsOpen.add(merged.id);
   app.revealCell(merged.id);
   app.hint(
@@ -867,6 +869,75 @@ app.mergeSelectedCells = () => {
       (gap ? tr('（間の部分も含めています）') : '') +
       tr('。Ctrl+Z で元に戻せます'),
   );
+};
+
+// ---- となりのセルと結合 ----
+// となりのセル（自分のセル）。dir: -1 = 左（前）、1 = 右（後ろ）。
+// 重なっていてもよいが、丸ごと含む・含まれるセルはとなりとみなさない
+app.neighborCell = (id, dir) => {
+  const c = store.getCell(id);
+  if (!c || c.src) return null;
+  let best = null;
+  for (const x of store.ownCells) {
+    if (x.id === c.id) continue;
+    if (dir > 0) {
+      if (!(x.s > c.s + 0.05 && x.e > c.e + 0.05)) continue;
+      if (!best || x.s < best.s || (x.s === best.s && x.e < best.e)) best = x;
+    } else {
+      if (!(x.s < c.s - 0.05 && x.e < c.e - 0.05)) continue;
+      if (!best || x.e > best.e || (x.e === best.e && x.s > best.s)) best = x;
+    }
+  }
+  return best;
+};
+
+// セルをまとめる。リピート中のセルが入っていれば、リピートを止めずに、まとめたセルへ引き継ぐ（回数・間・速さもそのまま）
+function mergeKeepingRepeat(ids) {
+  const rep = app.ui.repeatId;
+  const wasRepeat = ids.includes(rep);
+  // 購読の「なくなったセルのリピートを止める」を動かさないよう、まとめる間だけ外しておく
+  if (wasRepeat) app.ui.repeatId = null;
+  const merged = store.mergeCells(ids);
+  if (wasRepeat) {
+    app.ui.repeatId = merged ? merged.id : rep;
+    renderRepeatBar();
+    renderAll();
+  }
+  return merged;
+}
+
+// となりのセルと1つにまとめる（メモ・コメントはまとめて入り、色は時間が早いほうのものが残る）。まとめたセルを返す。
+// reveal: 右の一覧で、まとめたセルを光らせて見えるところへ出す（タイムラインやセルのバーから結合したときは、ページを動かさない）
+app.mergeWithNeighbor = (id, dir, { reveal = true } = {}) => {
+  const c = store.getCell(id);
+  const n = c && app.neighborCell(id, dir);
+  if (!n) {
+    app.hint(dir > 0 ? tr('後ろ（右）に結合できるセルがありません') : tr('前（左）に結合できるセルがありません'));
+    return null;
+  }
+  const ids = [c.id, n.id];
+  const gap = dir > 0 ? n.s > c.e + 0.05 : c.s > n.e + 0.05;
+  const { ui } = app;
+  const had = (set) => ids.some((x) => set.has(x));
+  const keep = { comments: had(ui.commentsOpen), open: had(ui.expanded), tx: had(ui.txOpen) };
+  const target = ids.includes(ui.cellTarget);
+  for (const x of ids) ui.selectedCells.delete(x);
+  if (ids.includes(ui.editingMemo)) ui.editingMemo = null;
+  const merged = mergeKeepingRepeat(ids);
+  if (!merged) return null;
+  // 開いていたコメント・文字起こし・詳細などは、まとめたセルに引き継ぐ
+  if (keep.comments) ui.commentsOpen.add(merged.id);
+  if (keep.open) ui.expanded.add(merged.id);
+  if (keep.tx) ui.txOpen.add(merged.id);
+  if (target) ui.cellTarget = merged.id;
+  if (reveal) ui.flashId = merged.id;
+  renderAll();
+  app.hint(
+    tr('{range} の1つのセルに結合しました', { range: `${fmt(merged.s)} – ${fmt(merged.e)}` }) +
+      (gap ? tr('（間の部分も含めています）') : '') +
+      tr('。Ctrl+Z で元に戻せます'),
+  );
+  return merged;
 };
 
 app.moveCellEdge = (id, edge, value) => {
@@ -888,7 +959,7 @@ app.stopModes = (except) => {
 
 const RAMP_FROM = 0.7; // 「だんだん速く」の最初の速度
 const RAMP_STEP = 0.1; // 1回ごとに上げる速度
-const repeatState = { loops: 0, timer: null, baseRate: 1 };
+const repeatState = { loops: 0, timer: null, baseRate: 1, token: 0 };
 
 function currentRate() {
   return Number($('#rateSelect').value) || 1;
@@ -915,6 +986,7 @@ function startRepeatState() {
 
 function endRepeatState() {
   clearTimeout(repeatState.timer);
+  repeatState.token++;
   if (app.settings.repeatRamp && app.player) app.setRate(repeatState.baseRate);
   repeatState.loops = 0;
   renderRepeatBar();
@@ -944,8 +1016,9 @@ function onRepeatLoop(c) {
     // 頭に戻ってから少し待つ（聞いたことを口に出す時間）
     p.pause();
     clearTimeout(repeatState.timer);
+    const token = ++repeatState.token;
     repeatState.timer = setTimeout(() => {
-      if (app.ui.repeatId === c.id && app.player === p) p.play();
+      if (app.ui.repeatId && repeatState.token === token && app.player === p) p.play();
     }, s.repeatGap * 1000);
   }
   renderRepeatBar();
@@ -1057,6 +1130,7 @@ function closeMedia() {
   if (practice.active) practice.stop();
   app.ui.commentPin = null;
   moment.resetFeed();
+  colorPop.close();
   app.ui.editingMemo = null;
   app.ui.commentsOpen.clear();
   app.ui.selectedCells.clear();

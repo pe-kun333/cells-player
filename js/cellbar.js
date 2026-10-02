@@ -1,4 +1,5 @@
 import { $, fmt, escapeHtml, icon, cellLabel } from './util.js';
+import { cellColorOf } from './store.js';
 import { tr } from './i18n.js';
 
 // いまのセルのバー（タイムラインのすぐ下）: 再生位置にあるセルの操作を、タイムラインの近くにまとめる。
@@ -31,7 +32,7 @@ export class CellBar {
     const list = app.cellsAt(now);
     const c = app.cellAt(now);
     const key = c
-      ? [c.id, c.s, c.e, c.lv, c.bm, c.memo, c.comments.length, app.ui.repeatId === c.id, list.length, list.indexOf(c)].join('|')
+      ? [c.id, c.s, c.e, c.lv, c.bm, c.color | 0, c.memo, c.comments.length, app.ui.repeatId === c.id, list.length, list.indexOf(c)].join('|')
       : 'none';
     if (key === this.key) return;
     this.key = key;
@@ -45,6 +46,11 @@ export class CellBar {
     const memo = cellLabel(c, 40);
     const rep = app.ui.repeatId === c.id;
     const pips = [1, 2, 3].map((n) => `<i class="${n <= c.lv ? 'on' : ''}"></i>`).join('');
+    const cc = cellColorOf(app.settings, c);
+    const colorTitle = cc ? tr('色を変える・外す（いまは 色 {n}）', { n: c.color | 0 }) : tr('色を付ける（登録した6色から選ぶ）');
+    const left = app.neighborCell(c.id, -1);
+    const right = app.neighborCell(c.id, 1);
+    const mergeTitle = (n, none) => (n ? tr('{range} のセルと1つにまとめる（メモ・コメントもまとめて入ります。Ctrl+Z で元に戻せます）', { range: `${fmt(n.s)} – ${fmt(n.e)}` }) : none);
     const cycle = list.length > 1
       ? `<button type="button" class="cb-cycle" data-cb="cycle" title="${tr('重なっているセルのうち、操作するセルを切り替える')}">${list.indexOf(c) + 1}/${list.length} ⇄</button>`
       : '';
@@ -58,6 +64,9 @@ export class CellBar {
         <button type="button" class="${rep ? 'on' : ''}" data-cb="repeat" title="${tr('リピート再生（同時に1つだけ）')}">${icon('repeat')}<kbd>R</kbd></button>
         <button type="button" class="cb-like" data-cb="like" data-lv="${c.lv}" title="${tr('いいね（押すたびに 1 → 2 → 3 → 解除）')}">${icon('heart', c.lv ? 'fill' : '')}<span class="pips">${pips}</span></button>
         <button type="button" class="${c.bm ? 'on' : ''}" data-cb="bm" title="${tr('ブックマーク')}" aria-pressed="${c.bm}">${icon('bookmark', c.bm ? 'fill' : '')}</button>
+        <button type="button" class="cb-color${cc ? ' on' : ''}" data-cb="color" title="${colorTitle}" aria-label="${colorTitle}" aria-haspopup="dialog">${icon('palette')}${cc ? `<span class="cdot" style="--cc:${cc}"></span>` : ''}</button>
+        <button type="button" data-cb="mergeL" title="${mergeTitle(left, tr('前（左）に結合できるセルがありません'))}"${left ? '' : ' disabled'}>${tr('← 結合')}</button>
+        <button type="button" data-cb="mergeR" title="${mergeTitle(right, tr('後ろ（右）に結合できるセルがありません'))}"${right ? '' : ' disabled'}>${tr('結合 →')}</button>
         <button type="button" data-cb="comment" title="${tr('このセルにコメントを書く')}">${icon('comment')}${c.comments.length ? `<span class="n">${c.comments.length}</span>` : ''}</button>
         <button type="button" data-cb="more" title="${tr('そのほかの操作（メニュー）')}" aria-label="${tr('そのほかの操作（メニュー）')}">${icon('dots')}</button>
       </span>`;
@@ -92,6 +101,13 @@ export class CellBar {
         break;
       case 'bm':
         app.store.updateCell(c.id, { bm: !c.bm });
+        break;
+      case 'color':
+        app.colorPop.open(c.id, b);
+        break;
+      case 'mergeL':
+      case 'mergeR':
+        app.mergeWithNeighbor(c.id, act === 'mergeL' ? -1 : 1, { reveal: false });
         break;
       case 'comment':
         app.tlMenu.open({ kind: 'cell', id: c.id, ...at, focus: 'comment' });
