@@ -71,13 +71,13 @@ YouTube's own captions (which YouTube turns on by itself in your language for so
 
 Choose the screen colors with "Theme" at the top of Settings. Your choice is shown right away and kept when you press "Save" ("Cancel" puts it back).
 
-- Match OS (default): follows your system light or dark setting. If the system is set to increase contrast, High contrast is used
+- Match OS (default): follows your system light or dark setting. If the system is in light mode and set to increase contrast, High contrast is used (in dark mode, Dark is kept)
 - Light / Dark: the usual light or dark colors, regardless of the system setting
 - White (a cool, crisp white), Paper (warm off-white with indigo), Mint (soft green), Sakura (cherry-blossom pink with plum), Fog (a dimmer gray for people who find white too bright), High contrast (black on white with strong borders), Midnight (navy dark)
 - Theater: the controls stay light, and only the band with the video, playback buttons and timeline turns dark so the video stands out
 - "Switch themes by time of day" uses different themes for day and night (you choose when each starts)
 - "Accent color" changes only the color of buttons, selections and the played range
-- "Tint the area around the video with its colors (ambient)" softly spreads the colors from the left and right of the video into the black bars and below it. YouTube videos use the thumbnail colors
+- "Tint the area around the video with its colors (ambient)" softly spreads the colors from the left and right of the video into the black bars and below it. YouTube videos use the thumbnail colors (not available for videos opened by URL from other sites)
 - Type "theme" in Ctrl+K to switch quickly with "Theme: White" and so on
 
 ## Now card (top of the right sidebar)

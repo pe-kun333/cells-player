@@ -708,8 +708,8 @@ export const EN = {
   '橙': 'Orange',
   '青灰': 'Slate',
   '動画のまわりを動画の色にする（アンビエント）': 'Tint the area around the video with its colors (ambient)',
-  '動画の左右の色を、動画の黒い余白と下にうすくにじませます。YouTube の動画は、サムネイルの色を使います（読めないときは出ません）':
-    'Softly spreads the colors from the left and right of the video into the black bars and below it. YouTube videos use the thumbnail colors (nothing is shown if they cannot be read)',
+  '動画の左右の色を、動画の黒い余白と下にうすくにじませます。YouTube の動画は、サムネイルの色を使います（読めないときは出ません）。別のサイトに置いた URL の動画では出ません':
+    'Softly spreads the colors from the left and right of the video into the black bars and below it. YouTube videos use the thumbnail colors (nothing is shown if they cannot be read). Not available for videos opened by URL from other sites',
   '配色: {name}': (v) => `Theme: ${v.name}`,
   '配色を「{name}」にしました': (v) => `Theme set to "${v.name}"`,
   '配色を「{name}」にしました（時間帯での切り替えはオフにしました）': (v) => `Theme set to "${v.name}" (switching by time of day is now off)`,

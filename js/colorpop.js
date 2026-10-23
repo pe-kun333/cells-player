@@ -211,6 +211,13 @@ export class ColorPop {
     const next = [...this.app.settings.cellColors];
     next[Number(inp.dataset.slot)] = v;
     this.setColors(next);
+    // 「色のセット」の選んでいる印も合わせる（描き直すと色を選ぶ画面が閉じるので、印だけ変える）
+    const cur = next.join();
+    for (const b of this.el.querySelectorAll('.cpop-set')) {
+      const on = CELL_COLOR_SETS.find((x) => x.id === b.dataset.set)?.colors.join() === cur;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+    }
   }
 
   setColors(list) {
