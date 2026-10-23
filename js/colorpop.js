@@ -1,10 +1,11 @@
 import { $, fmt, icon, clamp } from './util.js';
-import { saveSettings, DEFAULT_CELL_COLORS } from './store.js';
+import { saveSettings, CELL_COLOR_SETS } from './store.js';
 import { tr } from './i18n.js';
 
 // セルに色を付けるポップアップ（右のセルのカード・タイムラインのセルのメニュー・いまのセルのバーの「色」ボタンから）。
 // 登録した6色から選ぶと、そのセルの枠（タイムラインのバーの枠も）がその色になる。もう一度押すと外れる。
-// 「色を登録」で6色を選び直せる（セルには何番目の色かを持たせているので、選び直すと同じ番号のセルの色もまとめて変わる）
+// 「色を登録」で6色を選び直せる（セルには何番目の色かを持たせているので、選び直すと同じ番号のセルの色もまとめて変わる）。
+// 「色のセット」で、色覚に配慮した6色などにまとめて入れ替えることもできる
 export class ColorPop {
   constructor(app) {
     this.app = app;
@@ -103,10 +104,17 @@ export class ColorPop {
       const inputs = colors
         .map((hex, i) => `<label class="cpop-edit" title="${tr('色 {n} を選び直す', { n: i + 1 })}"><input type="color" value="${hex}" data-slot="${i}" aria-label="${tr('色 {n}', { n: i + 1 })}"><span>${i + 1}</span></label>`)
         .join('');
+      const cur = colors.join();
+      const sets = CELL_COLOR_SETS.map((st) => {
+        const on = st.colors.join() === cur;
+        const note = st.note ? ` title="${tr(st.note)}"` : '';
+        const dots = st.colors.map((hex) => `<i style="--c:${hex}"></i>`).join('');
+        return `<button type="button" class="cpop-set${on ? ' on' : ''}" data-set="${st.id}" aria-pressed="${on}"${note}><span class="cpop-dots" aria-hidden="true">${dots}</span>${tr(st.name)}</button>`;
+      }).join('');
       body = `<div class="cpop-grid">${inputs}</div>
         <div class="cpop-note">${tr('丸を押して色を選び直します。その番号の色を付けたセルも、まとめて変わります')}</div>
+        <div class="cpop-sets" role="group" aria-label="${tr('色のセット')}"><span class="cpop-sets-head">${tr('色のセット（6色をまとめて入れ替える）')}</span>${sets}</div>
         <div class="cpop-foot">
-          <button type="button" data-cpop="reset">${tr('はじめの6色に戻す')}</button>
           <span class="spacer"></span>
           <button type="button" class="primary" data-cpop="done">${tr('完了')}</button>
         </div>`;
@@ -164,6 +172,12 @@ export class ColorPop {
     const { store } = app;
     const c = store.getCell(this.cur.id);
     if (!c) return this.close();
+    if (b.dataset.set) {
+      const st = CELL_COLOR_SETS.find((x) => x.id === b.dataset.set);
+      if (st) this.setColors([...st.colors]);
+      this.render();
+      return;
+    }
     if (b.dataset.color) {
       const n = Number(b.dataset.color);
       // 同じ色をもう一度押すと外す
@@ -184,10 +198,6 @@ export class ColorPop {
         this.cur.editing = b.dataset.cpop === 'edit';
         this.render();
         this.place();
-        break;
-      case 'reset':
-        this.setColors([...DEFAULT_CELL_COLORS]);
-        this.render();
         break;
     }
   }

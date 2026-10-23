@@ -167,11 +167,16 @@ export class Broadcast {
     const id = this.videoId();
     if (!id) return;
     this.chatId = id;
-    const dark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+    const dark = this.app.theme ? this.app.theme.dark : !!window.matchMedia?.('(prefers-color-scheme: dark)').matches;
     const f = document.createElement('iframe');
     f.src = `https://www.youtube.com/live_chat?v=${id}&embed_domain=${encodeURIComponent(location.hostname)}${dark ? '&dark_theme=1' : ''}`;
     f.title = tr('YouTube のライブチャット');
     this.chatFrame.replaceChildren(f);
+  }
+
+  // 配色のライト・ダークが変わったら、開いているチャットをその配色で読み込み直す（YouTube のチャットの配色は、読み込むときにしか選べない）
+  refreshChatTheme() {
+    if (this.chatOpen && this.chatId) this.loadChat();
   }
 
   // 埋め込みで出ないときや、書き込めないとき（ブラウザがログイン情報を渡さない設定など）は、YouTube の別ウィンドウで
