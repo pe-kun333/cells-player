@@ -4,65 +4,152 @@
   --mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
   --radius: 8px;
 
-  --bg: #f5f5f3;
-  --panel: #ffffff;
-  --panel-2: #f0efec;
-  --line: #e3e2de;
-  --line-strong: #cfcdc7;
-  --text: #1d1d1b;
-  --text-2: #5c5b57;
-  --text-3: #8c8a84;
-  --accent: #2b6cd4;
-  --accent-bg: #e7f0fc;
-  --accent-bg-2: #cfe0f8;
-  --accent-text: #1d59b5;
-  --like-1: #f4c3d4;
-  --like-2: #e27aa0;
-  --like-3: #b83a6a;
-  --heart: #d24b7e;
-  --heart-off: #d3d1cb;
-  --cell-0: #c5d3e8;
-  --pin-0: #6f6e69;
-  --playhead: #e0413a;
-  --track: #ebeae6;
-  --outside: #d9d8d3;
-  --played: rgba(43, 108, 212, 0.12);
-  --tick-minor: rgba(0, 0, 0, 0.18);
-  --tick-major: rgba(0, 0, 0, 0.42);
-  --danger: #c23b3b;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  /* 色は light-dark(ライトの色, ダークの色)。どちらになるかは color-scheme で決まる
+     （ふだんは OS に合わせ、設定の「配色」で選ぶと <html data-theme> が付いて決まる。下の「配色」を参照）。
+     要素ごとに決まるので、color-scheme: dark の中（シアターの暗い帯など）ではダークの色になる */
+  --bg: light-dark(#f5f5f3, #181817);
+  --panel: light-dark(#ffffff, #222221);
+  --panel-2: light-dark(#f0efec, #2b2b29);
+  --line: light-dark(#e3e2de, #33332f);
+  --line-strong: light-dark(#cfcdc7, #474743);
+  --text: light-dark(#1d1d1b, #ebeae5);
+  --text-2: light-dark(#5c5b57, #b3b1aa);
+  --text-3: light-dark(#6e6c67, #97958e);
+  --accent: light-dark(#2b6cd4, #6aa2f0);
+  --accent-bg: light-dark(#e7f0fc, #1b2d47);
+  --accent-bg-2: light-dark(#cfe0f8, #25406a);
+  --accent-text: light-dark(#1d59b5, #9cc3f7);
+  /* アクセントの色の上の文字（主ボタン・「再生中」の印など） */
+  --on-accent: light-dark(#ffffff, #0f1d33);
+  --like-1: light-dark(#f4c3d4, #6e3350);
+  --like-2: light-dark(#e27aa0, #b24c78);
+  --like-3: light-dark(#b83a6a, #f07aa8);
+  --heart: light-dark(#d24b7e, #f07aa8);
+  --heart-off: light-dark(#d3d1cb, #4a4945);
+  --cell-0: light-dark(#c5d3e8, #3a4a63);
+  --pin-0: light-dark(#6f6e69, #a7a59e);
+  --playhead: light-dark(#e0413a, #ff5d55);
+  --track: light-dark(#ebeae6, #2e2e2c);
+  --outside: light-dark(#d9d8d3, #141413);
+  --played: light-dark(rgba(43, 108, 212, 0.12), rgba(106, 162, 240, 0.14));
+  --tick-minor: light-dark(rgba(0, 0, 0, 0.18), rgba(255, 255, 255, 0.18));
+  --tick-major: light-dark(rgba(0, 0, 0, 0.42), rgba(255, 255, 255, 0.42));
+  --danger: light-dark(#c23b3b, #f07070);
+  --shadow: 0 10px 30px light-dark(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.5));
 }
 
-@media (prefers-color-scheme: dark) {
+/* light-dark() が使えない古いブラウザでは、ライトの色だけにする（配色の切り替えは効かない） */
+@supports not (color: light-dark(#000, #fff)) {
   :root {
-    --bg: #181817;
-    --panel: #222221;
-    --panel-2: #2b2b29;
-    --line: #33332f;
-    --line-strong: #474743;
-    --text: #ebeae5;
-    --text-2: #b3b1aa;
-    --text-3: #83817b;
-    --accent: #6aa2f0;
-    --accent-bg: #1b2d47;
-    --accent-bg-2: #25406a;
-    --accent-text: #9cc3f7;
-    --like-1: #6e3350;
-    --like-2: #b24c78;
-    --like-3: #f07aa8;
-    --heart: #f07aa8;
-    --heart-off: #4a4945;
-    --cell-0: #3a4a63;
-    --pin-0: #a7a59e;
-    --playhead: #ff5d55;
-    --track: #2e2e2c;
-    --outside: #141413;
-    --played: rgba(106, 162, 240, 0.14);
-    --tick-minor: rgba(255, 255, 255, 0.18);
-    --tick-major: rgba(255, 255, 255, 0.42);
-    --danger: #f07070;
-    --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    color-scheme: light;
+    --bg: #f5f5f3; --panel: #ffffff; --panel-2: #f0efec; --line: #e3e2de; --line-strong: #cfcdc7;
+    --text: #1d1d1b; --text-2: #5c5b57; --text-3: #6e6c67;
+    --accent: #2b6cd4; --accent-bg: #e7f0fc; --accent-bg-2: #cfe0f8; --accent-text: #1d59b5; --on-accent: #ffffff;
+    --like-1: #f4c3d4; --like-2: #e27aa0; --like-3: #b83a6a; --heart: #d24b7e; --heart-off: #d3d1cb;
+    --cell-0: #c5d3e8; --pin-0: #6f6e69; --playhead: #e0413a; --track: #ebeae6; --outside: #d9d8d3;
+    --played: rgba(43, 108, 212, 0.12); --tick-minor: rgba(0, 0, 0, 0.18); --tick-major: rgba(0, 0, 0, 0.42);
+    --danger: #c23b3b; --shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
   }
+}
+
+/* ---- 配色（設定の「配色」。js/theme-boot.js が <html data-theme="…"> を付ける。付いていなければ OS に合わせる） ---- */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+/* ホワイト: 青みのある白。いまのライト（少し黄みのある白）より、すっきり明るい */
+:root[data-theme="white"] {
+  color-scheme: light;
+  --bg: #f4f6f9; --panel: #ffffff; --panel-2: #eef1f5; --line: #e1e5eb; --line-strong: #c8cfd8;
+  --text: #121820; --text-2: #4a5462; --text-3: #626c7a;
+  --accent: #1f6feb; --accent-bg: #e8f1fe; --accent-bg-2: #cde0fd; --accent-text: #1557c0;
+  --like-1: #f6c5d6; --like-2: #e2709a; --like-3: #b8325f; --heart: #d6457a; --heart-off: #d2d8df;
+  --cell-0: #c7d8f0; --pin-0: #646e7a; --playhead: #e5484d; --track: #ebeef2; --outside: #dce1e7;
+  --played: rgba(31, 111, 235, 0.12); --tick-minor: rgba(15, 23, 42, 0.18); --tick-major: rgba(15, 23, 42, 0.42);
+  --danger: #cf2e2e; --shadow: 0 10px 30px rgba(15, 23, 42, 0.14);
+}
+/* ペーパー: 紙のような生成りと藍。長く字幕や文字起こしを読むとき用。いいねは藍に合わせて朱に */
+:root[data-theme="paper"] {
+  color-scheme: light;
+  --bg: #eee7d8; --panel: #fbf7ee; --panel-2: #f2ebdd; --line: #e3d9c6; --line-strong: #cdbfa6;
+  --text: #2a241c; --text-2: #5b5142; --text-3: #6f6452;
+  --accent: #2e4a7d; --accent-bg: #e4e7ee; --accent-bg-2: #cdd5e4; --accent-text: #263f6c;
+  --like-1: #efc4bc; --like-2: #d7786b; --like-3: #a6402f; --heart: #bf4f3c; --heart-off: #d8cdb9;
+  --cell-0: #d2d8e2; --pin-0: #6c6354; --playhead: #c8462f; --track: #ece5d6; --outside: #ddd3c0;
+  --played: rgba(46, 74, 125, 0.12); --tick-minor: rgba(60, 40, 10, 0.2); --tick-major: rgba(60, 40, 10, 0.45);
+  --danger: #b03a2b; --shadow: 0 10px 30px rgba(60, 40, 10, 0.16);
+}
+/* ミント: うすい緑みの白と、深い緑。落ち着いて勉強する用 */
+:root[data-theme="mint"] {
+  color-scheme: light;
+  --bg: #ebf3ef; --panel: #fbfdfc; --panel-2: #e7f0eb; --line: #d6e5dd; --line-strong: #bcd2c6;
+  --text: #13201b; --text-2: #475a52; --text-3: #5c6e66;
+  --accent: #0d7a60; --accent-bg: #def2ea; --accent-bg-2: #bfe5d6; --accent-text: #0a634e;
+  --like-1: #f5c8d3; --like-2: #e07b95; --like-3: #b3405d; --heart: #cf5079; --heart-off: #c8d8d0;
+  --cell-0: #c1e0d3; --pin-0: #5d6f67; --playhead: #df4f39; --track: #e2ece7; --outside: #d1e0d8;
+  --played: rgba(13, 122, 96, 0.12); --tick-minor: rgba(10, 40, 30, 0.18); --tick-major: rgba(10, 40, 30, 0.42);
+  --danger: #be3838; --shadow: 0 10px 30px rgba(10, 40, 30, 0.14);
+}
+/* サクラ: うすい桜色と梅紫。いいねは紅にして、アクセントと区別する */
+:root[data-theme="sakura"] {
+  color-scheme: light;
+  --bg: #f7eff2; --panel: #fffbfc; --panel-2: #f5ebee; --line: #ebdce1; --line-strong: #dac3cb;
+  --text: #2a1c22; --text-2: #614e57; --text-3: #75626b;
+  --accent: #963b6b; --accent-bg: #f6e6ee; --accent-bg-2: #ebcbdb; --accent-text: #7f2f59;
+  --like-1: #f6c3c3; --like-2: #e46a6a; --like-3: #b52d39; --heart: #d43f4d; --heart-off: #e0d0d5;
+  --cell-0: #e9d1db; --pin-0: #74626a; --playhead: #d03838; --track: #f0e5e9; --outside: #e5d5db;
+  --played: rgba(150, 59, 107, 0.12); --tick-minor: rgba(60, 20, 35, 0.18); --tick-major: rgba(60, 20, 35, 0.42);
+  --danger: #b5302d; --shadow: 0 10px 30px rgba(60, 20, 35, 0.14);
+}
+/* うす曇り: 白がまぶしい人向けの、明るさをおさえたグレー（ライトとダークの間） */
+:root[data-theme="fog"] {
+  color-scheme: light;
+  --bg: #dcdfe4; --panel: #e9ecef; --panel-2: #e0e3e8; --line: #ccd1d7; --line-strong: #b1b8c1;
+  --text: #171a1f; --text-2: #434a53; --text-3: #555c66;
+  --accent: #2c5fb3; --accent-bg: #d6e1f1; --accent-bg-2: #c0d1ea; --accent-text: #224f98;
+  --like-1: #e6bccb; --like-2: #cc6b8f; --like-3: #a2325f; --heart: #bb416c; --heart-off: #c0c5cc;
+  --cell-0: #b9c9df; --pin-0: #5a6069; --playhead: #d3372f; --track: #dadde2; --outside: #c9cdd4;
+  --played: rgba(44, 95, 179, 0.13); --tick-minor: rgba(20, 25, 35, 0.2); --tick-major: rgba(20, 25, 35, 0.46);
+  --danger: #ad2e2e; --shadow: 0 10px 30px rgba(20, 25, 35, 0.2);
+}
+/* ハイコントラスト: 真っ白に黒い文字・濃い枠・太いフォーカスの輪（OS で「コントラストを上げる」にしているときは、OS に合わせるでもこれになる） */
+:root[data-theme="contrast"] {
+  color-scheme: light;
+  --bg: #ffffff; --panel: #ffffff; --panel-2: #eeeeee; --line: #767676; --line-strong: #1a1a1a;
+  --text: #000000; --text-2: #1f1f1f; --text-3: #3d3d3d;
+  --accent: #0040b0; --accent-bg: #dfe8ff; --accent-bg-2: #b8cbff; --accent-text: #002f86;
+  --like-1: #f0a3c0; --like-2: #c2185b; --like-3: #7f0d48; --heart: #c2185b; --heart-off: #8a8a8a;
+  --cell-0: #9db4de; --pin-0: #000000; --playhead: #d00000; --track: #e6e6e6; --outside: #bdbdbd;
+  --played: rgba(0, 64, 176, 0.16); --tick-minor: rgba(0, 0, 0, 0.45); --tick-major: rgba(0, 0, 0, 0.85);
+  --danger: #b00000; --shadow: 0 0 0 2px #000000, 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+:root[data-theme="contrast"] :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+:root[data-theme="contrast"] .card,
+:root[data-theme="contrast"] .timeline,
+:root[data-theme="contrast"] .now-card { border-width: 2px; }
+/* シアター: 操作はライトのまま、動画・再生ボタン・タイムラインの帯（.deck）だけダークにする。
+   帯の中は color-scheme: dark なので、light-dark() の色がそのままダークの色になる */
+:root[data-theme="theater"] { color-scheme: light; }
+/* ミッドナイト: 紺のダーク。アクセントの上の文字は暗くして読みやすく */
+:root[data-theme="midnight"] {
+  color-scheme: dark;
+  --bg: #0e1320; --panel: #151b2b; --panel-2: #1c2336; --line: #252e45; --line-strong: #35405e;
+  --text: #e6eaf2; --text-2: #a9b2c6; --text-3: #8892a8;
+  --accent: #6ea8ff; --accent-bg: #17284a; --accent-bg-2: #213a6b; --accent-text: #a3c6ff; --on-accent: #0a1530;
+  --like-1: #5a2a48; --like-2: #b14d82; --like-3: #f08cbf; --heart: #f08cbf; --heart-off: #3a4258;
+  --cell-0: #2c3d63; --pin-0: #9aa4ba; --playhead: #ff6b6b; --track: #1f2638; --outside: #0b0f19;
+  --played: rgba(110, 168, 255, 0.14); --tick-minor: rgba(255, 255, 255, 0.16); --tick-major: rgba(255, 255, 255, 0.4);
+  --danger: #ff7a7a; --shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+}
+/* アクセントの色を選んだとき（js/theme-boot.js が <html data-accent> と --accent-pick を入れる）。
+   仲間の色は選んだ色から作る。ダークの所では明るくして、上の文字を暗くする */
+:root[data-accent] {
+  --accent-lite: color-mix(in oklab, var(--accent-pick) 62%, #fff);
+  --accent: light-dark(var(--accent-pick), var(--accent-lite));
+  --accent-bg: light-dark(color-mix(in srgb, var(--accent-pick) 11%, var(--panel)), color-mix(in srgb, var(--accent-lite) 22%, var(--panel)));
+  --accent-bg-2: light-dark(color-mix(in srgb, var(--accent-pick) 22%, var(--panel)), color-mix(in srgb, var(--accent-lite) 36%, var(--panel)));
+  --accent-text: light-dark(color-mix(in oklab, var(--accent-pick) 84%, #000), color-mix(in oklab, var(--accent-lite) 72%, #fff));
+  --on-accent: light-dark(#ffffff, #0f1d33);
+  --played: light-dark(color-mix(in srgb, var(--accent-pick) 12%, transparent), color-mix(in srgb, var(--accent-lite) 14%, transparent));
 }
 
 * { box-sizing: border-box; }
@@ -99,7 +186,7 @@ button, input, select { font: inherit; color: inherit; }
 .btn.small { height: 26px; padding: 0 8px; font-size: 12.5px; }
 .btn.tiny { height: 22px; padding: 0 6px; font-size: 12px; border-radius: 6px; }
 .btn.icon-btn { width: 30px; padding: 0; justify-content: center; }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .btn.primary:hover { filter: brightness(1.08); }
 .btn.on { background: var(--accent-bg); border-color: var(--accent); color: var(--accent-text); }
 .btn.danger { color: var(--danger); }
@@ -155,6 +242,16 @@ select {
   display: flex; flex-direction: column; gap: 12px;
 }
 
+/* 動画・再生ボタン・タイムライン・いまのセルのバーのまとまり。ふだんは箱を作らない（中身は .left に直接並ぶのと同じ）。
+   シアターのときだけ、左の列の端まで広がる暗い帯にする */
+.deck { display: contents; }
+:root[data-theme="theater"] .deck {
+  color-scheme: dark; color: var(--text);
+  display: flex; flex-direction: column; gap: 12px;
+  margin: -14px -16px 0; padding: 14px 16px;
+  background: var(--bg); border-bottom: 1px solid var(--line);
+}
+
 /* ---- 動画エリア ---- */
 .stage {
   position: relative; flex: none;
@@ -195,6 +292,22 @@ select {
   align-items: center; justify-content: center; color: #ddd; background: rgba(0, 0, 0, 0.5);
 }
 body.is-loading .loading { display: flex; }
+/* アンビエント（設定）: 動画の左右の色を、動画の黒い余白と動画の下にうすくにじませる。
+   js/ambient.js が動画を小さく描いて --amb-l（左の3分の1）・--amb-r（右の3分の1）を入れ、<html data-ambient> を付ける */
+:root[data-ambient] .stage {
+  background:
+    linear-gradient(to right, #000, color-mix(in srgb, var(--amb-l, #000) 80%, #000)) left / 50% 100% no-repeat,
+    linear-gradient(to left, #000, color-mix(in srgb, var(--amb-r, #000) 80%, #000)) right / 50% 100% no-repeat,
+    #000;
+  box-shadow:
+    -30px 34px 70px -18px color-mix(in srgb, var(--amb-l, transparent) 70%, transparent),
+    30px 34px 70px -18px color-mix(in srgb, var(--amb-r, transparent) 70%, transparent);
+  transition: box-shadow 1.2s ease;
+}
+:root[data-ambient] .stage video { background: transparent; }
+@media (prefers-reduced-motion: reduce) {
+  :root[data-ambient] .stage { transition: none; }
+}
 /* 動画の上の字幕 */
 .caption {
   position: absolute; left: 50%; bottom: 7%; transform: translateX(-50%); z-index: 2;
@@ -249,7 +362,7 @@ body.caption-below .stage { border-radius: 10px 10px 0 0; }
 .tlm-row button:hover { background: var(--panel-2); }
 .tlm-row button .i { width: 14px; height: 14px; }
 .tlm-row button.on { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-text); }
-.tlm-row button.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+.tlm-row button.primary { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
 .tlm-row button.danger { color: var(--danger); }
 .tlm-row button.tlm-color.on { border-color: var(--cc, var(--line)); }
 .tlm-row .hearts .i { width: 12px; height: 12px; }
@@ -381,7 +494,7 @@ html[lang="en"] .tl-label { width: 56px; }
 .tz-playhead { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px; background: var(--playhead); pointer-events: none; z-index: 3; }
 .tz-drag {
   position: absolute; top: 0; transform: translateX(-50%); z-index: 4; pointer-events: none;
-  font: 11px var(--mono); padding: 0 5px; border-radius: 4px; background: var(--accent); color: #fff;
+  font: 11px var(--mono); padding: 0 5px; border-radius: 4px; background: var(--accent); color: var(--on-accent);
 }
 
 /* いまのセル（S・バーで操作するセル）。重なっているときだけ印を付ける */
@@ -394,12 +507,12 @@ html[lang="en"] .tl-label { width: 56px; }
   font: 11px var(--mono); padding: 0 4px; border-radius: 4px; background: var(--text); color: var(--bg); white-space: nowrap;
 }
 .tl-guide.is-cut { border-left: 2px solid var(--accent); }
-.tl-guide.is-cut::after { background: var(--accent); color: #fff; }
-.tl-hover.is-cut { background: var(--accent); color: #fff; }
+.tl-guide.is-cut::after { background: var(--accent); color: var(--on-accent); }
+.tl-hover.is-cut { background: var(--accent); color: var(--on-accent); }
 .tz-guide { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px solid var(--accent); pointer-events: none; z-index: 4; }
 .tz-guide::after {
   content: attr(data-t); position: absolute; top: 0; left: 4px;
-  font: 11px var(--mono); padding: 0 4px; border-radius: 4px; background: var(--accent); color: #fff; white-space: nowrap;
+  font: 11px var(--mono); padding: 0 4px; border-radius: 4px; background: var(--accent); color: var(--on-accent); white-space: nowrap;
 }
 /* セルの境目のつまみ（拡大の段の上のほう。ドラッグで両方のセルが一緒に動く） */
 .tz-bounds { position: absolute; inset: 0; pointer-events: none; }
@@ -460,11 +573,11 @@ html[lang="en"] .tl-label { width: 56px; }
 .nc-btn:hover { background: var(--panel-2); }
 .nc-btn:disabled { opacity: 0.45; cursor: default; }
 .nc-btn.on { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-text); }
-.nc-btn.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+.nc-btn.primary { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
 .nc-btn.primary:hover { filter: brightness(1.08); }
 .nc-btn .i { width: 14px; height: 14px; }
 .nc-btn kbd { font-size: 10px; padding: 0 3px; }
-.nc-btn.primary kbd { background: rgba(255, 255, 255, 0.2); color: #fff; border-color: transparent; }
+.nc-btn.primary kbd { background: rgba(255, 255, 255, 0.2); color: var(--on-accent); border-color: transparent; }
 .nc-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
 .nc-group { display: inline-flex; flex-wrap: wrap; gap: 4px; }
 .nc-cell { display: flex; flex-direction: column; gap: 6px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
@@ -493,7 +606,7 @@ html[lang="en"] .tl-label { width: 56px; }
   font: 11px var(--mono); padding: 0 4px; border-radius: 4px; background: var(--text); color: var(--bg); white-space: nowrap;
 }
 .nc-guide.is-cut { border-left: 2px solid var(--accent); }
-.nc-guide.is-cut::after { background: var(--accent); color: #fff; }
+.nc-guide.is-cut::after { background: var(--accent); color: var(--on-accent); }
 .nc-like-cycle:not([data-lv="0"]) { color: var(--heart); }
 .nc-like-cycle .pips { display: inline-flex; gap: 2px; }
 .nc-like-cycle .pips i { width: 4px; height: 4px; border-radius: 50%; background: var(--line-strong); }
@@ -821,7 +934,7 @@ dialog.palette-dialog { width: min(560px, 94vw); margin-top: 12vh; }
 }
 .tbtn:hover { color: var(--accent-text); background: var(--accent-bg); }
 .cell-len { white-space: nowrap; }
-.badge-now { display: none; padding: 0 8px; border-radius: 999px; font-size: 11.5px; line-height: 18px; color: #fff; background: var(--accent); }
+.badge-now { display: none; padding: 0 8px; border-radius: 999px; font-size: 11.5px; line-height: 18px; color: var(--on-accent); background: var(--accent); }
 .cell-card.is-active .badge-now { display: inline-block; }
 .badge-rep { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; color: var(--accent-text); }
 .badge-rep .i { width: 13px; height: 13px; }
@@ -913,13 +1026,24 @@ dialog.palette-dialog { width: min(560px, 94vw); margin-top: 12vh; }
 .cpop-edit input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 50%; }
 .cpop-edit input[type="color"]::-moz-color-swatch { border: 0; border-radius: 50%; }
 .cpop-note { font-size: 11.5px; line-height: 1.6; color: var(--text-3); }
+.cpop-sets { display: flex; flex-direction: column; gap: 2px; padding-top: 6px; border-top: 1px solid var(--line); }
+.cpop-sets-head { font-size: 11.5px; color: var(--text-3); margin-bottom: 2px; }
+.cpop-set {
+  display: flex; align-items: center; gap: 8px; min-height: 26px; padding: 2px 6px;
+  border: 1px solid transparent; border-radius: 7px; background: none; color: var(--text); cursor: pointer; font-size: 12.5px; text-align: left;
+}
+.cpop-set:hover { background: var(--panel-2); }
+.cpop-set.on { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-text); }
+.cpop-set:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.cpop-dots { display: inline-flex; gap: 3px; flex: none; }
+.cpop-dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15); }
 .cpop-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; row-gap: 6px; }
 .cpop-foot button {
   display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 9px;
   border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--text); cursor: pointer; font-size: 12.5px; white-space: nowrap;
 }
 .cpop-foot button:hover:not(:disabled) { background: var(--panel-2); }
-.cpop-foot button.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+.cpop-foot button.primary { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
 .cpop-foot button:disabled { opacity: 0.45; cursor: default; }
 .cpop-foot button .i { width: 14px; height: 14px; }
 
@@ -1358,7 +1482,7 @@ dialog.wide-dialog { width: min(720px, 94vw); }
 .drop-hint {
   position: fixed; inset: 0; z-index: 50; pointer-events: none;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(43, 108, 212, 0.15); border: 3px dashed var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent); border: 3px dashed var(--accent);
   font-size: 20px; font-weight: 600; color: var(--accent-text);
 }
 .drop-hint div { background: var(--panel); padding: 14px 24px; border-radius: 12px; box-shadow: var(--shadow); }
@@ -1386,6 +1510,50 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
 .mrow.is-cur .msub { color: inherit; opacity: 0.8; }
 .set-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
 .set-row.wide { grid-template-columns: 1fr auto; }
+
+/* 設定の「配色」 */
+.theme-set { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0 0 12px; border: 0; border-bottom: 1px solid var(--line); min-width: 0; }
+.theme-legend { padding: 0; margin-bottom: 2px; font-size: 13.5px; }
+.theme-legend small { display: block; font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+.theme-picker { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.theme-opt {
+  position: relative; display: flex; flex-direction: column; gap: 4px; padding: 4px 4px 5px;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--panel); cursor: pointer;
+  font-size: 11.5px; color: var(--text-2); text-align: center;
+}
+.theme-opt:hover { border-color: var(--line-strong); }
+/* ラジオボタンは見えなくして、カードを選んだ印にする（キーボードの ← → で選べる） */
+.theme-opt input { position: absolute; opacity: 0; pointer-events: none; }
+.theme-opt:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); color: var(--text); font-weight: 600; }
+.theme-opt:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.theme-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 小さなアプリの絵: 上のバー・動画・タイムライン・右のサイドバー */
+.theme-mini {
+  position: relative; display: block; height: 46px; border-radius: 6px; overflow: hidden;
+  background: var(--m-bg); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+.theme-mini::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 7px; background: var(--m-panel); border-bottom: 1px solid var(--m-line); }
+.theme-mini .v { position: absolute; left: 4px; top: 11px; width: 58%; height: 19px; border-radius: 3px; background: #000; }
+.theme-mini .t { position: absolute; left: 4px; top: 33px; width: 58%; height: 8px; border-radius: 2px; background: var(--m-deck, var(--m-panel)); box-shadow: inset 0 0 0 1px var(--m-line); }
+.theme-mini .t::after { content: ""; position: absolute; left: 3px; top: 3px; width: 40%; height: 2px; border-radius: 1px; background: var(--m-accent); }
+.theme-mini .s { position: absolute; right: 0; top: 7px; bottom: 0; width: 32%; background: var(--m-panel); border-left: 1px solid var(--m-line); }
+.theme-mini .s::before { content: ""; position: absolute; left: 4px; right: 4px; top: 4px; height: 6px; border-radius: 2px; background: var(--m-accent); }
+.theme-mini .s::after { content: ""; position: absolute; left: 4px; top: 14px; width: 6px; height: 6px; border-radius: 50%; background: var(--m-heart); box-shadow: 9px 0 0 var(--m-text), 18px 0 0 var(--m-line); }
+/* OS に合わせる: ライトとダークを斜めに半分ずつ */
+.theme-opt.is-auto .theme-mini { background: linear-gradient(135deg, #f5f5f3 0 50%, #181817 50% 100%); }
+.theme-opt.is-auto .theme-mini::before, .theme-opt.is-auto .theme-mini .s { display: none; }
+.theme-opt.is-auto .theme-mini .t { background: transparent; box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.5); }
+.theme-schedule { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 6px 8px; align-items: center; padding-left: 24px; font-size: 12.5px; color: var(--text-2); }
+.theme-schedule select { height: 28px; min-width: 0; }
+.theme-schedule .ts-time { width: 9.5em; height: 28px; padding: 0 6px; }
+.theme-schedule.is-off { opacity: 0.5; }
+.accent-picker { display: inline-flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.accent-opt { position: relative; display: inline-flex; cursor: pointer; }
+.accent-opt input { position: absolute; opacity: 0; pointer-events: none; }
+.accent-dot { width: 22px; height: 22px; border-radius: 50%; background: var(--sw); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15); }
+.accent-opt.is-theme .accent-dot { background: conic-gradient(#2b6cd4, #0d7a60, #963b6b, #c2410c, #2b6cd4); }
+.accent-opt:has(input:checked) .accent-dot { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--text-2); }
+.accent-opt:has(input:focus-visible) .accent-dot { outline: 2px solid var(--accent); outline-offset: 4px; }
 
 /* 音声認識 */
 .live-btn .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-3); flex: none; }

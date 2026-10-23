@@ -10,6 +10,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#222221" media="(prefers-color-scheme: dark)">
+<script src="js/theme-boot.js"></script>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -117,6 +118,8 @@
     <p class="chat-note">書き込むには、このブラウザで YouTube にログインしてください。コメントは YouTube のチャット画面から、あなたのアカウントで投稿されます（このアプリはその内容を受け取りません）。</p>
   </aside>
   <section class="left">
+    <!-- 動画・再生ボタン・タイムライン・いまのセルのバー（シアターの配色のときだけ、暗い帯になる） -->
+    <div class="deck" id="deck">
     <!-- 動画と字幕の帯（全画面にするときは、この2つをまとめて） -->
     <div class="player" id="playerBox">
     <div class="stage" id="stage">
@@ -175,6 +178,7 @@
 
     <!-- いまのセル（再生位置にあるセル）の操作 -->
     <div class="cell-bar" id="cellBar" hidden></div>
+    </div>
 
     <div class="live-sync-card" id="liveSyncCard" hidden></div>
     <div class="practice-card" id="practiceCard" hidden></div>
@@ -355,6 +359,27 @@
         <option value="en">English</option>
       </select>
     </label>
+    <!-- 配色: 選んでいる間は画面に当てて見せ、保存しなければ元に戻す（js/theme.js） -->
+    <fieldset class="theme-set" id="themeSet">
+      <legend class="theme-legend">配色<small>「OSに合わせる」は OS のライト・ダークに合わせます。ほかを選ぶと、OS の設定と関係なくその配色になります（Ctrl+K の「配色: …」でも切り替えられます）</small></legend>
+      <div class="theme-picker" id="themePicker"></div>
+      <label class="set-row check">
+        <input name="themeSchedule" type="checkbox">
+        <span>時間帯で配色を切り替える<small>昼と夜で別の配色にします（オンの間は、上で選んだ配色の代わりに使います）</small></span>
+      </label>
+      <div class="theme-schedule" id="themeSchedule">
+        <span class="ts-label">昼の配色</span><select name="themeDay" aria-label="昼の配色"></select><span class="ts-label">始まり</span><input class="field ts-time" name="dayStart" type="time" aria-label="昼の始まり">
+        <span class="ts-label">夜の配色</span><select name="themeNight" aria-label="夜の配色"></select><span class="ts-label">始まり</span><input class="field ts-time" name="nightStart" type="time" aria-label="夜の始まり">
+      </div>
+      <div class="set-row wide">
+        <span>アクセントの色<small>ボタン・選んでいる物・再生した範囲の色です（いちばん左は配色の色のまま）</small></span>
+        <span class="accent-picker" id="accentPicker" role="radiogroup" aria-label="アクセントの色"></span>
+      </div>
+      <label class="set-row check">
+        <input name="ambient" type="checkbox">
+        <span>動画のまわりを動画の色にする（アンビエント）<small>動画の左右の色を、動画の黒い余白と下にうすくにじませます。YouTube の動画は、サムネイルの色を使います（読めないときは出ません）</small></span>
+      </label>
+    </fieldset>
     <label class="set-row">
       <span>少し前に付ける目印（秒）<small>カンマ区切り、最大5つ</small></span>
       <input class="field" name="offsets" type="text">

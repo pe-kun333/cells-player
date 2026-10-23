@@ -24,6 +24,13 @@ export const DEFAULT_PRESET_SETS = isEn
 // セルの枠に付ける色（登録した6色）。セルには何番目の色か（color: 1〜6、0 か無しは色なし）を持たせる
 export const CELL_COLOR_COUNT = 6;
 export const DEFAULT_CELL_COLORS = ['#e5484d', '#f76b15', '#f5b400', '#30a46c', '#0090ff', '#8e4ec6'];
+// 色を登録するときに、6色をまとめて選べるセット（色覚に配慮は Okabe–Ito の配色から、白い背景で見える6色）
+export const CELL_COLOR_SETS = [
+  { id: 'std', name: '標準', colors: DEFAULT_CELL_COLORS },
+  { id: 'cud', name: '色覚に配慮', note: '色の見え方の違いがあっても見分けやすい色（Okabe–Ito の配色）', colors: ['#d55e00', '#e69f00', '#56b4e9', '#009e73', '#0072b2', '#cc79a7'] },
+  { id: 'pastel', name: 'パステル', colors: ['#f28b82', '#fbbc76', '#fdd663', '#81c995', '#8ab4f8', '#c58af9'] },
+  { id: 'wa', name: '和色', note: '紅・柑子・山吹・若竹・藍・江戸紫', colors: ['#c53d43', '#ee7800', '#e6b422', '#68be8d', '#165e83', '#745399'] },
+];
 
 export function normalizeCellColors(list) {
   return Array.from({ length: CELL_COLOR_COUNT }, (_, i) => {
@@ -84,6 +91,14 @@ export const DEFAULT_SETTINGS = {
   splitMax: 60,              // 同じく、1つのセルの長さの上限（秒）
   wordScope: 'media',        // 単語帳の表示（media: いまのメディア / all: すべて）
   cellColors: DEFAULT_CELL_COLORS, // セルの枠に付ける色（登録した6色）
+  theme: 'auto',             // 配色（auto: OS に合わせる / light / dark / white / paper / mint / sakura / fog / contrast / theater / midnight）
+  themeSchedule: false,      // 時間帯で配色を切り替える（昼は themeDay、夜は themeNight）
+  themeDay: 'white',
+  themeNight: 'dark',
+  dayStart: '07:00',         // 昼の始まり（HH:MM）
+  nightStart: '19:00',       // 夜の始まり（HH:MM）
+  accent: '',                // アクセントの色（#rrggbb。'' は配色の色のまま）
+  ambient: false,            // 動画のまわりを動画の色にする（アンビエント）
 };
 
 function readJSON(key) {

@@ -23,6 +23,8 @@ import { CellBar } from './cellbar.js';
 import { Palette } from './palette.js';
 import { NowCard } from './nowcard.js';
 import { ColorPop } from './colorpop.js';
+import { Theme, THEMES, themeName } from './theme.js';
+import { Ambient } from './ambient.js';
 import { $, clamp, fmt, round2, escapeHtml, icon, cellLabel } from './util.js';
 import { tr, trMaybe, lang, isEn, translatePage } from './i18n.js';
 
@@ -107,6 +109,13 @@ const cellBar = new CellBar(app);
 const nowCard = new NowCard(app);
 const colorPop = new ColorPop(app);
 app.colorPop = colorPop;
+// 配色（js/theme-boot.js が先に当てている。ここでは OS の設定・時刻の変化への追従と、ライブチャットの配色）
+const theme = new Theme(app);
+app.theme = theme;
+const ambient = new Ambient(app);
+theme.onChange(({ darkChanged }) => darkChanged && broadcast.refreshChatTheme());
+theme.apply();
+ambient.sync();
 
 // 操作の置き場所: 右のいまのカード（ops-card）か、左の「この瞬間」（前の配置）
 function applyOpsLayout() {
@@ -1818,7 +1827,61 @@ function openSettings() {
   f.resumeAfterComment.checked = s.resumeAfterComment;
   f.captions.checked = s.captions;
   f.lang.value = lang;
+  $('#themePicker').innerHTML = theme.pickerHtml(s.theme);
+  $('#accentPicker').innerHTML = theme.accentHtml(s.accent);
+  f.themeDay.innerHTML = theme.optionsHtml(s.themeDay);
+  f.themeNight.innerHTML = theme.optionsHtml(s.themeNight);
+  f.themeSchedule.checked = s.themeSchedule;
+  f.dayStart.value = s.dayStart;
+  f.nightStart.value = s.nightStart;
+  f.ambient.checked = s.ambient;
+  syncScheduleRow();
   $('#settingsDialog').showModal();
+}
+
+// 設定の「配色」の欄の値（保存するときと、選んでいる間に当てて見せるときに使う）
+function themeFields(f) {
+  const time = (v, fallback) => (/^\d{2}:\d{2}$/.test(v) ? v : fallback);
+  return {
+    theme: f.theme.value || 'auto',
+    themeSchedule: f.themeSchedule.checked,
+    themeDay: f.themeDay.value || DEFAULT_SETTINGS.themeDay,
+    themeNight: f.themeNight.value || DEFAULT_SETTINGS.themeNight,
+    dayStart: time(f.dayStart.value, DEFAULT_SETTINGS.dayStart),
+    nightStart: time(f.nightStart.value, DEFAULT_SETTINGS.nightStart),
+    accent: f.accent.value || '',
+    ambient: f.ambient.checked,
+  };
+}
+function syncScheduleRow() {
+  $('#themeSchedule').classList.toggle('is-off', !$('#settingsForm').themeSchedule.checked);
+}
+// 配色は、選んだらすぐ画面に当てて見せる。保存しないで閉じたら（キャンセル・Esc）元に戻す
+$('#themeSet').addEventListener('change', () => {
+  const p = themeFields($('#settingsForm'));
+  theme.preview(p);
+  ambient.sync(p.ambient);
+  syncScheduleRow();
+});
+$('#settingsDialog').addEventListener('close', () => {
+  theme.endPreview();
+  ambient.sync();
+});
+
+// Ctrl+K から配色を選ぶ（時間帯で切り替えていたら、それはオフにする）
+function setTheme(id) {
+  const wasScheduled = app.settings.themeSchedule;
+  app.settings = { ...app.settings, theme: id, themeSchedule: false };
+  saveSettings(app.settings);
+  theme.apply();
+  const name = themeName(id);
+  app.hint(wasScheduled ? tr('配色を「{name}」にしました（時間帯での切り替えはオフにしました）', { name }) : tr('配色を「{name}」にしました', { name }));
+}
+function toggleAmbient() {
+  app.settings = { ...app.settings, ambient: !app.settings.ambient };
+  saveSettings(app.settings);
+  ambient.sync();
+  app.hint(app.settings.ambient ? tr('アンビエントをオンにしました') : tr('アンビエントをオフにしました'));
 }
 
 // 表示の言語を切り替える。文はページを開いたときに決まるので、読み込み直す（開いているファイルは開き直してもらう）
@@ -1862,6 +1925,7 @@ $('#settingsForm').addEventListener('submit', (e) => {
     liveChat: f.liveChat.checked,
     resumeAfterComment: f.resumeAfterComment.checked,
     captions: f.captions.checked,
+    ...themeFields(f),
   };
   saveSettings(app.settings);
   applyOpsLayout();
@@ -1994,6 +2058,7 @@ const palette = new Palette(app, () => {
     cell: tr('セル'),
     tx: tr('字幕・練習'),
     other: tr('そのほか'),
+    theme: tr('配色'),
   };
   const addWord = () => {
     if (!requireMedia()) return;
@@ -2044,6 +2109,8 @@ const palette = new Palette(app, () => {
     { group: g.other, label: tr('やり直す'), key: 'Ctrl+Y', words: 'redo', run: () => store.redo() },
     { group: g.other, label: tr('設定'), words: 'settings', run: openSettings },
     { group: g.other, label: tr('ショートカットの一覧'), key: '?', words: 'help', run: () => $('#helpDialog').showModal() },
+    ...THEMES.map((t) => ({ group: g.theme, label: tr('配色: {name}', { name: tr(t.name) }), words: `theme color ${t.id}`, run: () => setTheme(t.id) })),
+    { group: g.theme, label: tr('アンビエント（動画のまわりを動画の色に）を切り替える'), words: 'ambient theme', run: toggleAmbient },
   ];
 });
 

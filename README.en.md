@@ -41,7 +41,7 @@ It then opens in its own window and also starts offline. After installing, you c
    "Full screen" in the top bar (or the F key) uses the whole screen for the app, including the browser bar at the top (the layout stays the same; Esc to exit).
    On the Cells row of the timeline, press a cell and drag left or right to select the cells in that row across the range. When you release, it asks whether to merge them; "Merge" makes them one cell (handy after splitting the video every 30 seconds)
    Press "…" on a cell card for "↑ Merge with the cell above" and "↓ Merge with the cell below"; the timeline cell menu has "← Merge with the cell on the left" and "Merge with the cell on the right →" (notes and comments are combined; Ctrl+Z undoes it).
-   The 🎨 (color) button on a cell card or in the timeline cell menu opens your 6 registered colors; pick one to color the cell's border (press the same color again to remove it). "Edit colors" in the popup lets you choose the 6 colors again, and cells with that color number change too.
+   The 🎨 (color) button on a cell card or in the timeline cell menu opens your 6 registered colors; pick one to color the cell's border (press the same color again to remove it). "Edit colors" in the popup lets you choose the 6 colors again, and cells with that color number change too ("Color sets" replaces all 6 at once with Standard, Color-blind friendly, Pastel or Japanese traditional colors).
    After a big jump from a card or the timeline, press "Back to 0:12" next to the play buttons or Backspace to return to where you were (Shift+Backspace to go forward again).
    Press S inside a cell (or "Split" on the card of the cell being played) to split it in two at the playhead. The note, likes, bookmark and comments stay with the earlier cell, and the later part becomes a new cell
    - You can also split at a clicked point with "Split here" in a cell's timeline menu, or Shift+click on the Cells, Full or Zoom row (holding Shift shows ✂ and the time where it will split)
@@ -66,6 +66,19 @@ Press "?" at the top right for the list of keyboard shortcuts.
 
 For YouTube videos, captions are shown in a strip just below the player instead of over it, following YouTube's terms.
 YouTube's own captions (which YouTube turns on by itself in your language for some videos) are kept off the video. Text burned into ads or into the video itself can't be removed.
+
+## Themes (White, Paper and more)
+
+Choose the screen colors with "Theme" at the top of Settings. Your choice is shown right away and kept when you press "Save" ("Cancel" puts it back).
+
+- Match OS (default): follows your system light or dark setting. If the system is set to increase contrast, High contrast is used
+- Light / Dark: the usual light or dark colors, regardless of the system setting
+- White (a cool, crisp white), Paper (warm off-white with indigo), Mint (soft green), Sakura (cherry-blossom pink with plum), Fog (a dimmer gray for people who find white too bright), High contrast (black on white with strong borders), Midnight (navy dark)
+- Theater: the controls stay light, and only the band with the video, playback buttons and timeline turns dark so the video stands out
+- "Switch themes by time of day" uses different themes for day and night (you choose when each starts)
+- "Accent color" changes only the color of buttons, selections and the played range
+- "Tint the area around the video with its colors (ambient)" softly spreads the colors from the left and right of the video into the black bars and below it. YouTube videos use the thumbnail colors
+- Type "theme" in Ctrl+K to switch quickly with "Theme: White" and so on
 
 ## Now card (top of the right sidebar)
 
