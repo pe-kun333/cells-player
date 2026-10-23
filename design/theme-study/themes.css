@@ -1,0 +1,395 @@
+/* 配色の検討用（試作）。アプリ本体には読み込んでいない。
+   lab.html がアプリの画面に差し込み、<html data-theme="…"> で切り替える。
+   css/style.css の :root の色の変数を、テーマごとに上書きするだけ（レイアウトは変えない）。
+   :root[data-theme] は @media (prefers-color-scheme: dark) の :root より強いので、OS がダークでも効く */
+
+/* ---- 共通: 本体で #fff のまま書いている「アクセントの上の文字」を変数にした場合の見え方 ---- */
+:root { --on-accent: #fff; }
+:root .btn.primary,
+:root .tlm-row button.primary,
+:root .nc-btn.primary,
+:root .cpop-foot button.primary,
+:root .badge-now,
+:root .tl-guide.is-cut::after,
+:root .tl-hover.is-cut,
+:root .nc-guide.is-cut::after,
+:root .tz-drag,
+:root .tz-guide::after { color: var(--on-accent); }
+:root .nc-btn.primary kbd { color: var(--on-accent); }
+
+/* ---- ホワイト: 青みのある白。いまのライト（少し黄みのある白）より、すっきり・明るい ---- */
+:root[data-theme="white"] {
+  color-scheme: light;
+  --bg: #f4f6f9;
+  --panel: #ffffff;
+  --panel-2: #eef1f5;
+  --line: #e1e5eb;
+  --line-strong: #c8cfd8;
+  --text: #121820;
+  --text-2: #4a5462;
+  --text-3: #6b7583;
+  --accent: #1f6feb;
+  --accent-bg: #e8f1fe;
+  --accent-bg-2: #cde0fd;
+  --accent-text: #1557c0;
+  --like-1: #f6c5d6;
+  --like-2: #e2709a;
+  --like-3: #b8325f;
+  --heart: #d6457a;
+  --heart-off: #d2d8df;
+  --cell-0: #c7d8f0;
+  --pin-0: #646e7a;
+  --playhead: #e5484d;
+  --track: #ebeef2;
+  --outside: #dce1e7;
+  --played: rgba(31, 111, 235, 0.12);
+  --tick-minor: rgba(15, 23, 42, 0.18);
+  --tick-major: rgba(15, 23, 42, 0.42);
+  --danger: #cf2e2e;
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.14);
+}
+
+/* ---- ペーパー（生成り）: 紙のような温かい白と、藍のアクセント。長く字幕や文字起こしを読むとき用 ---- */
+:root[data-theme="paper"] {
+  color-scheme: light;
+  --bg: #eee7d8;
+  --panel: #fbf7ee;
+  --panel-2: #f2ebdd;
+  --line: #e3d9c6;
+  --line-strong: #cdbfa6;
+  --text: #2a241c;
+  --text-2: #5b5142;
+  --text-3: #7a6e5b;
+  --accent: #2e4a7d;
+  --accent-bg: #e4e7ee;
+  --accent-bg-2: #cdd5e4;
+  --accent-text: #263f6c;
+  --like-1: #efc4bc;
+  --like-2: #d7786b;
+  --like-3: #a6402f;
+  --heart: #bf4f3c;
+  --heart-off: #d8cdb9;
+  --cell-0: #d2d8e2;
+  --pin-0: #6c6354;
+  --playhead: #c8462f;
+  --track: #ece5d6;
+  --outside: #ddd3c0;
+  --played: rgba(46, 74, 125, 0.12);
+  --tick-minor: rgba(60, 40, 10, 0.2);
+  --tick-major: rgba(60, 40, 10, 0.45);
+  --danger: #b03a2b;
+  --shadow: 0 10px 30px rgba(60, 40, 10, 0.16);
+}
+
+/* ---- ミント（若葉）: うすい緑みの白と、深い緑のアクセント。落ち着いて勉強する用 ---- */
+:root[data-theme="mint"] {
+  color-scheme: light;
+  --bg: #ebf3ef;
+  --panel: #fbfdfc;
+  --panel-2: #e7f0eb;
+  --line: #d6e5dd;
+  --line-strong: #bcd2c6;
+  --text: #13201b;
+  --text-2: #475a52;
+  --text-3: #66786f;
+  --accent: #0d7a60;
+  --accent-bg: #def2ea;
+  --accent-bg-2: #bfe5d6;
+  --accent-text: #0a634e;
+  --like-1: #f5c8d3;
+  --like-2: #e07b95;
+  --like-3: #b3405d;
+  --heart: #cf5079;
+  --heart-off: #c8d8d0;
+  --cell-0: #c1e0d3;
+  --pin-0: #5d6f67;
+  --playhead: #df4f39;
+  --track: #e2ece7;
+  --outside: #d1e0d8;
+  --played: rgba(13, 122, 96, 0.12);
+  --tick-minor: rgba(10, 40, 30, 0.18);
+  --tick-major: rgba(10, 40, 30, 0.42);
+  --danger: #be3838;
+  --shadow: 0 10px 30px rgba(10, 40, 30, 0.14);
+}
+
+/* ---- サクラ: うすい桜色の白と、梅紫のアクセント。いいねは紅にして、アクセントと区別する ---- */
+:root[data-theme="sakura"] {
+  color-scheme: light;
+  --bg: #f7eff2;
+  --panel: #fffbfc;
+  --panel-2: #f5ebee;
+  --line: #ebdce1;
+  --line-strong: #dac3cb;
+  --text: #2a1c22;
+  --text-2: #614e57;
+  --text-3: #7d6872;
+  --accent: #963b6b;
+  --accent-bg: #f6e6ee;
+  --accent-bg-2: #ebcbdb;
+  --accent-text: #7f2f59;
+  --like-1: #f6c3c3;
+  --like-2: #e46a6a;
+  --like-3: #b52d39;
+  --heart: #d43f4d;
+  --heart-off: #e0d0d5;
+  --cell-0: #e9d1db;
+  --pin-0: #74626a;
+  --playhead: #d03838;
+  --track: #f0e5e9;
+  --outside: #e5d5db;
+  --played: rgba(150, 59, 107, 0.12);
+  --tick-minor: rgba(60, 20, 35, 0.18);
+  --tick-major: rgba(60, 20, 35, 0.42);
+  --danger: #b5302d;
+  --shadow: 0 10px 30px rgba(60, 20, 35, 0.14);
+}
+
+/* ---- うす曇り: 白がまぶしい人向けの、明るさをおさえたグレー（ライトとダークの間） ---- */
+:root[data-theme="fog"] {
+  color-scheme: light;
+  --bg: #dcdfe4;
+  --panel: #e9ecef;
+  --panel-2: #e0e3e8;
+  --line: #ccd1d7;
+  --line-strong: #b1b8c1;
+  --text: #171a1f;
+  --text-2: #434a53;
+  --text-3: #5d646e;
+  --accent: #2c5fb3;
+  --accent-bg: #d6e1f1;
+  --accent-bg-2: #c0d1ea;
+  --accent-text: #224f98;
+  --like-1: #e6bccb;
+  --like-2: #cc6b8f;
+  --like-3: #a2325f;
+  --heart: #bb416c;
+  --heart-off: #c0c5cc;
+  --cell-0: #b9c9df;
+  --pin-0: #5a6069;
+  --playhead: #d3372f;
+  --track: #dadde2;
+  --outside: #c9cdd4;
+  --played: rgba(44, 95, 179, 0.13);
+  --tick-minor: rgba(20, 25, 35, 0.2);
+  --tick-major: rgba(20, 25, 35, 0.46);
+  --danger: #ad2e2e;
+  --shadow: 0 10px 30px rgba(20, 25, 35, 0.2);
+}
+
+/* ---- ハイコントラスト: 真っ白に黒い文字・濃い枠。見えにくさに配慮（prefers-contrast: more の候補） ---- */
+:root[data-theme="contrast"] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --panel-2: #eeeeee;
+  --line: #767676;
+  --line-strong: #1a1a1a;
+  --text: #000000;
+  --text-2: #1f1f1f;
+  --text-3: #3d3d3d;
+  --accent: #0040b0;
+  --accent-bg: #dfe8ff;
+  --accent-bg-2: #b8cbff;
+  --accent-text: #002f86;
+  --like-1: #f0a3c0;
+  --like-2: #c2185b;
+  --like-3: #7f0d48;
+  --heart: #c2185b;
+  --heart-off: #8a8a8a;
+  --cell-0: #9db4de;
+  --pin-0: #000000;
+  --playhead: #d00000;
+  --track: #e6e6e6;
+  --outside: #bdbdbd;
+  --played: rgba(0, 64, 176, 0.16);
+  --tick-minor: rgba(0, 0, 0, 0.45);
+  --tick-major: rgba(0, 0, 0, 0.85);
+  --danger: #b00000;
+  --shadow: 0 0 0 2px #000, 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+:root[data-theme="contrast"] :focus-visible { outline: 3px solid #0040b0 !important; outline-offset: 2px; }
+:root[data-theme="contrast"] .card,
+:root[data-theme="contrast"] .timeline,
+:root[data-theme="contrast"] .now-card { border-width: 2px; }
+
+/* ---- シアター: 操作はホワイトのまま、動画・コントロール・タイムラインの帯だけ暗くする（動画が引き立つ） ---- */
+:root[data-theme="theater"] {
+  color-scheme: light;
+  --bg: #f4f6f9;
+  --panel: #ffffff;
+  --panel-2: #eef1f5;
+  --line: #e1e5eb;
+  --line-strong: #c8cfd8;
+  --text: #121820;
+  --text-2: #4a5462;
+  --text-3: #6b7583;
+  --accent: #1f6feb;
+  --accent-bg: #e8f1fe;
+  --accent-bg-2: #cde0fd;
+  --accent-text: #1557c0;
+  --like-1: #f6c5d6;
+  --like-2: #e2709a;
+  --like-3: #b8325f;
+  --heart: #d6457a;
+  --heart-off: #d2d8df;
+  --cell-0: #c7d8f0;
+  --pin-0: #646e7a;
+  --playhead: #e5484d;
+  --track: #ebeef2;
+  --outside: #dce1e7;
+  --played: rgba(31, 111, 235, 0.12);
+  --tick-minor: rgba(15, 23, 42, 0.18);
+  --tick-major: rgba(15, 23, 42, 0.42);
+  --danger: #cf2e2e;
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.14);
+  /* 暗い帯の高さ（lab.html がタイムライン・いまのセルのバーの下端に合わせて入れる） */
+  --deck-h: 640px;
+}
+/* 帯の中だけ、ダークの変数に入れ替える（変数は子へ受け継がれるので、中の部品はそのまま暗くなる） */
+:root[data-theme="theater"] .player,
+:root[data-theme="theater"] .controls,
+:root[data-theme="theater"] .timeline,
+:root[data-theme="theater"] .cell-bar {
+  color-scheme: dark;
+  --panel: #1d1f23;
+  --panel-2: #272a2f;
+  --bg: #15171a;
+  --line: #30343a;
+  --line-strong: #454a52;
+  --text: #eceef1;
+  --text-2: #b4b9c1;
+  --text-3: #8a9099;
+  --accent: #6ea4f5;
+  --accent-bg: #1a2c48;
+  --accent-bg-2: #24406b;
+  --accent-text: #a3c5f8;
+  --on-accent: #0b1730;
+  --like-1: #6e3350;
+  --like-2: #b24c78;
+  --like-3: #f07aa8;
+  --heart: #f07aa8;
+  --heart-off: #4a4d53;
+  --cell-0: #3a4a63;
+  --pin-0: #a9aeb6;
+  --track: #2a2d32;
+  --outside: #121417;
+  --played: rgba(110, 164, 245, 0.16);
+  --tick-minor: rgba(255, 255, 255, 0.18);
+  --tick-major: rgba(255, 255, 255, 0.42);
+  color: var(--text);
+}
+:root[data-theme="theater"] .left {
+  background: linear-gradient(to bottom, #101215 0, #101215 var(--deck-h), transparent var(--deck-h));
+}
+:root[data-theme="theater"] .controls .btn,
+:root[data-theme="theater"] .controls select { background: var(--panel); }
+
+/* ---- ミッドナイト（ダークの別案）: 紺のダーク。アクセントの上の文字は暗い色にして読みやすく ---- */
+:root[data-theme="midnight"] {
+  color-scheme: dark;
+  --bg: #0e1320;
+  --panel: #151b2b;
+  --panel-2: #1c2336;
+  --line: #252e45;
+  --line-strong: #35405e;
+  --text: #e6eaf2;
+  --text-2: #a9b2c6;
+  --text-3: #8089a0;
+  --accent: #6ea8ff;
+  --accent-bg: #17284a;
+  --accent-bg-2: #213a6b;
+  --accent-text: #a3c6ff;
+  --on-accent: #0a1530;
+  --like-1: #5a2a48;
+  --like-2: #b14d82;
+  --like-3: #f08cbf;
+  --heart: #f08cbf;
+  --heart-off: #3a4258;
+  --cell-0: #2c3d63;
+  --pin-0: #9aa4ba;
+  --playhead: #ff6b6b;
+  --track: #1f2638;
+  --outside: #0b0f19;
+  --played: rgba(110, 168, 255, 0.14);
+  --tick-minor: rgba(255, 255, 255, 0.16);
+  --tick-major: rgba(255, 255, 255, 0.4);
+  --danger: #ff7a7a;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+}
+
+/* ---- 「ライト」「ダーク」を OS と関係なく選んだとき（いまの2つの配色をそのまま使う） ---- */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f5f5f3;
+  --panel: #ffffff;
+  --panel-2: #f0efec;
+  --line: #e3e2de;
+  --line-strong: #cfcdc7;
+  --text: #1d1d1b;
+  --text-2: #5c5b57;
+  --text-3: #8c8a84;
+  --accent: #2b6cd4;
+  --accent-bg: #e7f0fc;
+  --accent-bg-2: #cfe0f8;
+  --accent-text: #1d59b5;
+  --like-1: #f4c3d4;
+  --like-2: #e27aa0;
+  --like-3: #b83a6a;
+  --heart: #d24b7e;
+  --heart-off: #d3d1cb;
+  --cell-0: #c5d3e8;
+  --pin-0: #6f6e69;
+  --playhead: #e0413a;
+  --track: #ebeae6;
+  --outside: #d9d8d3;
+  --played: rgba(43, 108, 212, 0.12);
+  --tick-minor: rgba(0, 0, 0, 0.18);
+  --tick-major: rgba(0, 0, 0, 0.42);
+  --danger: #c23b3b;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #181817;
+  --panel: #222221;
+  --panel-2: #2b2b29;
+  --line: #33332f;
+  --line-strong: #474743;
+  --text: #ebeae5;
+  --text-2: #b3b1aa;
+  --text-3: #83817b;
+  --accent: #6aa2f0;
+  --accent-bg: #1b2d47;
+  --accent-bg-2: #25406a;
+  --accent-text: #9cc3f7;
+  --like-1: #6e3350;
+  --like-2: #b24c78;
+  --like-3: #f07aa8;
+  --heart: #f07aa8;
+  --heart-off: #4a4945;
+  --cell-0: #3a4a63;
+  --pin-0: #a7a59e;
+  --playhead: #ff5d55;
+  --track: #2e2e2c;
+  --outside: #141413;
+  --played: rgba(106, 162, 240, 0.14);
+  --tick-minor: rgba(255, 255, 255, 0.18);
+  --tick-major: rgba(255, 255, 255, 0.42);
+  --danger: #f07070;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* ---- アンビエント（試作）: 動画の左右の色を、動画の黒い余白と動画の下にうすくにじませる。
+   lab.html が動画を小さく描いて、左の3分の1・右の3分の1の色を --amb-l・--amb-r（不透明）に入れる。
+   動画の枠は左の列いっぱいに広がっているので、外側ではなく余白（レターボックス）と下の再生ボタンの並びに出す ---- */
+:root[data-ambient] .stage {
+  background:
+    linear-gradient(to right, #000, color-mix(in srgb, var(--amb-l, #000) 80%, #000)) left / 50% 100% no-repeat,
+    linear-gradient(to left, #000, color-mix(in srgb, var(--amb-r, #000) 80%, #000)) right / 50% 100% no-repeat;
+  box-shadow:
+    -30px 34px 70px -18px color-mix(in srgb, var(--amb-l, transparent) 70%, transparent),
+    30px 34px 70px -18px color-mix(in srgb, var(--amb-r, transparent) 70%, transparent);
+  transition: box-shadow 1.2s ease;
+}
+:root[data-ambient] .stage video { background: transparent; }

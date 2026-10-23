@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>配色ラボ（試作）</title>
+<link rel="icon" href="../../icons/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../css/style.css">
+<link rel="stylesheet" href="themes.css">
+<style>
+  /* このページの上の帯だけ。下はアプリをそのまま iframe で開く */
+  body { display: flex; flex-direction: column; height: 100vh; }
+  .lab-bar {
+    flex: none; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--panel); font-size: 12.5px;
+  }
+  .lab-title { font-weight: 600; font-size: 13.5px; white-space: nowrap; }
+  .lab-title small { margin-left: 6px; font-weight: 400; color: var(--text-3); }
+  .lab-group { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .lab-label { color: var(--text-3); margin-right: 2px; white-space: nowrap; }
+  .lab-chip {
+    display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 8px;
+    border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--text-2);
+    cursor: pointer; font: inherit; font-size: 12px; white-space: nowrap;
+  }
+  .lab-chip:hover { background: var(--panel-2); }
+  .lab-chip.on { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-text); font-weight: 600; }
+  .lab-chip .sw { width: 12px; height: 12px; border-radius: 50%; background: linear-gradient(135deg, var(--a) 0 50%, var(--b) 50% 100%); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); }
+  .lab-acc { width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; background: var(--sw); cursor: pointer; }
+  .lab-acc.is-none { background: conic-gradient(#2b6cd4, #0d7a60, #963b6b, #c2410c, #2b6cd4); }
+  .lab-acc.on { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
+  .lab-check { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; white-space: nowrap; }
+  .lab-check input { margin: 0; accent-color: var(--accent); }
+  .lab-note { width: 100%; font-size: 11.5px; color: var(--text-3); }
+  .lab-frame { flex: 1; min-height: 0; width: 100%; border: 0; background: var(--bg); }
+</style>
+</head>
+<body>
+<div class="lab-bar">
+  <div class="lab-title">配色ラボ<small>試作・アプリ本体は変えていません</small></div>
+  <div class="lab-group" id="labThemes" role="group" aria-label="配色"></div>
+  <span class="spacer"></span>
+  <div class="lab-group" id="labAccents" role="group" aria-label="アクセントの色"><span class="lab-label">アクセント</span></div>
+  <label class="lab-check" title="動画の平均の色を、動画のまわりに薄くにじませる（手元のファイル・URL の動画のとき）"><input type="checkbox" id="labAmbient">アンビエント</label>
+  <button type="button" class="btn small" id="labSettings" title="アプリの「設定」を開く（先頭に「配色」のモックが入っています）">設定の「配色」を見る</button>
+  <div class="lab-note">下はいつものアプリそのもの（メモ・設定も同じ）。配色はこのページの中だけで変わります。セルの 🎨 の「色のセット」だけは、登録した6色を実際に入れ替えます（「標準」で戻せます）。</div>
+</div>
+<iframe class="lab-frame" id="labFrame" src="../../index.html" title="区間セルプレイヤー"></iframe>
+
+<script>
+// テーマの一覧（m は設定の「配色」の小さな絵に使う色。値は themes.css と同じ）
+const THEMES = [
+  { id: 'auto', name: 'OSに合わせる', dot: ['#f5f5f3', '#181817'] },
+  { id: 'light', name: 'ライト', m: { bg: '#f5f5f3', panel: '#ffffff', line: '#e3e2de', accent: '#2b6cd4', heart: '#d24b7e', text: '#1d1d1b' } },
+  { id: 'dark', name: 'ダーク', dark: true, m: { bg: '#181817', panel: '#222221', line: '#33332f', accent: '#6aa2f0', heart: '#f07aa8', text: '#ebeae5' } },
+  { id: 'white', name: 'ホワイト', m: { bg: '#f4f6f9', panel: '#ffffff', line: '#e1e5eb', accent: '#1f6feb', heart: '#d6457a', text: '#121820' } },
+  { id: 'paper', name: 'ペーパー', m: { bg: '#eee7d8', panel: '#fbf7ee', line: '#e3d9c6', accent: '#2e4a7d', heart: '#bf4f3c', text: '#2a241c' } },
+  { id: 'mint', name: 'ミント', m: { bg: '#ebf3ef', panel: '#fbfdfc', line: '#d6e5dd', accent: '#0d7a60', heart: '#cf5079', text: '#13201b' } },
+  { id: 'sakura', name: 'サクラ', m: { bg: '#f7eff2', panel: '#fffbfc', line: '#ebdce1', accent: '#963b6b', heart: '#d43f4d', text: '#2a1c22' } },
+  { id: 'fog', name: 'うす曇り', m: { bg: '#dcdfe4', panel: '#e9ecef', line: '#ccd1d7', accent: '#2c5fb3', heart: '#bb416c', text: '#171a1f' } },
+  { id: 'contrast', name: 'ハイコントラスト', m: { bg: '#ffffff', panel: '#ffffff', line: '#1a1a1a', accent: '#0040b0', heart: '#c2185b', text: '#000000' } },
+  { id: 'theater', name: 'シアター', m: { bg: '#f4f6f9', panel: '#ffffff', line: '#e1e5eb', accent: '#1f6feb', heart: '#d6457a', text: '#121820', stage: '#000', deck: '#1d1f23' } },
+  { id: 'midnight', name: 'ミッドナイト', dark: true, m: { bg: '#0e1320', panel: '#151b2b', line: '#252e45', accent: '#6ea8ff', heart: '#f08cbf', text: '#e6eaf2' } },
+];
+const ACCENTS = ['', '#2b6cd4', '#4f46e5', '#0d7a60', '#963b6b', '#c2410c', '#475569'];
+// セルの色のセット（登録した6色をまとめて入れ替える）
+const CELL_SETS = [
+  { id: 'std', name: '標準', colors: ['#e5484d', '#f76b15', '#f5b400', '#30a46c', '#0090ff', '#8e4ec6'] },
+  { id: 'cud', name: '色覚に配慮', note: 'Okabe–Ito の配色（色覚の型によらず見分けやすい）', colors: ['#d55e00', '#e69f00', '#56b4e9', '#009e73', '#0072b2', '#cc79a7'] },
+  { id: 'pastel', name: 'パステル', colors: ['#f28b82', '#fbbc76', '#fdd663', '#81c995', '#8ab4f8', '#c58af9'] },
+  { id: 'wa', name: '和色', note: '紅・柑子・山吹・若竹・藍・江戸紫（ペーパーに合う）', colors: ['#c53d43', '#ee7800', '#e6b422', '#68be8d', '#165e83', '#745399'] },
+];
+
+const KEY = 'cells-theme-lab';
+const $ = (s, r = document) => r.querySelector(s);
+const frame = $('#labFrame');
+let state = { theme: 'auto', accent: '', ambient: false };
+try { state = { ...state, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch {}
+
+const doc = () => frame.contentDocument;
+const isDark = () => {
+  const t = THEMES.find((x) => x.id === state.theme);
+  if (state.theme === 'auto') return matchMedia('(prefers-color-scheme: dark)').matches;
+  return !!t?.dark;
+};
+
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
+}
+
+// ---- 上の帯 ----
+function renderBar() {
+  $('#labThemes').innerHTML = THEMES.map((t) => {
+    const [a, b] = t.dot || [t.m.panel, t.m.accent];
+    return `<button type="button" class="lab-chip${state.theme === t.id ? ' on' : ''}" data-theme-id="${t.id}"><i class="sw" style="--a:${a};--b:${b}"></i>${t.name}</button>`;
+  }).join('');
+  $('#labAccents').innerHTML = '<span class="lab-label">アクセント</span>' + ACCENTS.map((c) =>
+    `<button type="button" class="lab-acc${c ? '' : ' is-none'}${state.accent === c ? ' on' : ''}" data-accent="${c}" style="--sw:${c || 'transparent'}" title="${c || 'テーマの色'}" aria-label="${c || 'テーマの色'}"></button>`).join('');
+  $('#labAmbient').checked = state.ambient;
+}
+$('#labThemes').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-theme-id]');
+  if (b) setState({ theme: b.dataset.themeId });
+});
+$('#labAccents').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-accent]');
+  if (b) setState({ accent: b.dataset.accent });
+});
+$('#labAmbient').addEventListener('change', (e) => setState({ ambient: e.target.checked }));
+$('#labSettings').addEventListener('click', () => doc()?.querySelector('#btnSettings')?.click());
+
+function setState(patch) {
+  state = { ...state, ...patch };
+  save();
+  apply();
+}
+
+// ---- テーマを当てる（このページとアプリの両方の <html> に） ----
+function applyTo(root) {
+  if (state.theme === 'auto') delete root.dataset.theme;
+  else root.dataset.theme = state.theme;
+  // アクセントだけ選び直す: ほかの色はテーマのまま、アクセントの仲間の色を混ぜて作る
+  const vars = ['--accent', '--accent-bg', '--accent-bg-2', '--accent-text', '--played', '--on-accent'];
+  vars.forEach((v) => root.style.removeProperty(v));
+  if (state.accent) {
+    const a = isDark() ? `color-mix(in oklab, ${state.accent} 62%, #fff)` : state.accent;
+    root.style.setProperty('--accent', a);
+    root.style.setProperty('--accent-bg', `color-mix(in srgb, ${a} ${isDark() ? 22 : 11}%, var(--panel))`);
+    root.style.setProperty('--accent-bg-2', `color-mix(in srgb, ${a} ${isDark() ? 36 : 22}%, var(--panel))`);
+    root.style.setProperty('--accent-text', `color-mix(in oklab, ${a} 80%, var(--text))`);
+    root.style.setProperty('--played', `color-mix(in srgb, ${a} 13%, transparent)`);
+    root.style.setProperty('--on-accent', isDark() ? '#0b1530' : '#fff');
+  }
+  if (state.ambient) root.dataset.ambient = '';
+  else delete root.dataset.ambient;
+}
+
+function apply() {
+  renderBar();
+  applyTo(document.documentElement);
+  const d = doc();
+  if (!d?.documentElement) return;
+  applyTo(d.documentElement);
+  fitDeck();
+  renderPicker();
+  if (!state.ambient) ['--amb-l', '--amb-r'].forEach((v) => d.documentElement.style.removeProperty(v));
+}
+
+// シアター: 暗い帯を、タイムライン（いまのセルのバーがあればその下）の下端までにする
+function fitDeck() {
+  const d = doc();
+  if (!d || state.theme !== 'theater') return;
+  const left = d.querySelector('.left');
+  const cb = d.querySelector('#cellBar');
+  const bar = cb && cb.getBoundingClientRect().height > 0 ? cb : d.querySelector('#timeline');
+  if (!left || !bar) return;
+  const h = bar.getBoundingClientRect().bottom - left.getBoundingClientRect().top + left.scrollTop + 8;
+  d.documentElement.style.setProperty('--deck-h', `${Math.round(h)}px`);
+}
+setInterval(fitDeck, 700);
+
+// ---- アンビエント: 動画を小さく描いて、左右の3分の1ずつ、色の濃い所を重く平均する ----
+const cv = document.createElement('canvas');
+cv.width = 30;
+cv.height = 17;
+const cx = cv.getContext('2d', { willReadFrequently: true });
+function averageColor(px, x0, x1) {
+  let r = 0, g = 0, b = 0, w = 0;
+  for (let y = 0; y < cv.height; y++) {
+    for (let x = x0; x < x1; x++) {
+      const i = (y * cv.width + x) * 4;
+      const max = Math.max(px[i], px[i + 1], px[i + 2]);
+      const min = Math.min(px[i], px[i + 1], px[i + 2]);
+      const k = 0.1 + ((max - min) / 255) ** 2 * 3; // 鮮やかな所ほど重く
+      r += px[i] * k; g += px[i + 1] * k; b += px[i + 2] * k; w += k;
+    }
+  }
+  return [r / w, g / w, b / w].map(Math.round).join(' ');
+}
+setInterval(() => {
+  const d = doc();
+  if (!state.ambient || !d) return;
+  const v = d.querySelector('.stage video');
+  if (!v || v.readyState < 2 || v.videoWidth === 0) return; // YouTube（iframe）は中の絵を読めない
+  try {
+    cx.drawImage(v, 0, 0, cv.width, cv.height);
+    const px = cx.getImageData(0, 0, cv.width, cv.height).data;
+    d.documentElement.style.setProperty('--amb-l', `rgb(${averageColor(px, 0, 10)})`);
+    d.documentElement.style.setProperty('--amb-r', `rgb(${averageColor(px, 20, 30)})`);
+  } catch {
+    // 別のサイトの動画で絵が読めないとき
+  }
+}, 400);
+
+// ---- モック: 設定の先頭に「配色」 ----
+function miniHtml(t) {
+  if (!t.m) return '<span class="mk-mini is-auto"><i class="v"></i><i class="t"></i></span>';
+  const m = t.m;
+  const st = `--m-bg:${m.bg};--m-panel:${m.panel};--m-line:${m.line};--m-accent:${m.accent};--m-heart:${m.heart};--m-text:${m.text};${m.deck ? `--m-deck:${m.deck};` : ''}`;
+  return `<span class="mk-mini" style="${st}"><i class="v"></i><i class="t"></i><i class="s"></i></span>`;
+}
+function renderPicker() {
+  const d = doc();
+  const form = d?.querySelector('#settingsForm');
+  if (!form) return;
+  let row = form.querySelector('.mk-theme-row');
+  if (!row) {
+    row = d.createElement('div');
+    row.className = 'mk-theme-row';
+    const lang = form.querySelector('.set-row');
+    (lang || form.querySelector('h2')).after(row);
+    row.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-mk-theme]');
+      if (b) { e.preventDefault(); setState({ theme: b.dataset.mkTheme }); }
+      const a = e.target.closest('[data-mk-accent]');
+      if (a) { e.preventDefault(); setState({ accent: a.dataset.mkAccent }); }
+    });
+    row.addEventListener('change', (e) => {
+      if (e.target.matches('[data-mk-ambient]')) setState({ ambient: e.target.checked });
+    });
+  }
+  row.innerHTML = `
+    <div class="mk-label">配色<span class="mk-badge">モック</span><small>「OSに合わせる」はいまの動き。ほかを選ぶと、OS の設定と関係なくその配色になります（Ctrl+K の「配色: …」でも切り替え）</small></div>
+    <div class="mk-themes">${THEMES.map((t) => `<button type="button" class="mk-theme${state.theme === t.id ? ' on' : ''}" data-mk-theme="${t.id}">${miniHtml(t)}<span>${t.name}</span></button>`).join('')}</div>
+    <div class="mk-sub">
+      <span>時間帯で切り替える<small>昼と夜で別の配色にする（日の入りの時刻か、決めた時刻で）</small></span>
+      <span class="mk-inline"><select disabled><option>昼: ホワイト</option></select><select disabled><option>夜: ダーク</option></select></span>
+      <span>アクセントの色<small>ボタン・選んでいる物・再生した範囲の色</small></span>
+      <span class="mk-accents">${ACCENTS.map((c) => `<button type="button" class="mk-accent${state.accent === c ? ' on' : ''}" data-mk-accent="${c}" style="--sw:${c || 'conic-gradient(#2b6cd4, #0d7a60, #963b6b, #c2410c, #2b6cd4)'}" title="${c || 'テーマの色'}" aria-label="${c || 'テーマの色'}"></button>`).join('')}</span>
+      <span>動画のまわりを動画の色にする（アンビエント）<small>手元のファイル・URL の動画のとき。YouTube は絵を読めないので、サムネイルの色を使う案</small></span>
+      <label class="mk-check"><input type="checkbox" data-mk-ambient${state.ambient ? ' checked' : ''}>オン</label>
+    </div>`;
+}
+
+// ---- モック: セルの色のポップアップに「色のセット」 ----
+function sameColors(a, b) {
+  return a.length === b.length && a.every((x, i) => x.toLowerCase() === b[i].toLowerCase());
+}
+function decorateColorPop() {
+  const d = doc();
+  const pop = d?.querySelector('#colorPop');
+  if (!pop || pop.hidden || pop.querySelector('.mk-sets') || !pop.querySelector('.cpop-sw')) return;
+  const cur = [...pop.querySelectorAll('.cpop-sw')].map((b) => b.style.getPropertyValue('--sw').trim());
+  const box = d.createElement('div');
+  box.className = 'mk-sets';
+  box.innerHTML = `<div class="mk-sets-head">色のセット（モック）</div>` + CELL_SETS.map((s) =>
+    `<button type="button" class="mk-set${sameColors(cur, s.colors) ? ' on' : ''}" data-mk-set="${s.id}"${s.note ? ` title="${s.note}"` : ''}><span class="dots">${s.colors.map((c) => `<i style="--c:${c}"></i>`).join('')}</span>${s.name}</button>`).join('');
+  pop.querySelector('.cpop-foot')?.before(box);
+  box.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-mk-set]');
+    if (b) applyCellSet(CELL_SETS.find((s) => s.id === b.dataset.mkSet).colors);
+  });
+}
+// アプリの「色を登録」の画面を通して入れ替える（アプリの中の処理で保存・描き直しされる）
+async function applyCellSet(colors) {
+  const pop = doc().querySelector('#colorPop');
+  pop.querySelector('[data-cpop="edit"]')?.click();
+  await new Promise((r) => setTimeout(r, 30));
+  pop.querySelectorAll('input[type="color"][data-slot]').forEach((inp) => {
+    inp.value = colors[Number(inp.dataset.slot)];
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await new Promise((r) => setTimeout(r, 60));
+  pop.querySelector('[data-cpop="done"]')?.click();
+}
+
+frame.addEventListener('load', () => {
+  const d = doc();
+  if (!d) return;
+  for (const href of ['themes.css', 'mock.css']) {
+    const l = d.createElement('link');
+    l.rel = 'stylesheet';
+    l.href = new URL(href, location.href).href;
+    d.head.append(l);
+  }
+  new MutationObserver(decorateColorPop).observe(d.querySelector('#colorPop'), { childList: true, attributes: true });
+  apply();
+});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', apply);
+renderBar();
+applyTo(document.documentElement);
+</script>
+</body>
+</html>

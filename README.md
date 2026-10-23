@@ -215,6 +215,7 @@ Cloudflare Pages や Netlify でも、ビルドなし・このフォルダをそ
 - `privacy.html` … プライバシーとデータの扱い
 - `manifest.webmanifest` / `sw.js` / `icons/` … アプリとしてインストール・オフライン起動のため
 - `serve.py` / `start.bat` … 手元の PC で動かすための小さな Web サーバー
+- `design/theme-study/` … 配色の検討（ホワイトなどの配色案・配色ラボ・モック。アプリ本体には読み込んでいません）
 
 ## ライセンス
 
