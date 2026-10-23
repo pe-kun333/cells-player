@@ -145,8 +145,8 @@
 :root[data-accent] {
   --accent-lite: color-mix(in oklab, var(--accent-pick) 62%, #fff);
   --accent: light-dark(var(--accent-pick), var(--accent-lite));
-  --accent-bg: light-dark(color-mix(in srgb, var(--accent-pick) 11%, var(--panel)), color-mix(in srgb, var(--accent-lite) 22%, var(--panel)));
-  --accent-bg-2: light-dark(color-mix(in srgb, var(--accent-pick) 22%, var(--panel)), color-mix(in srgb, var(--accent-lite) 36%, var(--panel)));
+  --accent-bg: light-dark(color-mix(in srgb, var(--accent-pick) 9%, var(--panel)), color-mix(in srgb, var(--accent-pick) 16%, var(--panel)));
+  --accent-bg-2: light-dark(color-mix(in srgb, var(--accent-pick) 22%, var(--panel)), color-mix(in srgb, var(--accent-pick) 34%, var(--panel)));
   --accent-text: light-dark(color-mix(in oklab, var(--accent-pick) 84%, #000), color-mix(in oklab, var(--accent-lite) 72%, #fff));
   --on-accent: light-dark(#ffffff, #0f1d33);
   --played: light-dark(color-mix(in srgb, var(--accent-pick) 12%, transparent), color-mix(in srgb, var(--accent-lite) 14%, transparent));
@@ -305,6 +305,11 @@ body.is-loading .loading { display: flex; }
   transition: box-shadow 1.2s ease;
 }
 :root[data-ambient] .stage video { background: transparent; }
+/* 動画（position: relative）の下の光が、後ろに並ぶ物の上に描かれないように、それらも重なりの順に入れる */
+:root[data-ambient] .player > .caption-bar,
+:root[data-ambient] .controls,
+:root[data-ambient] .timeline,
+:root[data-ambient] .cell-bar { position: relative; }
 @media (prefers-reduced-motion: reduce) {
   :root[data-ambient] .stage { transition: none; }
 }
@@ -1547,6 +1552,10 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
 .theme-schedule select { height: 28px; min-width: 0; }
 .theme-schedule .ts-time { width: 9.5em; height: 28px; padding: 0 6px; }
 .theme-schedule.is-off { opacity: 0.5; }
+@media (max-width: 480px) {
+  .theme-schedule { grid-template-columns: auto minmax(0, 1fr); padding-left: 0; }
+  .theme-schedule .ts-time { width: 100%; }
+}
 .accent-picker { display: inline-flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
 .accent-opt { position: relative; display: inline-flex; cursor: pointer; }
 .accent-opt input { position: absolute; opacity: 0; pointer-events: none; }

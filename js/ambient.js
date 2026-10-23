@@ -32,13 +32,18 @@ export class Ambient {
     this.app = app;
     this.on = false;
     this.timer = 0;
+    this.newCanvas();
+    this.badSrc = ''; // 絵を読めなかった動画（別のサイトの動画など）。同じ動画では読み直さない
+    this.last = null; // 最後に描いた動画の位置（止まっている間は描き直さない）
+    this.thumb = { id: '', data: null, failed: false };
+  }
+
+  // 別のサイトの絵を一度でも描いた canvas は、ずっと読めなくなる。読めなかったら作り直す
+  newCanvas() {
     this.cv = document.createElement('canvas');
     this.cv.width = W;
     this.cv.height = H;
     this.cx = this.cv.getContext('2d', { willReadFrequently: true });
-    this.badSrc = ''; // 絵を読めなかった動画（別のサイトの動画など）。同じ動画では読み直さない
-    this.last = null; // 最後に描いた動画の位置（止まっている間は描き直さない）
-    this.thumb = { id: '', data: null, failed: false };
   }
 
   // 設定に合わせて動かす・止める（設定の画面で試しているときは、その値を渡す）
@@ -59,7 +64,9 @@ export class Ambient {
     if (document.hidden) return;
     const v = document.querySelector('#stageMedia video');
     if (v && v.videoWidth > 0 && v.readyState >= 2) {
-      if (v.currentSrc && v.currentSrc === this.badSrc) {
+      // 別のサイトの URL の動画は、絵を読めない（描くと canvas が読めなくなるので、描かない）
+      const src = v.currentSrc || '';
+      if ((src && src === this.badSrc) || (/^https?:/i.test(src) && new URL(src).origin !== location.origin)) {
         this.clear();
         return;
       }
@@ -69,8 +76,9 @@ export class Ambient {
         this.paint(this.cx.getImageData(0, 0, W, H).data);
         this.last = { src: v.currentSrc, t: v.currentTime };
       } catch {
-        // 別のサイトの動画で、絵を読めないとき
+        // 絵を読めないとき（リダイレクトで別のサイトになったときなど）
         this.badSrc = v.currentSrc;
+        this.newCanvas();
         this.clear();
       }
       return;
@@ -97,9 +105,11 @@ export class Ambient {
       try {
         this.cx.drawImage(img, 0, 0, W, H);
         this.thumb.data = this.cx.getImageData(0, 0, W, H).data;
-        if (this.on) this.paint(this.thumb.data);
+        // 読み終わるまでに別の動画を開いていたら、色は付けない（次にこの動画を開いたときに使う）
+        if (this.on && this.app.player?.kind === 'youtube' && this.app.store.doc?.id === 'yt:' + id) this.paint(this.thumb.data);
       } catch {
         this.thumb.failed = true;
+        this.newCanvas();
       }
     };
     img.onerror = () => {
