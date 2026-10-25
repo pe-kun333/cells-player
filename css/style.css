@@ -1283,6 +1283,7 @@ dialog.wide-dialog.lib-dialog { width: min(1120px, 96vw); }
   .lib-list, .pl-list { max-height: 45vh; }
 }
 .act.pl.on { color: var(--accent); }
+.act.mini.on { color: var(--accent-text); background: var(--accent-bg); }
 .jump-btn { gap: 4px; font-variant-numeric: tabular-nums; }
 /* 等間隔でセル化 */
 .side-digest { flex-wrap: wrap; row-gap: 4px; }
@@ -1482,6 +1483,76 @@ dialog.wide-dialog { width: min(720px, 94vw); }
 .empty-foot { max-width: 520px; font-size: 12px; line-height: 1.7; text-align: center; color: var(--text-3); }
 .empty-foot a { white-space: nowrap; margin-left: 4px; }
 .link-btn { padding: 0; margin-left: 10px; border: 0; background: none; font: inherit; color: var(--accent-text); text-decoration: underline; cursor: pointer; }
+
+/* ---- セルの小窓（js/miniwin.js）: セルの区間を、本体とは別に再生する浮かぶ窓 ---- */
+.mini-win {
+  position: fixed; left: 0; top: 0; z-index: 40; width: 320px; max-width: calc(100vw - 16px);
+  display: flex; flex-direction: column;
+  border: 1px solid var(--line-strong); border-radius: 12px; overflow: hidden;
+  background: var(--panel); color: var(--text); box-shadow: var(--shadow);
+  font-size: 12.5px;
+}
+/* 色を付けたセルの小窓は、枠をその色に */
+.mini-win.has-color { border-color: var(--cc); box-shadow: 0 0 0 1px var(--cc), var(--shadow); }
+.mini-win.is-flash { animation: mw-flash 0.9s ease-out; }
+@keyframes mw-flash { 30% { box-shadow: 0 0 0 3px var(--accent), var(--shadow); } }
+.mw-head {
+  display: flex; align-items: center; gap: 6px; min-width: 0; height: 32px; padding: 0 4px 0 10px;
+  border-bottom: 1px solid var(--line); background: var(--panel-2);
+  cursor: grab; user-select: none; touch-action: none;
+}
+.mini-win.is-dragging .mw-head { cursor: grabbing; }
+.mw-head > .i { width: 15px; height: 15px; color: var(--accent); }
+.mw-range { flex: none; font: 600 12px var(--mono); white-space: nowrap; }
+.mw-memo { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
+.mw-memo.is-missing { color: var(--danger); }
+.mw-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px; flex: none;
+  height: 26px; min-width: 26px; padding: 0 6px; border: 0; border-radius: 6px;
+  background: none; color: var(--text-2); cursor: pointer; font-size: 12px; white-space: nowrap;
+}
+.mw-btn:hover { background: var(--panel-2); color: var(--text); }
+.mw-head .mw-btn:hover { background: var(--panel); }
+.mw-btn .i { width: 15px; height: 15px; }
+.mw-btn.on { background: var(--accent-bg); color: var(--accent-text); }
+.mw-stage { position: relative; aspect-ratio: 16 / 9; background: #000; }
+.mw-media, .mw-media > * { position: absolute; inset: 0; width: 100%; height: 100%; }
+.mw-media video { object-fit: contain; background: #000; }
+.mw-media iframe { border: 0; }
+/* 音声だけのとき: 動画の場所は低くして、音符を出す */
+.mini-win.is-audio .mw-stage { aspect-ratio: auto; height: 64px; }
+.mw-cover { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #c9c7c0; pointer-events: none; }
+.mw-cover .i { width: 28px; height: 28px; }
+/* 知らせ・字幕は、動画の上に重ねずに下に出す（YouTube の埋め込みの上には何も重ねない） */
+.mw-msg { padding: 6px 10px; font-size: 12px; line-height: 1.6; color: var(--text-2); background: var(--panel-2); overflow-wrap: anywhere; }
+.mw-cap {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: calc(1.5em * 2 + 8px); padding: 4px 10px;
+  background: #000; color: #fff; text-align: center; font-size: 13px; line-height: 1.5;
+  white-space: pre-line; overflow-wrap: anywhere;
+}
+.mw-cap.is-dual { min-height: calc(1.5em * 3 + 8px); }
+.mw-cap .cap-line { display: block; }
+.mw-cap .cap-sub { font-size: 0.86em; color: #ffe7a3; }
+/* セルの中の帯（クリック・ドラッグで移動） */
+.mw-bar { position: relative; height: 16px; margin: 6px 12px 0; cursor: pointer; touch-action: none; }
+.mw-bar::before { content: ""; position: absolute; left: 0; right: 0; top: 6px; height: 4px; border-radius: 2px; background: var(--track); }
+.mw-played { position: absolute; left: 0; top: 6px; height: 4px; width: 0; border-radius: 2px; background: var(--accent); }
+.mw-knob {
+  position: absolute; top: 3px; left: 0; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 0 2px var(--panel); pointer-events: none;
+}
+.mw-ctl { display: flex; align-items: center; gap: 2px; padding: 2px 20px 6px 6px; min-width: 0; }
+.mw-time { min-width: 0; margin-left: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 12px var(--mono); color: var(--text-2); }
+.mw-rate { flex: none; width: auto; height: 24px; padding: 0 2px; font-size: 12px; }
+/* 右下の角: ドラッグで大きさを変える */
+.mw-resize {
+  position: absolute; right: 0; bottom: 0; width: 18px; height: 18px; cursor: nwse-resize; touch-action: none;
+  background: linear-gradient(135deg, transparent 0 52%, var(--line-strong) 52% 60%, transparent 60% 70%, var(--line-strong) 70% 78%, transparent 78%);
+}
+/* 動かしている間は、YouTube の埋め込みにマウスを取られないようにする */
+body.mw-dragging iframe { pointer-events: none; }
+body.mw-dragging { user-select: none; }
 
 /* ---- ドロップ・トースト・ダイアログ ---- */
 .drop-hint {

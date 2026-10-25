@@ -6,7 +6,7 @@ import { tr } from './i18n.js';
 const NUDGES = [-1, -0.1, 0.1, 1];
 
 // 共有で読み込んだセル・目印でもできる操作（見る・移動する・リピートするだけ）
-const SHARED_ACTS = new Set(['seek', 'jump', 'lead', 'repeat', 'tx', 'txcopy', 'talk', 'toggle', 'pl']);
+const SHARED_ACTS = new Set(['seek', 'jump', 'lead', 'repeat', 'mini', 'tx', 'txcopy', 'talk', 'toggle', 'pl']);
 
 // 並び順（時間順以外は字下げせずに並べる）
 const SORTS = {
@@ -411,6 +411,7 @@ export class Sidebar {
         ${this.colorBtn(c)}`}
         ${sh && !c.comments.length ? '' : `<button class="act talk${talk ? ' open' : ''}" data-act="talk" title="${tr('コメント')}" aria-expanded="${talk}">${icon('comment')}${c.comments.length ? `<span class="n">${c.comments.length}</span>` : ''}</button>`}
         <button class="act rep${rep ? ' on' : ''}" data-act="repeat" title="${tr('リピート再生（同時に1つだけ）')}">${icon('repeat')}<span>${tr('リピート')}</span></button>
+        ${this.miniBtn(c)}
         ${this.plBtn(c)}
         ${sh ? '' : `<button class="act split" data-act="split" title="${tr('再生位置で2つに分ける（メモ・いいね・コメントは前のセルに残ります） (S)')}">${icon('scissors')}<span>${tr('分割')}</span></button>`}
         ${this.app.store.cues.length ? `<button class="act tx${tx ? ' open' : ''}" data-act="tx" title="${tr('この区間の文字起こし')}" aria-expanded="${tx}">${icon('text')}<span>${tr('文字起こし')}</span></button>` : ''}
@@ -604,6 +605,13 @@ export class Sidebar {
     </div>`;
   }
 
+  // 「小窓」ボタン: このセルの区間を、本体とは別の小さな窓で再生する（開いていれば閉じる）
+  miniBtn(c) {
+    const on = this.app.miniOpen(c.id);
+    const title = on ? tr('小窓を閉じる (P)') : tr('小窓で再生（本体とは別に、このセルの区間だけをくり返す） (P)');
+    return `<button class="act mini${on ? ' on' : ''}" data-act="mini" title="${title}" aria-pressed="${on}">${icon('pip')}<span>${tr('小窓')}</span></button>`;
+  }
+
   // 「プレイリストに入れる」ボタン（入っていれば「外す」）。目印は開いた詳細の中に出す
   plBtn(o, asText = false) {
     const on = this.app.playlist.has(this.app.store.doc?.id, o.id);
@@ -691,6 +699,9 @@ export class Sidebar {
         break;
       case 'repeat':
         app.toggleRepeat(id);
+        break;
+      case 'mini':
+        app.toggleMini(id);
         break;
       case 'split':
         app.splitCellAt(id);

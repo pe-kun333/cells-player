@@ -259,10 +259,12 @@ export class TlMenu {
     const sh = store.shareOf(c);
     const memo = cellLabel(c, 60);
     const rep = ui.repeatId === c.id;
+    const mini = this.app.miniOpen(c.id);
     const moveRow = `<div class="tlm-row">
         <button type="button" data-tlm="c-play">${icon('play')} ${tr('頭から再生')}</button>
         <button type="button" data-tlm="c-seek">${tr('頭へ移動')}</button>
         <button type="button" class="${rep ? 'on' : ''}" data-tlm="c-repeat">${icon('repeat')} ${rep ? tr('リピートを止める') : tr('リピート')}</button>
+        <button type="button" class="${mini ? 'on' : ''}" data-tlm="c-mini" title="${mini ? tr('小窓を閉じる (P)') : tr('小窓で再生（本体とは別に、このセルの区間だけをくり返す） (P)')}" aria-pressed="${mini}">${icon('pip')} ${mini ? tr('小窓を閉じる') : tr('小窓で再生')}</button>
       </div>`;
     const memoHtml = `<div class="tlm-memo${memo ? '' : ' muted'}">${memo ? escapeHtml(memo) : tr('（メモなし）')}</div>`;
     if (sh) {
@@ -519,6 +521,9 @@ export class TlMenu {
         return this.close();
       case 'c-repeat':
         app.toggleRepeat(c.id);
+        return this.close();
+      case 'c-mini':
+        app.toggleMini(c.id);
         return this.close();
       case 'c-like': {
         const lv = Number(b.dataset.lv);

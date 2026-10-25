@@ -25,6 +25,7 @@ import { NowCard } from './nowcard.js';
 import { ColorPop } from './colorpop.js';
 import { Theme, THEMES, themeName } from './theme.js';
 import { Ambient } from './ambient.js';
+import { MiniWins } from './miniwin.js';
 import { $, clamp, fmt, round2, escapeHtml, icon, cellLabel } from './util.js';
 import { tr, trMaybe, lang, isEn, translatePage } from './i18n.js';
 
@@ -109,6 +110,9 @@ const cellBar = new CellBar(app);
 const nowCard = new NowCard(app);
 const colorPop = new ColorPop(app);
 app.colorPop = colorPop;
+// セルの小窓（セルの区間を、本体とは別の小さな窓で再生する）
+const miniWins = new MiniWins(app);
+app.miniWins = miniWins;
 // 配色（js/theme-boot.js が先に当てている。ここでは OS の設定・時刻の変化への追従と、ライブチャットの配色）
 const theme = new Theme(app);
 app.theme = theme;
@@ -132,6 +136,20 @@ function applyOpsLayout() {
 app.startComment = () => (nowCard.on ? nowCard.startComment() : moment.startMark());
 app.openPresets = () => presetDialog.open();
 app.gridQuick = () => gridCells.quick();
+
+// ---- セルの小窓 ----
+app.mediaSrc = null; // 開いているメディアの読み込み元 { kind, src }（小窓が同じものをもう1つ読み込む）
+app.miniOpen = (id) => miniWins.has(id);
+app.toggleMini = (id) => miniWins.toggle(id);
+// P キー: 再生位置のセル（いまのセル）の小窓を開く・閉じる
+app.miniHere = () => {
+  if (!requireMedia()) return;
+  const c = app.cellAt() || [...app.activeCells].map((id) => store.getCell(id)).find(Boolean);
+  if (c) miniWins.toggle(c.id);
+  else app.hint(tr('再生位置にセルはありません（セルのカードやタイムラインのセルの「小窓」からも開けます）'));
+};
+// 小窓を開いた・閉じたとき: カードやバーの「小窓」ボタンの表示を直す
+app.onMiniChange = () => renderAll();
 
 // ---- 検索・絞り込み・連続再生の区画をたたむ（セルの一覧を広く見る） ----
 function applySideFold() {
@@ -907,6 +925,8 @@ function mergeKeepingRepeat(ids) {
   // 購読の「なくなったセルのリピートを止める」を動かさないよう、まとめる間だけ外しておく
   if (wasRepeat) app.ui.repeatId = null;
   const merged = store.mergeCells(ids);
+  // まとめる前のセルを小窓で再生していたら、まとめたセルの小窓にする
+  if (merged) miniWins.remap(ids, merged.id);
   if (wasRepeat) {
     app.ui.repeatId = merged ? merged.id : rep;
     renderRepeatBar();
@@ -1116,6 +1136,9 @@ let cleanupMedia = null;
 let openSeq = 0;
 
 function closeMedia() {
+  // 小窓は同じメディアを読み込んでいるので、先に閉じる（手元のファイルは、このあと読み込み元を手放す）
+  miniWins.closeAll({ quiet: true });
+  app.mediaSrc = null;
   if (app.player) {
     try {
       app.player.destroy();
@@ -1190,6 +1213,7 @@ async function openMedia(meta, makePlayer, src, cleanup) {
   }
   if (seq !== openSeq) return;
   document.body.classList.remove('is-loading');
+  app.mediaSrc = { kind: player.kind, src };
 
   if (player.kind === 'youtube') {
     const title = player.getTitle();
@@ -1202,6 +1226,8 @@ async function openMedia(meta, makePlayer, src, cleanup) {
   store.setDuration(player.getDuration());
 
   player.on('play', updatePlayButton);
+  // 本体を再生したら、音を出している小窓は止める（音が重ならないように）
+  player.on('play', () => miniWins.onMainPlay());
   player.on('pause', updatePlayButton);
   player.on('durationchange', () => store.setDuration(player.getDuration()));
   player.on('error', (msg) => {
@@ -1994,6 +2020,7 @@ $('#volume').value = app.settings.volume;
 $('#volume').addEventListener('input', (e) => {
   app.settings.volume = Number(e.target.value);
   app.player?.setVolume(app.settings.volume);
+  miniWins.syncVolume();
 });
 $('#volume').addEventListener('change', (e) => {
   saveSettings(app.settings);
@@ -2010,12 +2037,12 @@ document.addEventListener(
   true,
 );
 
-// YouTube の動画をクリックするとキー操作が iframe に取られるので、親ページへ戻す。
+// YouTube の動画（小窓の動画も）をクリックするとキー操作が iframe に取られるので、親ページへ戻す。
 // ライブチャットの iframe は書き込むところなので戻さない（戻すと入力欄からすぐ外れてしまう）
 window.addEventListener('blur', () => {
   setTimeout(() => {
     const a = document.activeElement;
-    if (a && a.tagName === 'IFRAME' && a.closest('#stageMedia')) {
+    if (a && a.tagName === 'IFRAME' && a.closest('#stageMedia, .mini-win')) {
       a.blur();
       window.focus();
     }
@@ -2087,6 +2114,8 @@ const palette = new Palette(app, () => {
     { group: g.cell, label: tr('いまのセルの終わりを再生位置に'), words: 'end edge 端', run: () => app.cellAt() ? app.setCellEdge(app.cellAt().id, 'e') : app.hint(tr('再生位置にセルはありません')) },
     { group: g.cell, label: tr('重なっているセルを切り替える'), run: () => app.cycleCellTarget() },
     { group: g.cell, label: tr('いまのセルをリピート'), key: 'R', words: 'repeat loop', run: toggleRepeatHere },
+    { group: g.cell, label: tr('いまのセルを小窓で再生 / 閉じる'), key: 'P', words: 'mini window pip popup 小窓 別', run: () => app.miniHere() },
+    { group: g.cell, label: tr('小窓をすべて閉じる'), words: 'mini window pip close 小窓', run: () => miniWins.closeAll() },
     { group: g.cell, label: gridLabel(Number(app.settings.gridSec) || 30), words: 'grid 30 60 等間隔', run: () => gridCells.quick() },
     { group: g.cell, label: tr('等間隔でセル化（長さを選ぶ）'), words: 'grid 30 60', run: () => gridCells.open() },
     { group: g.cell, label: tr('一覧を連続再生'), words: 'digest', run: clickBtn('#btnDigest') },
@@ -2215,6 +2244,10 @@ document.addEventListener('keydown', (e) => {
     case 'R':
       toggleRepeatHere();
       break;
+    case 'p':
+    case 'P':
+      app.miniHere();
+      break;
     case 's':
     case 'S':
       app.splitCellAt();
@@ -2314,6 +2347,7 @@ function watch() {
   sidebar.follow();
   cellBar.tick(now);
   nowCard.tick(now);
+  miniWins.tick();
 
   updateTranscript(now);
   digest.tick(now, !p.paused);

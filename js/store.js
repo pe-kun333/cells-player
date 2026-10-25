@@ -99,6 +99,7 @@ export const DEFAULT_SETTINGS = {
   nightStart: '19:00',       // 夜の始まり（HH:MM）
   accent: '',                // アクセントの色（#rrggbb。'' は配色の色のまま）
   ambient: false,            // 動画のまわりを動画の色にする（アンビエント）
+  miniWidth: 320,            // セルの小窓の幅（px。最後に大きさを変えたもの）
 };
 
 function readJSON(key) {

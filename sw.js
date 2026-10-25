@@ -32,6 +32,7 @@ const APP_FILES = [
   './js/theme-boot.js',
   './js/theme.js',
   './js/ambient.js',
+  './js/miniwin.js',
   './js/players.js',
   './js/practice.js',
   './js/presets.js',

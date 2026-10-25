@@ -236,6 +236,36 @@ export const EN = {
   '「{name}」をリピート再生します': 'Repeating "{name}"',
   '再生位置を含むセルがありません': 'No cell contains the current position',
 
+  // ---- セルの小窓 ----
+  '小窓': 'Mini',
+  '小窓で再生': 'Play in mini player',
+  '小窓を閉じる': 'Close mini player',
+  '小窓を閉じる (P)': 'Close mini player (P)',
+  '小窓で再生（本体とは別に、このセルの区間だけをくり返す） (P)': 'Play in a mini player (loops just this cell, separately from the main player) (P)',
+  'いまのセルを小窓で再生 / 閉じる': 'Play the current cell in a mini player / close it',
+  '小窓をすべて閉じる': 'Close all mini players',
+  '再生位置にセルはありません（セルのカードやタイムラインのセルの「小窓」からも開けます）':
+    'There is no cell at the playhead (you can also use "Mini" on a cell card or a timeline cell)',
+  '小窓は同時に {n} つまでです（使わない小窓を閉じてください）': 'You can open up to {n} mini players at once (close one you no longer need)',
+  '{range} を小窓で再生します（本体の再生位置は動きません。音が出るのは本体か小窓の1つだけです）':
+    'Playing {range} in a mini player (the main player stays where it is; only one player makes sound at a time)',
+  '本体の再生位置を、この小窓の位置へ移す（すばやく2回押すと、本体で再生）': 'Move the main player to this position (press twice quickly to play it there)',
+  '本体へ': 'To main',
+  '本体を {time} へ移しました（すばやく2回押すと、本体で再生します）': 'Moved the main player to {time} (press twice quickly to play it there)',
+  'クリック・ドラッグで、セルの中を移動': 'Click or drag to move within the cell',
+  'セルの頭から再生': 'Play from the start of the cell',
+  'この小窓の速度': 'Speed of this mini player',
+  'ドラッグで大きさを変える': 'Drag to resize',
+  'ドラッグで動かす': 'Drag to move',
+  '（このセルは削除されました）': '(this cell was deleted)',
+  'セルの小窓 {range}': 'Mini player {range}',
+  'くり返す': 'Loop',
+  'くり返す（オン）: 終わりまで来たら頭へ戻ります': 'Loop (on): goes back to the start at the end',
+  'くり返す（オフ）: 終わりで止まります': 'Loop (off): stops at the end',
+  '消音': 'Mute',
+  '消音中（本体やほかの小窓と一緒に再生できます）。押すと音を出します': 'Muted (can play along with the main player and other mini players). Press to unmute',
+  '消音にする（消音にした小窓は、本体やほかの小窓と一緒に再生できます）': 'Mute (a muted mini player can play along with the main player and other mini players)',
+
   // ---- サイドバー ----
   '目印（タブ）': 'Markers',
   'すべて': 'All',
@@ -1190,6 +1220,7 @@ export const EN_HTML = {
       <tr><td><kbd>F</kbd></td><td>Full screen (use the whole screen for the app, including the browser bar at the top) / exit</td></tr>
       <tr><td><kbd>Backspace</kbd></td><td>After a big jump, go back to where you were (<kbd>Shift</kbd>+<kbd>Backspace</kbd> to go forward again)</td></tr>
       <tr><td><kbd>R</kbd></td><td>Repeat the cell at the playback position / stop</td></tr>
+      <tr><td><kbd>P</kbd></td><td>Play the cell at the playback position in a mini player / close it (loops just that cell, separately from the main player)</td></tr>
       <tr><td><kbd>T</kbd></td><td>Show / hide captions (loads captions if none)</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>V</kbd></td><td>Paste a copied transcript to load it</td></tr>
       <tr><td><kbd>W</kbd></td><td>Add to vocabulary (uses the selected text and the current caption line)</td></tr>

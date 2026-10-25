@@ -94,6 +94,21 @@ The actions for the scene you are watching are gathered in the "now card" at the
 - Under the video, "This moment" (nearby markers) and the moment comment / transcript list sit side by side
 - "Where the actions go" in Settings switches back to "This moment" on the left (the previous layout)
 
+## Mini players (play just a cell, separately from the main player)
+
+Play a cell's range in a small floating window (a mini player), separately from the main player. The main player stays where it is.
+Use it to keep a model scene looping, or to line up a few scenes and compare them.
+
+- Open: "Mini" on a cell card in the right sidebar, "Play in mini player" in a timeline cell's menu, the mini player button on the current-cell bar and the now card, the `P` key (the cell at the playhead), or "Play the current cell in a mini player" in Ctrl+K. Press again to close
+- A mini player plays only that cell's range. At the end it goes back to the start and loops (turn off the loop button to stop at the end)
+- Controls: play / pause, back to the start of the cell, a strip for the cell (click or drag to move), loop, speed and mute. If captions are loaded, the caption for the mini player's position is shown below its video
+- To keep sounds from overlapping, only the main player or one mini player makes sound at a time. Playing a mini player pauses the main player (and other mini players), and playing the main player pauses the mini players. A muted mini player keeps playing, so it can run silently alongside the main player
+- "To main" moves the main player to the mini player's position (press twice quickly to play it there)
+- Drag the title bar to move it and the bottom-right corner to resize it (the next mini player opens at the same size). Up to 4 can be open at once
+- When you change a cell's range, its mini player follows. A mini player keeps playing a merged cell. If you delete the cell, it keeps playing the last range until you undo
+- For YouTube videos, mini players never cover the main video or each other, following YouTube's terms (you cannot drag them there, and they move out of the way when scrolling moves the video). A YouTube mini player uses another YouTube embed
+- Opening another video closes the mini players
+
 ## Two subtitles (Japanese and English side by side)
 
 After loading subtitles, load another set (a translation, for example) to show two lines together.

@@ -32,7 +32,7 @@ export class CellBar {
     const list = app.cellsAt(now);
     const c = app.cellAt(now);
     const key = c
-      ? [c.id, c.s, c.e, c.lv, c.bm, c.color | 0, c.memo, c.comments.length, app.ui.repeatId === c.id, list.length, list.indexOf(c)].join('|')
+      ? [c.id, c.s, c.e, c.lv, c.bm, c.color | 0, c.memo, c.comments.length, app.ui.repeatId === c.id, app.miniOpen(c.id), list.length, list.indexOf(c)].join('|')
       : 'none';
     if (key === this.key) return;
     this.key = key;
@@ -45,6 +45,8 @@ export class CellBar {
     }
     const memo = cellLabel(c, 40);
     const rep = app.ui.repeatId === c.id;
+    const mini = app.miniOpen(c.id);
+    const miniTitle = mini ? tr('小窓を閉じる (P)') : tr('小窓で再生（本体とは別に、このセルの区間だけをくり返す） (P)');
     const pips = [1, 2, 3].map((n) => `<i class="${n <= c.lv ? 'on' : ''}"></i>`).join('');
     const cc = cellColorOf(app.settings, c);
     const colorTitle = cc ? tr('色を変える・外す（いまは 色 {n}）', { n: c.color | 0 }) : tr('色を付ける（登録した6色から選ぶ）');
@@ -62,6 +64,7 @@ export class CellBar {
         <button type="button" data-cb="start" title="${tr('セルの始まりを再生位置にする（となりのセルとの境目も一緒に動きます）')}">${tr('⇤ 始まりをここに')}</button>
         <button type="button" data-cb="end" title="${tr('セルの終わりを再生位置にする（となりのセルとの境目も一緒に動きます）')}">${tr('終わりをここに ⇥')}</button>
         <button type="button" class="${rep ? 'on' : ''}" data-cb="repeat" title="${tr('リピート再生（同時に1つだけ）')}">${icon('repeat')}<kbd>R</kbd></button>
+        <button type="button" class="${mini ? 'on' : ''}" data-cb="mini" title="${miniTitle}" aria-label="${miniTitle}" aria-pressed="${mini}">${icon('pip')}<kbd>P</kbd></button>
         <button type="button" class="cb-like" data-cb="like" data-lv="${c.lv}" title="${tr('いいね（押すたびに 1 → 2 → 3 → 解除）')}">${icon('heart', c.lv ? 'fill' : '')}<span class="pips">${pips}</span></button>
         <button type="button" class="${c.bm ? 'on' : ''}" data-cb="bm" title="${tr('ブックマーク')}" aria-pressed="${c.bm}">${icon('bookmark', c.bm ? 'fill' : '')}</button>
         <button type="button" class="cb-color${cc ? ' on' : ''}" data-cb="color" title="${colorTitle}" aria-label="${colorTitle}" aria-haspopup="dialog">${icon('palette')}${cc ? `<span class="cdot" style="--cc:${cc}"></span>` : ''}</button>
@@ -95,6 +98,9 @@ export class CellBar {
         break;
       case 'repeat':
         app.toggleRepeat(c.id);
+        break;
+      case 'mini':
+        app.toggleMini(c.id);
         break;
       case 'like':
         app.store.updateCell(c.id, { lv: (c.lv + 1) % 4 });

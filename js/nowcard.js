@@ -136,7 +136,7 @@ export class NowCard {
     const inPl = c ? app.playlist.has(app.store.doc?.id, c.id) : false;
     const last = c?.comments[c.comments.length - 1];
     const key = c
-      ? [c.id, c.s, c.e, c.lv, c.bm, c.memo, c.comments.length, last?.text, app.ui.repeatId === c.id, list.length, list.indexOf(c), inPl].join('|')
+      ? [c.id, c.s, c.e, c.lv, c.bm, c.memo, c.comments.length, last?.text, app.ui.repeatId === c.id, list.length, list.indexOf(c), inPl, app.miniOpen(c.id)].join('|')
       : `none:${app.settings.gridSec}`;
     if (key === this.cellKey) return;
     this.cellKey = key;
@@ -151,6 +151,8 @@ export class NowCard {
     }
     const memo = c.memo.trim();
     const rep = app.ui.repeatId === c.id;
+    const mini = app.miniOpen(c.id);
+    const miniTitle = mini ? tr('小窓を閉じる (P)') : tr('小窓で再生（本体とは別に、このセルの区間だけをくり返す） (P)');
     const pips = [1, 2, 3].map((n) => `<i class="${n <= c.lv ? 'on' : ''}"></i>`).join('');
     const recent = last ? `<div class="nc-cm">${icon('comment')}<span>${escapeHtml(last.text)}</span>${c.comments.length > 1 ? `<span class="nc-cm-more">${tr('ほか {n} 件のコメント', { n: c.comments.length - 1 })}</span>` : ''}</div>` : '';
     const cycle = list.length > 1
@@ -171,6 +173,7 @@ export class NowCard {
         <button type="button" class="nc-btn" data-nc="start" title="${tr('セルの始まりを再生位置にする（となりのセルとの境目も一緒に動きます）')}">${tr('⇤ 始まり')}</button>
         <button type="button" class="nc-btn" data-nc="end" title="${tr('セルの終わりを再生位置にする（となりのセルとの境目も一緒に動きます）')}">${tr('終わり ⇥')}</button>
         <button type="button" class="nc-btn${rep ? ' on' : ''}" data-nc="repeat" title="${tr('リピート再生（同時に1つだけ）')} (R)" aria-label="${tr('リピート')}">${icon('repeat')}</button>
+        <button type="button" class="nc-btn${mini ? ' on' : ''}" data-nc="mini" title="${miniTitle}" aria-label="${miniTitle}" aria-pressed="${mini}">${icon('pip')}</button>
         <button type="button" class="nc-btn nc-like-cycle" data-nc="like" data-lv="${c.lv}" title="${tr('いいね（押すたびに 1 → 2 → 3 → 解除）')}">${icon('heart', c.lv ? 'fill' : '')}<span class="pips">${pips}</span></button>
         <button type="button" class="nc-btn${c.bm ? ' on' : ''}" data-nc="bm" title="${tr('ブックマーク')}" aria-pressed="${c.bm}">${icon('bookmark', c.bm ? 'fill' : '')}</button>
         <button type="button" class="nc-btn primary" data-nc="split" title="${tr('再生位置で2つに分ける（メモ・いいね・コメントは前のセルに残ります） (S)')}">${icon('scissors')}${tr('分割')}<kbd>S</kbd></button>
@@ -462,6 +465,8 @@ export class NowCard {
         return app.setCellEdge(c.id, 'e');
       case 'repeat':
         return app.toggleRepeat(c.id);
+      case 'mini':
+        return app.toggleMini(c.id);
       case 'like':
         return app.store.updateCell(c.id, { lv: (c.lv + 1) % 4 });
       case 'bm':
